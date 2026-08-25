@@ -6654,6 +6654,17 @@ static void arm_hollywood_timer_poll(CPUState *cs)
     p->ctl = deposit32(p->ctl, 2, 1, pist);
     hw_phys_out = (p->ctl & 1) && pist && !(p->ctl & 2);
 
+    {
+        static unsigned long _hw_poll_n = 0;
+        if ((_hw_poll_n++ % 20000) == 0) {
+            fprintf(stderr, "[hwtimer] cnt=%llu freq_hz=%llu vctl=%u vcval=%llu vout=%d | pctl=%u pcval=%llu pout=%d | voff=%llu\n",
+                    (unsigned long long)cnt, (unsigned long long)cpu->gt_cntfrq_hz,
+                    (unsigned)v->ctl, (unsigned long long)v->cval, hw_virt_out,
+                    (unsigned)p->ctl, (unsigned long long)p->cval, hw_phys_out,
+                    (unsigned long long)env->cp15.cntvoff_el2);
+        }
+    }
+
     hw_gic_update_irq(cs);
 }
 

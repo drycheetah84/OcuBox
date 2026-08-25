@@ -25,12 +25,12 @@ uint64_t GicV3::read(uint64_t offset, unsigned size) {
     uint64_t abs = base() + offset;
     if (abs >= dist_base_ && abs < dist_base_ + dist_size_) {
         uint64_t v = dist_read(abs - dist_base_, size);
-        if (g_gic_log++ < 400) HW_WARN("gic", "R dist+{:#x} = {:#x}", abs - dist_base_, v);
+        if (g_gic_log++ < 0) HW_WARN("gic", "R dist+{:#x} = {:#x}", abs - dist_base_, v);
         return v;
     }
     if (abs >= redist_base_ && abs < redist_base_ + redist_size_) {
         uint64_t v = redist_read(abs - redist_base_, size);
-        if (g_gic_log++ < 400) HW_WARN("gic", "R redist+{:#x} = {:#x}", abs - redist_base_, v);
+        if (g_gic_log++ < 0) HW_WARN("gic", "R redist+{:#x} = {:#x}", abs - redist_base_, v);
         return v;
     }
     return 0;
@@ -38,11 +38,11 @@ uint64_t GicV3::read(uint64_t offset, unsigned size) {
 void GicV3::write(uint64_t offset, uint64_t value, unsigned size) {
     uint64_t abs = base() + offset;
     if (abs >= dist_base_ && abs < dist_base_ + dist_size_) {
-        if (g_gic_log++ < 400) HW_WARN("gic", "W dist+{:#x} = {:#x}", abs - dist_base_, value);
+        if (g_gic_log++ < 0) HW_WARN("gic", "W dist+{:#x} = {:#x}", abs - dist_base_, value);
         dist_write(abs - dist_base_, value, size); return;
     }
     if (abs >= redist_base_ && abs < redist_base_ + redist_size_) {
-        if (g_gic_log++ < 400) HW_WARN("gic", "W redist+{:#x} = {:#x}", abs - redist_base_, value);
+        if (g_gic_log++ < 0) HW_WARN("gic", "W redist+{:#x} = {:#x}", abs - redist_base_, value);
         redist_write(abs - redist_base_, value, size); return;
     }
 }

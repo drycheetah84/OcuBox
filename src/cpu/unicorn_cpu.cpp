@@ -127,7 +127,32 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
     if (cse == CS_ERR_OK) csh_ = (void*)(uintptr_t)handle;
     else HW_WARN("cpu.uc", "capstone cs_open failed ({}): disasm disabled", (int)cse);
 
+    if (!opts_.fn_trace_ksyms.empty()) load_fn_trace();
+
     return true;
+}
+
+// Load the addresses of a fixed set of timer/irq functions from a ksyms.txt
+// ("<hexaddr> <type> <name>" per line) so code_cb can trace their calls.
+void UnicornCpu::load_fn_trace() {
+    static const char* kWatch[] = {
+        "arch_timer_of_init", "arch_timer_mem_of_init", "irq_of_parse_and_map",
+        "of_irq_get", "of_irq_parse_one", "of_irq_parse_raw", "of_irq_find_parent",
+        "irq_create_of_mapping", "irq_create_fwspec_mapping", "irq_find_matching_fwspec",
+        "__irq_domain_alloc_irqs", "irq_domain_alloc_irqs", "gic_irq_domain_translate",
+        "gic_irq_domain_alloc", "gic_irq_domain_select", "irq_domain_translate_twocell",
+        "irq_create_mapping_affinity", "__irq_create_mapping_affinity",
+    };
+    std::FILE* f = std::fopen(opts_.fn_trace_ksyms.c_str(), "rb");
+    if (!f) { HW_WARN("trace", "fn-trace: cannot open {}", opts_.fn_trace_ksyms); return; }
+    char line[512];
+    while (std::fgets(line, sizeof line, f)) {
+        unsigned long long addr; char type; char nm[256];
+        if (std::sscanf(line, "%llx %c %255s", &addr, &type, nm) != 3) continue;
+        for (const char* w : kWatch) if (std::strcmp(w, nm) == 0) { fn_watch_[addr] = nm; break; }
+    }
+    std::fclose(f);
+    HW_WARN("trace", "fn-trace: watching {} function entries", fn_watch_.size());
 }
 
 void UnicornCpu::set_state(const CpuState& st) {
@@ -287,6 +312,28 @@ void UnicornCpu::code_cb(uc_engine* uc, uint64_t address, uint32_t /*size*/, voi
     if (self->opts_.trace && self->traced_ < self->opts_.trace_limit) {
         self->traced_++;
         self->disasm_line(address);
+    }
+
+    // Symbol-based function tracing: log entry (args) and return value (x0).
+    if (!self->fn_watch_.empty() && self->fn_trace_lines_ < 4000) {
+        auto it = self->fn_watch_.find(address);
+        if (it != self->fn_watch_.end()) {
+            uint64_t x0=0,x1=0,x2=0,lr=0;
+            uc_reg_read(uc, UC_ARM64_REG_X0, &x0);
+            uc_reg_read(uc, UC_ARM64_REG_X1, &x1);
+            uc_reg_read(uc, UC_ARM64_REG_X2, &x2);
+            uc_reg_read(uc, UC_ARM64_REG_LR, &lr);
+            HW_WARN("trace", "{}> {}(x0={:#x} x1={:#x} x2={:#x}) lr={:#x}",
+                    std::string(self->fn_retstk_.size()*2, ' '), it->second, x0, x1, x2, lr);
+            self->fn_retstk_.push_back({lr, it->second});
+            self->fn_trace_lines_++;
+        }
+        while (!self->fn_retstk_.empty() && address == self->fn_retstk_.back().first) {
+            uint64_t x0=0; uc_reg_read(uc, UC_ARM64_REG_X0, &x0);
+            auto nm = self->fn_retstk_.back().second; self->fn_retstk_.pop_back();
+            HW_WARN("trace", "{}< {} = {:#x}", std::string(self->fn_retstk_.size()*2, ' '), nm, x0);
+            self->fn_trace_lines_++;
+        }
     }
 
     // Spin-wait detection.

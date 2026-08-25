@@ -1,0 +1,738 @@
+
+[1mhollywood_emu[0m  [2mMeta Quest 2 (hollywood / Snapdragon XR2) boot[0m
+[2m--------------------------------------------------------------[0m
+
+[[33m....[0m] Initializing emulator[ [32mOK[0m ] Initializing emulator  [2mhost=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)[0m
+[[33m....[0m] Loading Quest 2 configuration[ [32mOK[0m ] Loading Quest 2 configuration  [2mbuild oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys[0m
+[[33m....[0m] Loading kernel[ [32mOK[0m ] Loading kernel  [2mARM64 Image 29658 KB, image_size=0x1dd2000[0m
+[[33m....[0m] Initializing virtual hardware[ [32mOK[0m ] Initializing virtual hardware  [2mdram_base=0x80000000, 2 MMIO devices[0m
+[[33m....[0m] Loading boot image[ [32mOK[0m ] Loading boot image  [2mramdisk 2613 KB (cpio 6112 KB)[0m
+[[33m....[0m] Initializing memory  [WARN ] boot.dtb   | patch diff: 2 bytes in [0x114..0x11c]; write-window [0x110..0x120]
+[ [32mOK[0m ] Initializing memory  [2m2048 MB @ 0x80000000; kernel@0x80080000 dtb@0x81e80000 ramdisk@0x82000000[0m
+[[33m....[0m] Starting kernel[ [32mOK[0m ] Starting kernel  [2mPC=0x80080000 x0(dtb)=0x81e80000 pstate=0x3c5[0m
+[[33m....[0m] Attaching ARM64 execution backend[ [32mOK[0m ] Attaching ARM64 execution backend  [2mUnicorn (ARM64 / QEMU-TCG)[0m
+[[33m....[0m] Executing Quest 2 kernel
+[hwtimer] cnt=1981705980262 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981712297431 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981716975181 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981721578625 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 20M insns, PC=0xffffff8008fff970
+[hwtimer] cnt=1981726245987 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981730769300 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981735196856 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981742338306 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 40M insns, PC=0xffffff8009000fc8
+[hwtimer] cnt=1981747413925 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981752406462 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981765181512 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981770773968 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 60M insns, PC=0xffffff8009000e68
+[hwtimer] cnt=1981776088187 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981781216418 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981787191837 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981793023862 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 80M insns, PC=0xffffff800828cafc
+[hwtimer] cnt=1981798852287 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981804588825 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981810403987 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981816201862 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 100M insns, PC=0xffffff800828caec
+[hwtimer] cnt=1981822113281 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981838846262 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981843716837 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981848839681 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 120M insns, PC=0xffffff800823aae8
+[hwtimer] cnt=1981854020506 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981862715825 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981867899743 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [WARN ] gic        | R dist+0xffe8 = 0x30
+  [WARN ] gic        | R dist+0x4 = 0x1f
+  [WARN ] gic        | R redist+0xffe8 = 0x30
+  [WARN ] gic        | R redist+0x8 = 0x10
+  [WARN ] gic        | R redist+0xc = 0x0
+  [WARN ] gic        | R redist+0x8 = 0x10
+  [WARN ] gic        | R redist+0xc = 0x0
+  [WARN ] gic        | R dist+0x4 = 0x1f
+  [WARN ] gic        | W dist+0x0 = 0x0
+  [WARN ] gic        | R dist+0x0 = 0x0
+  [WARN ] gic        | W dist+0x84 = 0xffffffff
+  [WARN ] gic        | W dist+0x88 = 0xffffffff
+  [WARN ] gic        | W dist+0x8c = 0xffffffff
+  [WARN ] gic        | W dist+0x90 = 0xffffffff
+  [WARN ] gic        | W dist+0x94 = 0xffffffff
+  [WARN ] gic        | W dist+0x98 = 0xffffffff
+  [WARN ] gic        | W dist+0x9c = 0xffffffff
+  [WARN ] gic        | W dist+0xa0 = 0xffffffff
+  [WARN ] gic        | W dist+0xa4 = 0xffffffff
+  [WARN ] gic        | W dist+0xa8 = 0xffffffff
+  [WARN ] gic        | W dist+0xac = 0xffffffff
+  [WARN ] gic        | W dist+0xb0 = 0xffffffff
+  [WARN ] gic        | W dist+0xb4 = 0xffffffff
+  [WARN ] gic        | W dist+0xb8 = 0xffffffff
+  [WARN ] gic        | W dist+0xbc = 0xffffffff
+  [WARN ] gic        | W dist+0xc0 = 0xffffffff
+  [WARN ] gic        | W dist+0xc4 = 0xffffffff
+  [WARN ] gic        | W dist+0xc8 = 0xffffffff
+  [WARN ] gic        | W dist+0xcc = 0xffffffff
+  [WARN ] gic        | W dist+0xd0 = 0xffffffff
+  [WARN ] gic        | W dist+0xd4 = 0xffffffff
+  [WARN ] gic        | W dist+0xd8 = 0xffffffff
+  [WARN ] gic        | W dist+0xdc = 0xffffffff
+  [WARN ] gic        | W dist+0xe0 = 0xffffffff
+  [WARN ] gic        | W dist+0xe4 = 0xffffffff
+  [WARN ] gic        | W dist+0xe8 = 0xffffffff
+  [WARN ] gic        | W dist+0xec = 0xffffffff
+  [WARN ] gic        | W dist+0xf0 = 0xffffffff
+  [WARN ] gic        | W dist+0xf4 = 0xffffffff
+  [WARN ] gic        | W dist+0xf8 = 0xffffffff
+  [WARN ] gic        | W dist+0xfc = 0xffffffff
+  [WARN ] gic        | W dist+0xc08 = 0x0
+  [WARN ] gic        | W dist+0xc0c = 0x0
+  [WARN ] gic        | W dist+0xc10 = 0x0
+  [WARN ] gic        | W dist+0xc14 = 0x0
+  [WARN ] gic        | W dist+0xc18 = 0x0
+  [WARN ] gic        | W dist+0xc1c = 0x0
+  [WARN ] gic        | W dist+0xc20 = 0x0
+  [WARN ] gic        | W dist+0xc24 = 0x0
+  [WARN ] gic        | W dist+0xc28 = 0x0
+  [WARN ] gic        | W dist+0xc2c = 0x0
+  [WARN ] gic        | W dist+0xc30 = 0x0
+  [WARN ] gic        | W dist+0xc34 = 0x0
+  [WARN ] gic        | W dist+0xc38 = 0x0
+  [WARN ] gic        | W dist+0xc3c = 0x0
+  [WARN ] gic        | W dist+0xc40 = 0x0
+  [WARN ] gic        | W dist+0xc44 = 0x0
+  [WARN ] gic        | W dist+0xc48 = 0x0
+  [WARN ] gic        | W dist+0xc4c = 0x0
+  [WARN ] gic        | W dist+0xc50 = 0x0
+  [WARN ] gic        | W dist+0xc54 = 0x0
+  [WARN ] gic        | W dist+0xc58 = 0x0
+  [WARN ] gic        | W dist+0xc5c = 0x0
+  [WARN ] gic        | W dist+0xc60 = 0x0
+  [WARN ] gic        | W dist+0xc64 = 0x0
+  [WARN ] gic        | W dist+0xc68 = 0x0
+  [WARN ] gic        | W dist+0xc6c = 0x0
+  [WARN ] gic        | W dist+0xc70 = 0x0
+  [WARN ] gic        | W dist+0xc74 = 0x0
+  [WARN ] gic        | W dist+0xc78 = 0x0
+  [WARN ] gic        | W dist+0xc7c = 0x0
+  [WARN ] gic        | W dist+0xc80 = 0x0
+  [WARN ] gic        | W dist+0xc84 = 0x0
+  [WARN ] gic        | W dist+0xc88 = 0x0
+  [WARN ] gic        | W dist+0xc8c = 0x0
+  [WARN ] gic        | W dist+0xc90 = 0x0
+  [WARN ] gic        | W dist+0xc94 = 0x0
+  [WARN ] gic        | W dist+0xc98 = 0x0
+  [WARN ] gic        | W dist+0xc9c = 0x0
+  [WARN ] gic        | W dist+0xca0 = 0x0
+  [WARN ] gic        | W dist+0xca4 = 0x0
+  [WARN ] gic        | W dist+0xca8 = 0x0
+  [WARN ] gic        | W dist+0xcac = 0x0
+  [WARN ] gic        | W dist+0xcb0 = 0x0
+  [WARN ] gic        | W dist+0xcb4 = 0x0
+  [WARN ] gic        | W dist+0xcb8 = 0x0
+  [WARN ] gic        | W dist+0xcbc = 0x0
+  [WARN ] gic        | W dist+0xcc0 = 0x0
+  [WARN ] gic        | W dist+0xcc4 = 0x0
+  [WARN ] gic        | W dist+0xcc8 = 0x0
+  [WARN ] gic        | W dist+0xccc = 0x0
+  [WARN ] gic        | W dist+0xcd0 = 0x0
+  [WARN ] gic        | W dist+0xcd4 = 0x0
+  [WARN ] gic        | W dist+0xcd8 = 0x0
+  [WARN ] gic        | W dist+0xcdc = 0x0
+  [WARN ] gic        | W dist+0xce0 = 0x0
+  [WARN ] gic        | W dist+0xce4 = 0x0
+  [WARN ] gic        | W dist+0xce8 = 0x0
+  [WARN ] gic        | W dist+0xcec = 0x0
+  [WARN ] gic        | W dist+0xcf0 = 0x0
+  [WARN ] gic        | W dist+0xcf4 = 0x0
+  [WARN ] gic        | W dist+0xcf8 = 0x0
+  [WARN ] gic        | W dist+0xcfc = 0x0
+  [WARN ] gic        | W dist+0x420 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x424 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x428 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x42c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x430 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x434 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x438 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x43c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x440 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x444 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x448 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x44c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x450 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x454 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x458 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x45c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x460 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x464 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x468 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x46c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x470 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x474 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x478 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x47c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x480 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x484 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x488 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x48c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x490 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x494 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x498 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x49c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4a0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4a4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4a8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4ac = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4b0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4b4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4b8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4bc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4c0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4c4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4c8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4cc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4d0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4d4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4d8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4dc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4e0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4e4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4e8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4ec = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4f0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4f4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4f8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x4fc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x500 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x504 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x508 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x50c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x510 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x514 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x518 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x51c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x520 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x524 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x528 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x52c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x530 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x534 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x538 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x53c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x540 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x544 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x548 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x54c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x550 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x554 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x558 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x55c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x560 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x564 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x568 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x56c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x570 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x574 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x578 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x57c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x580 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x584 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x588 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x58c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x590 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x594 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x598 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x59c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5a0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5a4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5a8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5ac = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5b0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5b4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5b8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5bc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5c0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5c4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5c8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5cc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5d0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5d4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5d8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5dc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5e0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5e4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5e8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5ec = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5f0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5f4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5f8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x5fc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x600 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x604 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x608 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x60c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x610 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x614 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x618 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x61c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x620 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x624 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x628 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x62c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x630 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x634 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x638 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x63c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x640 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x644 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x648 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x64c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x650 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x654 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x658 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x65c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x660 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x664 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x668 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x66c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x670 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x674 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x678 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x67c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x680 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x684 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x688 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x68c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x690 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x694 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x698 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x69c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6a0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6a4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6a8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6ac = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6b0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6b4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6b8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6bc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6c0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6c4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6c8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6cc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6d0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6d4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6d8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6dc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6e0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6e4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6e8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6ec = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6f0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6f4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6f8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x6fc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x700 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x704 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x708 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x70c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x710 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x714 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x718 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x71c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x720 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x724 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x728 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x72c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x730 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x734 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x738 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x73c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x740 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x744 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x748 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x74c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x750 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x754 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x758 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x75c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x760 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x764 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x768 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x76c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x770 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x774 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x778 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x77c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x780 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x784 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x788 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x78c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x790 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x794 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x798 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x79c = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7a0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7a4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7a8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7ac = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7b0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7b4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7b8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7bc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7c0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7c4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7c8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7cc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7d0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7d4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7d8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7dc = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7e0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7e4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7e8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7ec = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7f0 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7f4 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x7f8 = 0xa0a0a0a0
+  [WARN ] gic        | W dist+0x384 = 0xffffffff
+  [WARN ] gic        | W dist+0x184 = 0xffffffff
+  [WARN ] gic        | W dist+0x388 = 0xffffffff
+  [WARN ] gic        | W dist+0x188 = 0xffffffff
+  [WARN ] gic        | W dist+0x38c = 0xffffffff
+  [WARN ] gic        | W dist+0x18c = 0xffffffff
+  [WARN ] gic        | W dist+0x390 = 0xffffffff
+  [WARN ] gic        | W dist+0x190 = 0xffffffff
+  [WARN ] gic        | W dist+0x394 = 0xffffffff
+  [WARN ] gic        | W dist+0x194 = 0xffffffff
+  [WARN ] gic        | W dist+0x398 = 0xffffffff
+  [WARN ] gic        | W dist+0x198 = 0xffffffff
+  [WARN ] gic        | W dist+0x39c = 0xffffffff
+  [WARN ] gic        | W dist+0x19c = 0xffffffff
+  [WARN ] gic        | W dist+0x3a0 = 0xffffffff
+  [WARN ] gic        | W dist+0x1a0 = 0xffffffff
+  [WARN ] gic        | W dist+0x3a4 = 0xffffffff
+  [WARN ] gic        | W dist+0x1a4 = 0xffffffff
+  [WARN ] gic        | W dist+0x3a8 = 0xffffffff
+  [WARN ] gic        | W dist+0x1a8 = 0xffffffff
+  [WARN ] gic        | W dist+0x3ac = 0xffffffff
+  [WARN ] gic        | W dist+0x1ac = 0xffffffff
+  [WARN ] gic        | W dist+0x3b0 = 0xffffffff
+  [WARN ] gic        | W dist+0x1b0 = 0xffffffff
+  [WARN ] gic        | W dist+0x3b4 = 0xffffffff
+  [WARN ] gic        | W dist+0x1b4 = 0xffffffff
+  [WARN ] gic        | W dist+0x3b8 = 0xffffffff
+  [WARN ] gic        | W dist+0x1b8 = 0xffffffff
+  [WARN ] gic        | W dist+0x3bc = 0xffffffff
+  [WARN ] gic        | W dist+0x1bc = 0xffffffff
+  [WARN ] gic        | W dist+0x3c0 = 0xffffffff
+  [WARN ] gic        | W dist+0x1c0 = 0xffffffff
+  [WARN ] gic        | W dist+0x3c4 = 0xffffffff
+  [WARN ] gic        | W dist+0x1c4 = 0xffffffff
+  [WARN ] gic        | W dist+0x3c8 = 0xffffffff
+  [WARN ] gic        | W dist+0x1c8 = 0xffffffff
+  [WARN ] gic        | W dist+0x3cc = 0xffffffff
+  [WARN ] gic        | W dist+0x1cc = 0xffffffff
+  [WARN ] gic        | W dist+0x3d0 = 0xffffffff
+  [WARN ] gic        | W dist+0x1d0 = 0xffffffff
+  [WARN ] gic        | W dist+0x3d4 = 0xffffffff
+  [WARN ] gic        | W dist+0x1d4 = 0xffffffff
+  [WARN ] gic        | W dist+0x3d8 = 0xffffffff
+  [WARN ] gic        | W dist+0x1d8 = 0xffffffff
+  [WARN ] gic        | W dist+0x3dc = 0xffffffff
+  [WARN ] gic        | W dist+0x1dc = 0xffffffff
+  [WARN ] gic        | W dist+0x3e0 = 0xffffffff
+  [WARN ] gic        | W dist+0x1e0 = 0xffffffff
+  [WARN ] gic        | W dist+0x3e4 = 0xffffffff
+  [WARN ] gic        | W dist+0x1e4 = 0xffffffff
+  [WARN ] mmio       | PC=0xffffff8009af26fc UNMAPPED READ 0x17c20008 size=4
+  [WARN ] mmio       | PC=0xffffff8009af27c8 UNMAPPED READ 0x17c21010 size=4
+[hwtimer] cnt=1981875841437 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 140M insns, PC=0xffffff800814dd34
+[hwtimer] cnt=1981887267068 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981893976612 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981900714100 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981907260881 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 160M insns, PC=0xffffff800814573c
+[hwtimer] cnt=1981914088587 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=1981921245887 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[[33mHANG[0m] Kernel is spinning  [33mhot loop / spin-wait detected (guest is busy-waiting on hardware state)[0m
+       [2mreal execution confirmed: 170124046 instructions ran before the spin-wait at PC=0xffffff800814572c.[0m
+
+[1m=== ARM64 EXCEPTION ===[0m
+
+  PC     : 0xffffff800814572c
+  SP     : 0xffffff800805b490
+  PSTATE : 0x00000000000003c5
+
+  X0 : 0x0000000000000001    X1 : 0xffffffc07fcd2480
+  X2 : 0x0000000000000001    X3 : 0x0000000000003220
+  X4 : 0x0000000000000008    X5 : 0x00000000ffffd198
+  X6 : 0xffffff8009da27ea    X7 : 0x7020687469772064
+  X8 : 0xffffffc07fcd2480    X9 : 0x0000000000000101
+  X10: 000000000000000000    X11: 000000000000000000
+  X12: 000000000000000000    X13: 0x0000000000000040
+  X14: 0xffffff800915def8    X15: 0xffffff8009010720
+  X16: 0x0000000000000001    X17: 0x0000000000000101
+  X18: 000000000000000000    X19: 0xffffffc00bf68000
+  X20: 0xffffffc00bf688b4    X21: 0xffffff8009bbe2f0
+  X22: 0xffffffc07fcd2480    X23: 0xffffff8009ba0480
+  X24: 0x0000004076132000    X25: 0x00000000000003c0
+  X26: 0xffff800812ae9400    X27: 0xffffff8009d7a000
+  X28: 0xffffff8009d7a000    X29: 0xffffff800805b4a0
+  X30: 0xffffff8008145714
+
+Fault:
+  Type    : hot loop / spin-wait detected (guest is busy-waiting on hardware state)
+
+Last MMIO:
+  READ 0x17a00004 (issued from PC 0xffffff8008571428)
+
+Execution:
+  Instructions executed : 170124046
+
+Code around PC:
+  0xffffff8008145724: 72001d3f  tst w9, #0xff           
+  0xffffff8008145728: 54000160  b.eq #0xffffff8008145754
+  0xffffff800814572c: 93407d29  sxtw x9, w9              <== PC
+  0xffffff8008145730: d50320bf  sevl                    
+  0xffffff8008145734: d503205f  wfe                     
+  0xffffff8008145738: 885f7d0a  ldxr w10, [x8]          
+  0xffffff800814573c: 4a09014a  eor w10, w10, w9        
+  0xffffff8008145740: 3500004a  cbnz w10, #0xffffff8008145748
+
+Recent instruction trace (last 48, oldest first):
+  0xffffff8008145730: sevl 
+  0xffffff8008145734: wfe 
+  0xffffff8008145738: ldxr w10, [x8]
+  0xffffff800814573c: eor w10, w10, w9
+  0xffffff8008145740: cbnz w10, #0xffffff8008145748
+  0xffffff8008145744: wfe 
+  0xffffff8008145748: ldar w9, [x8]
+  0xffffff800814574c: tst w9, #0xff
+  0xffffff8008145750: b.ne #0xffffff800814572c
+  0xffffff800814572c: sxtw x9, w9
+  0xffffff8008145730: sevl 
+  0xffffff8008145734: wfe 
+  0xffffff8008145738: ldxr w10, [x8]
+  0xffffff800814573c: eor w10, w10, w9
+  0xffffff8008145740: cbnz w10, #0xffffff8008145748
+  0xffffff8008145744: wfe 
+  0xffffff8008145748: ldar w9, [x8]
+  0xffffff800814574c: tst w9, #0xff
+  0xffffff8008145750: b.ne #0xffffff800814572c
+  0xffffff800814572c: sxtw x9, w9
+
+Page-table walk of 0xffffff800814572c  (TTBR1=0x81e4f000, VA39/4KB):
+  ESR_EL1=0xf2000800  FAR_EL1=0  VBAR_EL1=0xffffff8008081800  MAIR_EL1=0xbbff440c0400
+  ESR.EC=0x3c (?)  ISS=0x800
+  L1[00000] @ 0x81e4f000 = 0x00000000ffffe003  (table)
+  L2[0x040] @ 0xffffe200 = 0x00000000ffffd003  (table)
+  L3[0x145] @ 0xffffda28 = 0x0050000080145793  (page)
+  => PA 0x8014572c  (MAPPED)
+
+[1m== recovered kernel log (printk @ phys 0xea700048) ==[0m
+  Linux version 4.19.325-cip128-st12-g49638c7a8637 (twsvcscm@5da3-cb39-0004-0000.twshared28741.01.snb1.tw.fbinfra.net) (Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6), LLD 14.0.7) #1 SMP PREEMPT Thu Aug 20 01:00:45 PDT 2026
+  Machine model: Qualcomm Technologies, Inc. kona v2 SoC
+  Reserved memory: created CMA memory pool at 0x00000000f5800000, size 164 MiB
+  OF: reserved mem: initialized node secure_display_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f4400000, size 20 MiB
+  OF: reserved mem: initialized node cnss_wlan_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f3c00000, size 8 MiB
+  OF: reserved mem: initialized node sdsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f2c00000, size 16 MiB
+  OF: reserved mem: initialized node sp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1c00000, size 16 MiB
+  OF: reserved mem: initialized node user_contig_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1000000, size 12 MiB
+  OF: reserved mem: initialized node adsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000efc00000, size 20 MiB
+  OF: reserved mem: initialized node qseecom_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ef800000, size 4 MiB
+  OF: reserved mem: initialized node cdsp_region, compatible id shared-dma-pool
+  Reserved memory: created DMA memory pool at 0x00000000ffc00000, size 0 MiB
+  OF: reserved mem: initialized node mailbox_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ee800000, size 16 MiB
+  OF: reserved mem: initialized node qseecom_ta_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ec800000, size 32 MiB
+  OF: reserved mem: initialized node linux,cma, compatible id shared-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000080880000, size 0 MiB
+  OF: reserved mem: initialized node res_xbl_uefi_log_region@80880000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086200000, size 5 MiB
+  OF: reserved mem: initialized node pil_camera_region@86200000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008681a000, size 0 MiB
+  OF: reserved mem: initialized node pil_gpu_region@8681a000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086900000, size 5 MiB
+  OF: reserved mem: initialized node pil_npu_region@86900000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086e00000, size 5 MiB
+  OF: reserved mem: initialized node pil_video_region@86e00000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087300000, size 5 MiB
+  OF: reserved mem: initialized node pil_cvp_region@87300000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087800000, size 20 MiB
+  OF: reserved mem: initialized node pil_cdsp_region@87800000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008a100000, size 29 MiB
+  OF: reserved mem: initialized node pil_adsp_region@8a100000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008be00000, size 1 MiB
+  OF: reserved mem: initialized node pil_spss_region@8be00000, compatible id removed-dma-pool
+  On node 0 totalpages: 482634
+    Normal zone: 7542 pages used for memmap
+    Normal zone: 0 pages reserved
+    Normal zone: 482634 pages, LIFO batch:63
+  psci: probing for conduit method from DT.
+  psci: PSCIv0.2 detected in firmware.
+  psci: Using standard PSCI v0.2 function IDs
+  psci: Trusted OS migration not required
+  percpu: Embedded 24 pages/cpu s61080 r8192 d29032 u98304
+  pcpu-alloc: s61080 r8192 d29032 u98304 alloc=24*4096
+  pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+  Detected PIPT I-cache on CPU0
+  spectrev2 mitigation disabled by kernel configuration
+  CPU features: kernel page table isolation disabled by kernel configuration
+  Built 1 zonelists, mobility grouping on.  Total pages: 475092
+  Kernel command line: rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kpti=off
+  log_buf_len individual max cpu contribution: 131072 bytes
+  log_buf_len total cpu_extra contributions: 917504 bytes
+  log_buf_len min size: 131072 bytes
+  log_buf_len: 1048576 bytes
+  early log buf free: 125456(95%)
+  Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes)
+  Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes)
+  mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+  Memory: 1536660K/1930536K available (16062K kernel code, 1820K rwdata, 10660K rodata, 1088K init, 844K bss, 78484K reserved, 315392K cma-reserved)
+  SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+  rcu: Preemptible hierarchical RCU implementation.
+  rcu: 	RCU dyntick-idle grace-period acceleration is enabled.
+  	All grace periods are expedited (rcu_expedited).
+  	Tasks RCU enabled.
+  NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+  GICv3: Distributor has no Range Selector support
+  GICv3: no VLPI support, no direct LPI support
+  rcu: 	Offload RCU callbacks from CPUs: 0-7.
+  Successfully registered dummy reset controller for cpucc_clocks
+  Successfully registered dummy clock controller for cpucc_clocks
+  arch_timer: No interrupt available, giving up
+  Failed to initialize '/soc/timer': -22
+  arch_timer: Frame missing phys irq.
+  Failed to initialize '/soc/timer@17c20000': -22
+  timer_probe: no matching timers found
+  sched_clock: 64 bits at 300 Hz, resolution 3333333ns, wraps every 9007199254120390ns
+  Calibrating delay loop (skipped), value calculated using timer frequency.. 38.00 BogoMIPS (lpj=64000)
+  pid_max: default: 32768 minimum: 301
+  Security Framework initialized
+  SELinux:  Initializing.
+  Mount-cache hash table entries: 4096 (order: 3, 32768 bytes)
+  Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes)
+  ASID allocator initialised with 65536 entries
+  rcu: Hierarchical SRCU implementation.
+  WALT-BUG CPU0; wallclock=0 is lesser than window_start=1
+  ============ WALT RQ DUMP START ==============
+  Sched ktime_get: 0
+  Time last window changed=0
+  CPU:0 nr_running:2 current: 1 (swapper/0)
+  ==========================================
+  rq->window_start=1
+  rq->prev_window_size=19999998
+  rq->curr_runnable_sum=0
+  rq->prev_runnable_sum=0
+  rq->nt_curr_runnable_sum=0
+  rq->nt_prev_runnable_sum=0
+  rq->cum_window_demand_scaled=0
+  rq->task_exec_scale=1024
+  rq->grp_time.curr_runnable_sum=0
+  rq->grp_time.prev_runnable_sum=0
+  rq->grp_time.nt_curr_runnable_sum=0
+  rq->grp_time.nt_prev_runnable_sum=0
+  rq->load_subs[0].window_start=0)
+  rq->load_subs[0].subs=0)
+  rq->load_subs[0].new_subs=0)
+  rq->load_subs[1].window_start=0)
+  rq->load_subs[1].subs=0)
+  rq->load_subs[1].new_subs=0)
+  p->pid=1
+  p->ravg.mark_start=1
+  p->ravg.demand=0
+  p->ravg.coloc_demand=0
+  sched_ravg_window=19999998
+  new_sched_ravg_window=19999998
+  p->ravg.curr_window=0 (0 0 0 0 0 0 0 0 )
+  p->ravg.prev_window=0 (0 0 0 0 0 0 0 0 )
+  p->last_wake_ts=0
+  p->last_enqueued_ts=0
+  p->misfit=0
+  p->unfilter=200000000
+  sched_capacity_margin_up[cpu]=1078
+  sched_capacity_margin_down[cpu]=1205
+  max_possible_capacity=1024
+  min_max_possible_capacity=1024
+  ============ WALT RQ DUMP END ==============
+  ------------[ cut here ]------------
+  kernel BUG at kernel/sched/walt.c:303!
+  Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+  Modules linked in:
+  Process swapper/0 (pid: 1, stack limit = 0x(____ptrval____))
+  CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.19.325-cip128-st12-g49638c7a8637 #1
+  Hardware name: Qualcomm Technologies, Inc. kona v2 SoC (DT)
+  pstate: 60400085 (nZCv daIf +PAN -UAO)
+  pc : update_task_ravg+0x1308/0x188c
+  lr : update_task_ravg+0x1308/0x188c
+  sp : ffffff800805b8c0
+  x29: ffffff800805b9a0 x28: ffffff8009bbe2f0 
+  x27: 0000000000000008 x26: 0000000000000000 
+  x25: 0000000000000010 x24: ffffff800933a42c 
+  x23: 0000000000000000 x22: ffffff800805b910 
+  x21: ffffff800938b4cf x20: 0000000000000080 
+  x19: ffffff800938b4cf x18: 0000000000000000 
+  x17: 0000000000000001 x16: 0000000000000007 
+  x15: ffffffc06a700008 x14: ffffff8009da0000 
+  x13: 0000000000000004 x12: 0000000000000000 
+  x11: 0000000000000000 x10: 0000000000000007 
+  x9 : f86cda8fbb142300 x8 : f86cda8fbb142300 
+  x7 : 0000000000000000 x6 : ffffffc06a7025bc 
+  x5 : 00000000ffffda80 x4 : 0000000000000008 
+  x3 : 000000003d3d3d3d x2 : 0000000000000007 
+  x1 : 0000000000000006 x0 : 000000000000002c 
+  Call trace:
+   update_task_ravg+0x1308/0x188c
+   try_to_wake_up+0x2d0/0x724
+   wake_up_process+0x18/0x20
+   __kthread_create_on_node+0x120/0x20c
+   kthread_create_on_node+0x64/0x88
+   rcu_spawn_gp_kthread+0xac/0x148
+   do_one_initcall+0x16c/0x2dc
+   do_pre_smp_initcalls+0xd4/0xf8
+   kernel_init_freeable+0xa8/0x138
+   kernel_init+0x14/0x28c
+   ret_from_fork+0x10/0x18
+  Code: 943ba7b4 900094c0 91219800 943ba7b1 (d4210000) 
+  ---[ end trace a5ba33ac8eaa7185 ]---
+  note: swapper/0[1] exited with preempt_count 2
+[2m-- panic/BUG text found in RAM --[0m
+  Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+  Fkernel BUG at kernel/sched/walt.c:303!
+
+
+[1m== diagnostics ==[0m
+[1mCPU[0m
+  Architecture : ARM64 (AArch64)
+  Backend      : Unicorn (ARM64 / QEMU-TCG)
+  Entry PC     : 0x80080000
+  x0 (DTB ptr) : 0x81e80000
+[1mMemory[0m
+  Guest RAM    : 2048 MB @ 0x80000000-0x100000000
+[1mKernel[0m
+  Android build: oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+  Image        : loaded (29658 KB)
+  Entry        : 0x80080000
+  DTB          : loaded @ 0x81e80000
+  Initramfs    : loaded @ 0x82000000 (6112 KB)
+  Cmdline      : androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[1mDevices[0m
+  geni_uart        @ 0x00a90000  [32mOK[0m
+  gic-v3           @ 0x17a00000  [32mOK[0m
+  arch_timer                           [2mPLANNED[0m
+  ufs_storage                          [2mPLANNED[0m
+  syncboss_spi                         [2mPLANNED[0m
+  kgsl_gpu                             [2mPLANNED[0m
+  display_dsi                          [2mPLANNED[0m
+  sensors                              [2mPLANNED[0m
+

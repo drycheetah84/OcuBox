@@ -476,6 +476,20 @@ void BootPipeline::patch_dtb_memory(Bytes& dtb) {
     write_cells(reg->blob_offset + (size_t)ac * 4, sc, emu_.ram_size); // size
     HW_INFO("boot.dtb", "/memory patched: base->{:#x} size {:#x}->{:#x} (ac={} sc={})",
             emu_.dram_base, old, emu_.ram_size, ac, sc);
+
+    // Corruption check: the patch must touch ONLY the reg cells we wrote.
+    if (dtb.size() == emu_.boot_img.dtb.size()) {
+        size_t ndiff = 0, first = 0, last = 0;
+        for (size_t i = 0; i < dtb.size(); ++i)
+            if (dtb[i] != emu_.boot_img.dtb[i]) { if (!ndiff) first = i; last = i; ++ndiff; }
+        size_t wr_lo = reg->blob_offset, wr_hi = reg->blob_offset + (size_t)(ac + sc) * 4;
+        HW_WARN("boot.dtb", "patch diff: {} bytes in [{:#x}..{:#x}]; write-window [{:#x}..{:#x}]{}",
+                ndiff, first, last, wr_lo, wr_hi,
+                (ndiff && (first < wr_lo || last >= wr_hi)) ? "  <-- OUT OF WINDOW: CORRUPTION" : "");
+    } else {
+        HW_WARN("boot.dtb", "patch changed blob SIZE {}->{}: CORRUPTION",
+                emu_.boot_img.dtb.size(), dtb.size());
+    }
 }
 
 void BootPipeline::dump_dt() {

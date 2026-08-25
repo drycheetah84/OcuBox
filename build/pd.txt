@@ -1,0 +1,41 @@
+
+[1mhollywood_emu[0m  [2mMeta Quest 2 (hollywood / Snapdragon XR2) boot[0m
+[2m--------------------------------------------------------------[0m
+
+[[33m....[0m] Initializing emulator[ [32mOK[0m ] Initializing emulator  [2mhost=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)[0m
+[[33m....[0m] Loading Quest 2 configuration[ [32mOK[0m ] Loading Quest 2 configuration  [2mbuild oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys[0m
+[[33m....[0m] Loading kernel[ [32mOK[0m ] Loading kernel  [2mARM64 Image 29658 KB, image_size=0x1dd2000[0m
+[[33m....[0m] Initializing virtual hardware[ [32mOK[0m ] Initializing virtual hardware  [2mdram_base=0x80000000, 2 MMIO devices[0m
+[[33m....[0m] Loading boot image[ [32mOK[0m ] Loading boot image  [2mramdisk 2613 KB (cpio 6112 KB)[0m
+[[33m....[0m] Initializing memory  [WARN ] boot.dtb   | patch diff: 2 bytes in [0x114..0x11c]; write-window [0x110..0x120]
+[ [32mOK[0m ] Initializing memory  [2m2048 MB @ 0x80000000; kernel@0x80080000 dtb@0x81e80000 ramdisk@0x82000000[0m
+[[33m....[0m] Starting kernel[ [32mOK[0m ] Starting kernel  [2mPC=0x80080000 x0(dtb)=0x81e80000 pstate=0x3c5[0m
+[[33m....[0m] Attaching ARM64 execution backend[ [32mOK[0m ] Attaching ARM64 execution backend  [2mUnicorn (ARM64 / QEMU-TCG)[0m
+[[33m....[0m] Executing Quest 2 kernel
+[ [32mOK[0m ] Kernel execution ran  [2mreached instruction limit (1 insns, PC=0x81aa0000)[0m
+
+[1m== diagnostics ==[0m
+[1mCPU[0m
+  Architecture : ARM64 (AArch64)
+  Backend      : Unicorn (ARM64 / QEMU-TCG)
+  Entry PC     : 0x80080000
+  x0 (DTB ptr) : 0x81e80000
+[1mMemory[0m
+  Guest RAM    : 2048 MB @ 0x80000000-0x100000000
+[1mKernel[0m
+  Android build: oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+  Image        : loaded (29658 KB)
+  Entry        : 0x80080000
+  DTB          : loaded @ 0x81e80000
+  Initramfs    : loaded @ 0x82000000 (6112 KB)
+  Cmdline      : androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[1mDevices[0m
+  geni_uart        @ 0x00a90000  [32mOK[0m
+  gic-v3           @ 0x17a00000  [32mOK[0m
+  arch_timer                           [2mPLANNED[0m
+  ufs_storage                          [2mPLANNED[0m
+  syncboss_spi                         [2mPLANNED[0m
+  kgsl_gpu                             [2mPLANNED[0m
+  display_dsi                          [2mPLANNED[0m
+  sensors                              [2mPLANNED[0m
+

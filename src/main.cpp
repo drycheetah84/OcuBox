@@ -58,6 +58,7 @@ struct Args {
     bool step = false;
     bool cpu_tlb = false;   // use Unicorn's native CPU TLB (native MMU + native exceptions)
     bool stop_on_undef = false;
+    bool trace_irq = false; // symbol-trace timer/irq functions (needs build/ksyms.txt)
     bool dump_dt = false;
 };
 
@@ -207,6 +208,7 @@ int cmd_boot(const Args& a) {
     uopts.step = a.step;
     if (a.cpu_tlb) { uopts.our_mmu = false; uopts.vector_exc = false; }  // native MMU + exceptions
     uopts.stop_on_undef = a.stop_on_undef;
+    if (a.trace_irq) uopts.fn_trace_ksyms = "build/ksyms.txt";
     emu.backend = std::make_unique<cpu::UnicornCpu>(uopts);
 
     core::BootPipeline pipeline(emu);
@@ -247,6 +249,7 @@ int main(int argc, char** argv) {
         else if (s == "--step") a.step = true;
         else if (s == "--cpu-tlb") a.cpu_tlb = true;
         else if (s == "--stop-on-undef") a.stop_on_undef = true;
+        else if (s == "--trace-irq") a.trace_irq = true;
         else if (s == "--dump-dt") a.dump_dt = true;
         else if (s == "--debug") { a.verbose = true; a.log_mmio = true; }
         else if (s == "-v" || s == "--verbose") a.verbose = true;

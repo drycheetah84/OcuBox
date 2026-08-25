@@ -1,0 +1,345 @@
+
+[1mhollywood_emu[0m  [2mMeta Quest 2 (hollywood / Snapdragon XR2) boot[0m
+[2m--------------------------------------------------------------[0m
+
+[[33m....[0m] Initializing emulator[ [32mOK[0m ] Initializing emulator  [2mhost=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)[0m
+[[33m....[0m] Loading Quest 2 configuration[ [32mOK[0m ] Loading Quest 2 configuration  [2mbuild oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys[0m
+[[33m....[0m] Loading kernel[ [32mOK[0m ] Loading kernel  [2mARM64 Image 29658 KB, image_size=0x1dd2000[0m
+[[33m....[0m] Initializing virtual hardware[ [32mOK[0m ] Initializing virtual hardware  [2mdram_base=0x80000000, 2 MMIO devices[0m
+[[33m....[0m] Loading boot image[ [32mOK[0m ] Loading boot image  [2mramdisk 2613 KB (cpio 6112 KB)[0m
+[[33m....[0m] Initializing memory  [WARN ] boot.dtb   | patch diff: 2 bytes in [0x114..0x11c]; write-window [0x110..0x120]
+[ [32mOK[0m ] Initializing memory  [2m2048 MB @ 0x80000000; kernel@0x80080000 dtb@0x81e80000 ramdisk@0x82000000[0m
+[[33m....[0m] Starting kernel[ [32mOK[0m ] Starting kernel  [2mPC=0x80080000 x0(dtb)=0x81e80000 pstate=0x3c5[0m
+[[33m....[0m] Attaching ARM64 execution backend  [WARN ] trace      | fn-trace: watching 16 function entries
+[ [32mOK[0m ] Attaching ARM64 execution backend  [2mUnicorn (ARM64 / QEMU-TCG)[0m
+[[33m....[0m] Executing Quest 2 kernel
+[hwtimer] cnt=2198974534793 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2198982452181 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2198988294762 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2198994300443 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 20M insns, PC=0xffffff8008fff970
+[hwtimer] cnt=2199000317637 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199006307556 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199012215475 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [WARN ] trace      | > irq_of_parse_and_map(x0=0xffffffbefe880000 x1=0x0 x2=0xffffff8009ddfc10) lr=0xffffff8009af3b78
+  [WARN ] trace      |   > of_irq_parse_one(x0=0xffffffbefe880000 x1=0x0 x2=0x0) lr=0xffffff8008a5a544
+[hwtimer] cnt=2199020985187 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 40M insns, PC=0xffffff8009000fc8
+[hwtimer] cnt=2199027526387 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199033958168 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [WARN ] trace      |   < of_irq_parse_one = 0x1cb564
+  [WARN ] trace      |   > of_irq_parse_one(x0=0xffffffbefe880000 x1=0xffffffc07fd8ba98 x2=0x0) lr=0xffffff8008a5a59c
+[hwtimer] cnt=2199048159587 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199055163006 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 60M insns, PC=0xffffff8009000e68
+[hwtimer] cnt=2199061866700 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [WARN ] trace      |   < of_irq_parse_one = 0x1cb564
+  [WARN ] trace      | < irq_of_parse_and_map = 0xffffffc07fd8ba98
+[hwtimer] cnt=2199068683993 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199075955462 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199083309175 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 80M insns, PC=0xffffff800828cafc
+[hwtimer] cnt=2199090645081 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199097906100 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199105253250 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199112759718 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 100M insns, PC=0xffffff800828caec
+[hwtimer] cnt=2199120267631 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199138490918 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199145000537 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199151769643 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 120M insns, PC=0xffffff800823aae8
+[hwtimer] cnt=2199158679881 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199168959937 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199175651493 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [WARN ] mmio       | PC=0xffffff8009af26fc UNMAPPED READ 0x17c20008 size=4
+  [WARN ] mmio       | PC=0xffffff8009af27c8 UNMAPPED READ 0x17c21010 size=4
+[hwtimer] cnt=2199184545437 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 140M insns, PC=0xffffff80081503fc
+[hwtimer] cnt=2199197824081 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199205759206 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199214755125 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199222769168 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+  [2m[cpu][0m executed 160M insns, PC=0xffffff8008145750
+[hwtimer] cnt=2199230937831 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[hwtimer] cnt=2199238884037 freq_hz=62500000 vctl=4 vcval=0 vout=0 | pctl=4 pcval=0 pout=0 | voff=0
+[[33mHANG[0m] Kernel is spinning  [33mhot loop / spin-wait detected (guest is busy-waiting on hardware state)[0m
+       [2mreal execution confirmed: 170124021 instructions ran before the spin-wait at PC=0xffffff800814572c.[0m
+
+[1m=== ARM64 EXCEPTION ===[0m
+
+  PC     : 0xffffff800814572c
+  SP     : 0xffffff800805b490
+  PSTATE : 0x00000000000003c5
+
+  X0 : 0x0000000000000001    X1 : 0xffffffc07fcd2480
+  X2 : 0x0000000000000001    X3 : 0x0000000000003220
+  X4 : 0x0000000000000008    X5 : 0x00000000ffffd198
+  X6 : 0xffffff8009da27ea    X7 : 0x7020687469772064
+  X8 : 0xffffffc07fcd2480    X9 : 0x0000000000000101
+  X10: 000000000000000000    X11: 000000000000000000
+  X12: 000000000000000000    X13: 0x0000000000000040
+  X14: 0xffffff800915def8    X15: 0xffffff8009010720
+  X16: 0x0000000000000001    X17: 0x0000000000000101
+  X18: 000000000000000000    X19: 0xffffffc00bf6bd00
+  X20: 0xffffffc00bf6c5b4    X21: 0xffffff8009bbe2f0
+  X22: 0xffffffc07fcd2480    X23: 0xffffff8009ba0480
+  X24: 0x0000004076132000    X25: 0x00000000000003c0
+  X26: 0xffff800812ae9400    X27: 0xffffff8009d7a000
+  X28: 0xffffff8009d7a000    X29: 0xffffff800805b4a0
+  X30: 0xffffff8008145714
+
+Fault:
+  Type    : hot loop / spin-wait detected (guest is busy-waiting on hardware state)
+
+Last MMIO:
+  READ 0x17a00004 (issued from PC 0xffffff8008571428)
+
+Execution:
+  Instructions executed : 170124021
+
+Code around PC:
+  0xffffff8008145724: 72001d3f  tst w9, #0xff           
+  0xffffff8008145728: 54000160  b.eq #0xffffff8008145754
+  0xffffff800814572c: 93407d29  sxtw x9, w9              <== PC
+  0xffffff8008145730: d50320bf  sevl                    
+  0xffffff8008145734: d503205f  wfe                     
+  0xffffff8008145738: 885f7d0a  ldxr w10, [x8]          
+  0xffffff800814573c: 4a09014a  eor w10, w10, w9        
+  0xffffff8008145740: 3500004a  cbnz w10, #0xffffff8008145748
+
+Recent instruction trace (last 48, oldest first):
+  0xffffff8008145730: sevl 
+  0xffffff8008145734: wfe 
+  0xffffff8008145738: ldxr w10, [x8]
+  0xffffff800814573c: eor w10, w10, w9
+  0xffffff8008145740: cbnz w10, #0xffffff8008145748
+  0xffffff8008145744: wfe 
+  0xffffff8008145748: ldar w9, [x8]
+  0xffffff800814574c: tst w9, #0xff
+  0xffffff8008145750: b.ne #0xffffff800814572c
+  0xffffff800814572c: sxtw x9, w9
+  0xffffff8008145730: sevl 
+  0xffffff8008145734: wfe 
+  0xffffff8008145738: ldxr w10, [x8]
+  0xffffff800814573c: eor w10, w10, w9
+  0xffffff8008145740: cbnz w10, #0xffffff8008145748
+  0xffffff8008145744: wfe 
+  0xffffff8008145748: ldar w9, [x8]
+  0xffffff800814574c: tst w9, #0xff
+  0xffffff8008145750: b.ne #0xffffff800814572c
+  0xffffff800814572c: sxtw x9, w9
+
+Page-table walk of 0xffffff800814572c  (TTBR1=0x81e4f000, VA39/4KB):
+  ESR_EL1=0xf2000800  FAR_EL1=0  VBAR_EL1=0xffffff8008081800  MAIR_EL1=0xbbff440c0400
+  ESR.EC=0x3c (?)  ISS=0x800
+  L1[00000] @ 0x81e4f000 = 0x00000000ffffe003  (table)
+  L2[0x040] @ 0xffffe200 = 0x00000000ffffd003  (table)
+  L3[0x145] @ 0xffffda28 = 0x0050000080145793  (page)
+  => PA 0x8014572c  (MAPPED)
+
+[1m== recovered kernel log (printk @ phys 0xea700048) ==[0m
+  Linux version 4.19.325-cip128-st12-g49638c7a8637 (twsvcscm@5da3-cb39-0004-0000.twshared28741.01.snb1.tw.fbinfra.net) (Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6), LLD 14.0.7) #1 SMP PREEMPT Thu Aug 20 01:00:45 PDT 2026
+  Machine model: Qualcomm Technologies, Inc. kona v2 SoC
+  Reserved memory: created CMA memory pool at 0x00000000f5800000, size 164 MiB
+  OF: reserved mem: initialized node secure_display_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f4400000, size 20 MiB
+  OF: reserved mem: initialized node cnss_wlan_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f3c00000, size 8 MiB
+  OF: reserved mem: initialized node sdsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f2c00000, size 16 MiB
+  OF: reserved mem: initialized node sp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1c00000, size 16 MiB
+  OF: reserved mem: initialized node user_contig_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1000000, size 12 MiB
+  OF: reserved mem: initialized node adsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000efc00000, size 20 MiB
+  OF: reserved mem: initialized node qseecom_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ef800000, size 4 MiB
+  OF: reserved mem: initialized node cdsp_region, compatible id shared-dma-pool
+  Reserved memory: created DMA memory pool at 0x00000000ffc00000, size 0 MiB
+  OF: reserved mem: initialized node mailbox_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ee800000, size 16 MiB
+  OF: reserved mem: initialized node qseecom_ta_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ec800000, size 32 MiB
+  OF: reserved mem: initialized node linux,cma, compatible id shared-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000080880000, size 0 MiB
+  OF: reserved mem: initialized node res_xbl_uefi_log_region@80880000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086200000, size 5 MiB
+  OF: reserved mem: initialized node pil_camera_region@86200000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008681a000, size 0 MiB
+  OF: reserved mem: initialized node pil_gpu_region@8681a000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086900000, size 5 MiB
+  OF: reserved mem: initialized node pil_npu_region@86900000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086e00000, size 5 MiB
+  OF: reserved mem: initialized node pil_video_region@86e00000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087300000, size 5 MiB
+  OF: reserved mem: initialized node pil_cvp_region@87300000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087800000, size 20 MiB
+  OF: reserved mem: initialized node pil_cdsp_region@87800000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008a100000, size 29 MiB
+  OF: reserved mem: initialized node pil_adsp_region@8a100000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008be00000, size 1 MiB
+  OF: reserved mem: initialized node pil_spss_region@8be00000, compatible id removed-dma-pool
+  On node 0 totalpages: 482634
+    Normal zone: 7542 pages used for memmap
+    Normal zone: 0 pages reserved
+    Normal zone: 482634 pages, LIFO batch:63
+  psci: probing for conduit method from DT.
+  psci: PSCIv0.2 detected in firmware.
+  psci: Using standard PSCI v0.2 function IDs
+  psci: Trusted OS migration not required
+  percpu: Embedded 24 pages/cpu s61080 r8192 d29032 u98304
+  pcpu-alloc: s61080 r8192 d29032 u98304 alloc=24*4096
+  pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+  Detected PIPT I-cache on CPU0
+  spectrev2 mitigation disabled by kernel configuration
+  CPU features: kernel page table isolation disabled by kernel configuration
+  Built 1 zonelists, mobility grouping on.  Total pages: 475092
+  Kernel command line: rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kpti=off
+  log_buf_len individual max cpu contribution: 131072 bytes
+  log_buf_len total cpu_extra contributions: 917504 bytes
+  log_buf_len min size: 131072 bytes
+  log_buf_len: 1048576 bytes
+  early log buf free: 125456(95%)
+  Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes)
+  Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes)
+  mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+  Memory: 1536660K/1930536K available (16062K kernel code, 1820K rwdata, 10660K rodata, 1088K init, 844K bss, 78484K reserved, 315392K cma-reserved)
+  SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+  rcu: Preemptible hierarchical RCU implementation.
+  rcu: 	RCU dyntick-idle grace-period acceleration is enabled.
+  	All grace periods are expedited (rcu_expedited).
+  	Tasks RCU enabled.
+  NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+  GICv3: Distributor has no Range Selector support
+  GICv3: no VLPI support, no direct LPI support
+  rcu: 	Offload RCU callbacks from CPUs: 0-7.
+  Successfully registered dummy reset controller for cpucc_clocks
+  Successfully registered dummy clock controller for cpucc_clocks
+  arch_timer: No interrupt available, giving up
+  Failed to initialize '/soc/timer': -22
+  arch_timer: Frame missing phys irq.
+  Failed to initialize '/soc/timer@17c20000': -22
+  timer_probe: no matching timers found
+  sched_clock: 64 bits at 300 Hz, resolution 3333333ns, wraps every 9007199254120390ns
+  Calibrating delay loop (skipped), value calculated using timer frequency.. 38.00 BogoMIPS (lpj=64000)
+  pid_max: default: 32768 minimum: 301
+  Security Framework initialized
+  SELinux:  Initializing.
+  Mount-cache hash table entries: 4096 (order: 3, 32768 bytes)
+  Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes)
+  ASID allocator initialised with 65536 entries
+  rcu: Hierarchical SRCU implementation.
+  WALT-BUG CPU0; wallclock=0 is lesser than window_start=1
+  ============ WALT RQ DUMP START ==============
+  Sched ktime_get: 0
+  Time last window changed=0
+  CPU:0 nr_running:2 current: 1 (swapper/0)
+  ==========================================
+  rq->window_start=1
+  rq->prev_window_size=19999998
+  rq->curr_runnable_sum=0
+  rq->prev_runnable_sum=0
+  rq->nt_curr_runnable_sum=0
+  rq->nt_prev_runnable_sum=0
+  rq->cum_window_demand_scaled=0
+  rq->task_exec_scale=1024
+  rq->grp_time.curr_runnable_sum=0
+  rq->grp_time.prev_runnable_sum=0
+  rq->grp_time.nt_curr_runnable_sum=0
+  rq->grp_time.nt_prev_runnable_sum=0
+  rq->load_subs[0].window_start=0)
+  rq->load_subs[0].subs=0)
+  rq->load_subs[0].new_subs=0)
+  rq->load_subs[1].window_start=0)
+  rq->load_subs[1].subs=0)
+  rq->load_subs[1].new_subs=0)
+  p->pid=1
+  p->ravg.mark_start=1
+  p->ravg.demand=0
+  p->ravg.coloc_demand=0
+  sched_ravg_window=19999998
+  new_sched_ravg_window=19999998
+  p->ravg.curr_window=0 (0 0 0 0 0 0 0 0 )
+  p->ravg.prev_window=0 (0 0 0 0 0 0 0 0 )
+  p->last_wake_ts=0
+  p->last_enqueued_ts=0
+  p->misfit=0
+  p->unfilter=200000000
+  sched_capacity_margin_up[cpu]=1078
+  sched_capacity_margin_down[cpu]=1205
+  max_possible_capacity=1024
+  min_max_possible_capacity=1024
+  ============ WALT RQ DUMP END ==============
+  ------------[ cut here ]------------
+  kernel BUG at kernel/sched/walt.c:303!
+  Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+  Modules linked in:
+  Process swapper/0 (pid: 1, stack limit = 0x(____ptrval____))
+  CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.19.325-cip128-st12-g49638c7a8637 #1
+  Hardware name: Qualcomm Technologies, Inc. kona v2 SoC (DT)
+  pstate: 60400085 (nZCv daIf +PAN -UAO)
+  pc : update_task_ravg+0x1308/0x188c
+  lr : update_task_ravg+0x1308/0x188c
+  sp : ffffff800805b8c0
+  x29: ffffff800805b9a0 x28: ffffff8009bbe2f0 
+  x27: 0000000000000008 x26: 0000000000000000 
+  x25: 0000000000000010 x24: ffffff800933a42c 
+  x23: 0000000000000000 x22: ffffff800805b910 
+  x21: ffffff800938b4cf x20: 0000000000000080 
+  x19: ffffff800938b4cf x18: 0000000000000000 
+  x17: 0000000000000001 x16: 0000000000000007 
+  x15: ffffffc06a700008 x14: ffffff8009da0000 
+  x13: 0000000000000004 x12: 0000000000000000 
+  x11: 0000000000000000 x10: 0000000000000007 
+  x9 : 0c154c3c58bd4e00 x8 : 0c154c3c58bd4e00 
+  x7 : 0000000000000000 x6 : ffffffc06a7025bc 
+  x5 : 00000000ffffda80 x4 : 0000000000000008 
+  x3 : 000000003d3d3d3d x2 : 0000000000000007 
+  x1 : 0000000000000006 x0 : 000000000000002c 
+  Call trace:
+   update_task_ravg+0x1308/0x188c
+   try_to_wake_up+0x2d0/0x724
+   wake_up_process+0x18/0x20
+   __kthread_create_on_node+0x120/0x20c
+   kthread_create_on_node+0x64/0x88
+   rcu_spawn_gp_kthread+0xac/0x148
+   do_one_initcall+0x16c/0x2dc
+   do_pre_smp_initcalls+0xd4/0xf8
+   kernel_init_freeable+0xa8/0x138
+   kernel_init+0x14/0x28c
+   ret_from_fork+0x10/0x18
+  Code: 943ba7b4 900094c0 91219800 943ba7b1 (d4210000) 
+  ---[ end trace 8fb365d903814ca0 ]---
+  note: swapper/0[1] exited with preempt_count 2
+[2m-- panic/BUG text found in RAM --[0m
+  Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+  Fkernel BUG at kernel/sched/walt.c:303!
+
+
+[1m== diagnostics ==[0m
+[1mCPU[0m
+  Architecture : ARM64 (AArch64)
+  Backend      : Unicorn (ARM64 / QEMU-TCG)
+  Entry PC     : 0x80080000
+  x0 (DTB ptr) : 0x81e80000
+[1mMemory[0m
+  Guest RAM    : 2048 MB @ 0x80000000-0x100000000
+[1mKernel[0m
+  Android build: oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+  Image        : loaded (29658 KB)
+  Entry        : 0x80080000
+  DTB          : loaded @ 0x81e80000
+  Initramfs    : loaded @ 0x82000000 (6112 KB)
+  Cmdline      : androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[1mDevices[0m
+  geni_uart        @ 0x00a90000  [32mOK[0m
+  gic-v3           @ 0x17a00000  [32mOK[0m
+  arch_timer                           [2mPLANNED[0m
+  ufs_storage                          [2mPLANNED[0m
+  syncboss_spi                         [2mPLANNED[0m
+  kgsl_gpu                             [2mPLANNED[0m
+  display_dsi                          [2mPLANNED[0m
+  sensors                              [2mPLANNED[0m
+

@@ -39,6 +39,8 @@ struct UnicornOptions {
     bool our_mmu = true;            // provide translation via our own ARMv8 walker (UC_TLB_VIRTUAL + TLB_FILL)
     bool vector_exc = true;         // deliver CPU exceptions to the guest's VBAR_EL1 handler
     bool stop_on_undef = false;     // halt on the first undefined-instruction exception (debug)
+    std::string fn_trace_ksyms;     // path to a ksyms.txt; if set, trace a fixed set of
+                                    // timer/irq functions (entry args + return value)
 };
 
 class UnicornCpu : public CpuBackend {
@@ -127,6 +129,14 @@ private:
     static constexpr size_t kPcRing = 48;
     uint64_t pc_ring_[kPcRing] = {};
     size_t pc_ring_pos_ = 0;
+
+    // Symbol-based function tracing (timer/irq debug). fn_watch_ maps a watched
+    // function-entry VA to its name; fn_retstk_ holds pending (return-addr, name)
+    // so we can log each call's return value (x0) when it returns.
+    void load_fn_trace();
+    std::unordered_map<uint64_t, std::string> fn_watch_;
+    std::vector<std::pair<uint64_t, std::string>> fn_retstk_;
+    uint64_t fn_trace_lines_ = 0;
 };
 
 const char* arm_excp_name(uint32_t intno);
