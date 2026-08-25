@@ -522,6 +522,26 @@ void BootPipeline::dump_dt() {
     // memory-mapped timer(s), if any
     dump_node(emu_.fdt->find_compatible("arm,armv7-timer-mem"), "mem-mapped timer");
     dump_node(emu_.fdt->find_compatible("arm,mmio-timer"), "qcom mmio timer");
+
+    // CRITICAL CHECK: the guest kernel unflattens the PATCHED blob (dtb_image),
+    // while everything above inspects the UNPATCHED emu_.fdt. Byte-diff the two:
+    // the ONLY differences should be inside the /memory reg cells. Any other
+    // differing offset means patch_dtb_memory corrupted the structure.
+    if (!emu_.dtb_image.empty() && emu_.dtb_image.size() == emu_.boot_img.dtb.size()) {
+        std::printf("\n%s== patched vs unpatched DTB byte-diff ==%s\n", BOLD, RST);
+        size_t ndiff = 0, first = 0, last = 0;
+        for (size_t i = 0; i < emu_.dtb_image.size(); ++i) {
+            if (emu_.dtb_image[i] != emu_.boot_img.dtb[i]) {
+                if (ndiff == 0) first = i;
+                last = i; ++ndiff;
+            }
+        }
+        std::printf("  %zu bytes differ, range [%#zx .. %#zx] (contiguous run expected inside /memory reg)\n",
+                    ndiff, first, last);
+    } else if (!emu_.dtb_image.empty()) {
+        std::printf("\n  WARNING: patched blob size (%zu) != unpatched (%zu) -- structure changed!\n",
+                    emu_.dtb_image.size(), emu_.boot_img.dtb.size());
+    }
     std::printf("\n");
 }
 
