@@ -1,0 +1,8 @@
+Name: unicorn
+Description: Unicorn emulator engine
+Version: 2.1.4
+libdir=D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/debug/lib
+includedir=D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/debug/include
+Libs: -L${libdir} -lunicorn
+Libs.private:  
+Cflags: -I${includedir}

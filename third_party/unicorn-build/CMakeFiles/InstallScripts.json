@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/projects/eurka_emu/third_party/unicorn-build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

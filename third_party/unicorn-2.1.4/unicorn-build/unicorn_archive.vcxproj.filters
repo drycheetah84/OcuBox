@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn_static.dir\$(Configuration)\uc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn_static.dir\$(Configuration)\vl.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn_static.dir\$(Configuration)\cpu.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\list.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\glib_compat.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\gtestutils.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\garray.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\gtree.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\grand.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\glist.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\gmem.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\gpattern.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\gslice.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\bitmap.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\bitops.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\crc32c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\cutils.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\getauxval.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\guest-random.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\host-utils.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\osdep.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\qdist.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-timer.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-timer-common.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\range.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\qht.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\pagesize.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\cacheinfo.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\aes.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\oslib-win32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-thread-win32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\unicorn-common.dir\$(Configuration)\setjmp-wrapper-win32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\exec.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\exec-vary.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpus.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\ioport.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\memory.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\memory_mapping.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\softfloat.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\optimize.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op-gvec.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op-vec.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu-exec.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu-exec-common.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cputlb.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-all.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-runtime.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-runtime-gvec.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-all.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translator.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\unicorn_vtlb.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\crypto_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\debug_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\helper-a64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\iwmmxt_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\m_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\neon_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\op_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\pauth_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\psci.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\sve_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tlb_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-a64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-sve.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\vec_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\vfp_helper.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\unicorn-build\aarch64-softmmu.dir\$(Configuration)\unicorn_aarch64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{9BFA5FE1-8D5D-3201-B3B6-B90986526A08}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

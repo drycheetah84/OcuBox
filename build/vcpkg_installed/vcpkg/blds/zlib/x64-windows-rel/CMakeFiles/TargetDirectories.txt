@@ -1,0 +1,15 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/zlib.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/package.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/package_source.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/edit_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/rebuild_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/list_install_components.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/install.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/CMakeFiles/install/local.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/package.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/package_source.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/edit_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/rebuild_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/list_install_components.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/install.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/zlib/x64-windows-rel/contrib/CMakeFiles/install/local.dir

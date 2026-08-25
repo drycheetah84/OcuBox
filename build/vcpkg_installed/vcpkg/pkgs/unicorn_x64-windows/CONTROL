@@ -1,0 +1,7 @@
+Package: unicorn
+Version: 2.1.4
+Depends: vcpkg-cmake
+Architecture: x64-windows
+Multi-Arch: same
+Abi: eeed57dd65b8aea392740e06cdf27da6f7ea8606fc90f043a5635955c85e6da0
+Description: Unicorn is a lightweight multi-platform, multi-architecture CPU emulator framework

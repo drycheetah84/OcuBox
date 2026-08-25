@@ -1,0 +1,30 @@
+Downloading https://github.com/tukaani-project/xz/archive/v5.8.3.tar.gz -> tukaani-project-xz-v5.8.3.tar.gz
+Successfully downloaded tukaani-project-xz-v5.8.3.tar.gz
+-- Extracting source C:/Users/drych/AppData/Local/vcpkg/downloads/tukaani-project-xz-v5.8.3.tar.gz
+-- Applying patch build-tools.patch
+-- Using source at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/src/v5.8.3-6de1f0384d.clean
+-- Configuring x64-windows
+CMake Warning at D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/share/vcpkg-cmake/vcpkg_cmake_configure.cmake:346 (message):
+  The following variables are not used in CMakeLists.txt:
+
+      XZ_SANDBOX
+
+  Please recheck them and remove the unnecessary options from the
+  `vcpkg_cmake_configure` call.
+
+  If these options should still be passed for whatever reason, please use the
+  `MAYBE_UNUSED_VARIABLES` argument.
+Call Stack (most recent call first):
+  C:/Users/drych/AppData/Local/vcpkg/registries/git-trees/ae94eaf58eb64ce5b0dfba7769095c43c6c65d71/portfile.cmake:26 (vcpkg_cmake_configure)
+  scripts/ports.cmake:206 (include)
+
+
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/liblzma_x64-windows/lib/pkgconfig/liblzma.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/drych/AppData/Local/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/liblzma_x64-windows/debug/lib/pkgconfig/liblzma.pc
+-- Installing: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/liblzma_x64-windows/share/liblzma/copyright
+-- Performing post-build validation

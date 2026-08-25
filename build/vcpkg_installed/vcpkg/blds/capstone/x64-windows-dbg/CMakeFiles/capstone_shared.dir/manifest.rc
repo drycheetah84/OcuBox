@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+2 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-dbg/CMakeFiles/capstone_shared.dir/embed.manifest"

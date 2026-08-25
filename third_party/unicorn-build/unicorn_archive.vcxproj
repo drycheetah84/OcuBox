@@ -1,0 +1,495 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9DA14A39-D60A-3DC2-ADA1-FCF55BC7784E}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>unicorn_archive</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\projects\eurka_emu\third_party\unicorn-build\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">unicorn_archive.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">unicorn</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\projects\eurka_emu\third_party\unicorn-build\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">unicorn_archive.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">unicorn</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\projects\eurka_emu\third_party\unicorn-build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">unicorn_archive.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">unicorn</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\projects\eurka_emu\third_party\unicorn-build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">unicorn_archive.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">unicorn</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4098;4244;4267</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <MASM>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <IncludePaths>D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(IncludePaths)</IncludePaths>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+cd D:\projects\eurka_emu\third_party\unicorn-build\Debug
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E copy unicorn.lib D:/projects/eurka_emu/third_party/unicorn-build/Debug/unicorn.o
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DisableSpecificWarnings>4018;4098;4244;4267</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <MASM>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <IncludePaths>D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(IncludePaths)</IncludePaths>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+cd D:\projects\eurka_emu\third_party\unicorn-build\Release
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E copy unicorn.lib D:/projects/eurka_emu/third_party/unicorn-build/Release/unicorn.o
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DisableSpecificWarnings>4018;4098;4244;4267</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <MASM>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <IncludePaths>D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(IncludePaths)</IncludePaths>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+cd D:\projects\eurka_emu\third_party\unicorn-build\MinSizeRel
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E copy unicorn.lib D:/projects/eurka_emu/third_party/unicorn-build/MinSizeRel/unicorn.o
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4098;4244;4267</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <MASM>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;inline=__inline;__func__=__FUNCTION__;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;__x86_64__;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <IncludePaths>D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\i386;D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(IncludePaths)</IncludePaths>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\projects\eurka_emu\third_party\unicorn-2.1.4\msvc;D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\include;D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+cd D:\projects\eurka_emu\third_party\unicorn-build\RelWithDebInfo
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E copy unicorn.lib D:/projects/eurka_emu/third_party/unicorn-build/RelWithDebInfo/unicorn.o
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/projects/eurka_emu/third_party/unicorn-2.1.4 -BD:/projects/eurka_emu/third_party/unicorn-build --check-stamp-file D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASM_MASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASM_MASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;D:\projects\eurka_emu\third_party\unicorn-2.1.4\cmake\bundle_static.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeASM_MASMCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/projects/eurka_emu/third_party/unicorn-2.1.4 -BD:/projects/eurka_emu/third_party/unicorn-build --check-stamp-file D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASM_MASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASM_MASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;D:\projects\eurka_emu\third_party\unicorn-2.1.4\cmake\bundle_static.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeASM_MASMCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/projects/eurka_emu/third_party/unicorn-2.1.4 -BD:/projects/eurka_emu/third_party/unicorn-build --check-stamp-file D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASM_MASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASM_MASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;D:\projects\eurka_emu\third_party\unicorn-2.1.4\cmake\bundle_static.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeASM_MASMCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/projects/eurka_emu/third_party/unicorn-2.1.4 -BD:/projects/eurka_emu/third_party/unicorn-build --check-stamp-file D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeASM_MASMInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeASM_MASMLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;D:\projects\eurka_emu\third_party\unicorn-2.1.4\cmake\bundle_static.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeASM_MASMCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn_static.dir\$(Configuration)\uc.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn_static.dir\$(Configuration)\vl.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn_static.dir\$(Configuration)\cpu.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\list.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\glib_compat.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\gtestutils.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\garray.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\gtree.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\grand.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\glist.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\gmem.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\gpattern.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\gslice.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\bitmap.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\bitops.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\crc32c.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\cutils.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\getauxval.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\guest-random.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\host-utils.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\osdep.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\qdist.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-timer.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-timer-common.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\range.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\qht.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\pagesize.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\cacheinfo.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\aes.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\oslib-win32.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\qemu-thread-win32.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.dir\$(Configuration)\setjmp-wrapper-win32.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\exec.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\exec-vary.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpus.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\ioport.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\memory.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\memory_mapping.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\softfloat.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\optimize.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op-gvec.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-op-vec.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu-exec.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu-exec-common.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cputlb.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-all.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-runtime.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tcg-runtime-gvec.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-all.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translator.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\unicorn_vtlb.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu64.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\cpu.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\crypto_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\debug_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\helper-a64.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\iwmmxt_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\m_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\neon_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\op_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\pauth_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\psci.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\sve_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\tlb_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-a64.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\translate-sve.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\vec_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\vfp_helper.obj" />
+    <Object Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.dir\$(Configuration)\unicorn_aarch64.obj" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="D:\projects\eurka_emu\third_party\unicorn-build\ZERO_CHECK.vcxproj">
+      <Project>{D10492D8-D422-32EA-B7BD-9E784514C251}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj">
+      <Project>{F3232114-1137-3BFE-8CD9-DC740596535C}</Project>
+      <Name>aarch64-softmmu</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn-common.vcxproj">
+      <Project>{7501059F-5251-3BE1-A120-8AFC0E5B299F}</Project>
+      <Name>unicorn-common</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\projects\eurka_emu\third_party\unicorn-build\unicorn_static.vcxproj">
+      <Project>{C9441B05-74BA-3CBF-840C-2EC50C6FF0D4}</Project>
+      <Name>unicorn_static</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>

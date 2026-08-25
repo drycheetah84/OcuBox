@@ -1,0 +1,76 @@
+Package: vcpkg-cmake
+Version: 2025-08-07
+Architecture: x64-windows
+Multi-Arch: same
+Abi: a04464fe4c0fb0020464222402478b87a0fbe259e829ac412a5c9aaae37834b5
+Status: install ok installed
+
+Package: bzip2
+Version: 1.0.8
+Port-Version: 6
+Depends: vcpkg-cmake
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 9ef26cccf6027f8682d92d340fb3828784523f1b6e3a8554b4de327b5f1c917f
+Description: bzip2 is a freely available, patent free, high-quality data compressor. It typically compresses files to within 10% to 15% of the best available techniques (the PPM family of statistical compressors), whilst being around twice as fast at compression and six times faster at decompression.
+Default-Features: tool
+Status: install ok installed
+
+Package: bzip2
+Feature: tool
+Architecture: x64-windows
+Multi-Arch: same
+Description: Builds bzip2 executable
+Status: install ok installed
+
+Package: vcpkg-cmake-config
+Version: 2026-07-21
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 9860d21c43440b9fe07808c94b5c9d67a186bb009f7b51cc1aad7e9660dfc77d
+Status: install ok installed
+
+Package: liblzma
+Version: 5.8.3
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 8a00b9699006dfac6d6a53338899f06e48a21db3f4eeba24ce9374ffc3ec5419
+Description: Compression library with an API similar to that of zlib.
+Status: install ok installed
+
+Package: zlib
+Version: 1.3.2
+Port-Version: 2
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 26e47171135db1c12e6b5118aba7df56d84a700eab4176014f75907ae37b4b98
+Description: A compression library
+Status: install ok installed
+
+Package: capstone
+Version: 5.0.9
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 45f61baf48280441b03a02e76838299537db59a1975cabec2b0893e6be6120da
+Description: Multi-architecture disassembly framework
+Status: install ok installed
+
+Package: unicorn
+Version: 2.1.4
+Depends: vcpkg-cmake
+Architecture: x64-windows
+Multi-Arch: same
+Abi: eeed57dd65b8aea392740e06cdf27da6f7ea8606fc90f043a5635955c85e6da0
+Description: Unicorn is a lightweight multi-platform, multi-architecture CPU emulator framework
+Status: install ok installed
+
+Package: capstone
+Feature: arm64
+Architecture: x64-windows
+Multi-Arch: same
+Description: Capstone disassembly support for ARM64
+Status: install ok installed
+

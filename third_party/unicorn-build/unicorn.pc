@@ -1,0 +1,8 @@
+Name: unicorn
+Description: Unicorn emulator engine
+Version: 2.1.4
+libdir=C:/Program Files/unicorn/lib
+includedir=C:/Program Files/unicorn/include
+Libs: -L${libdir} -lunicorn
+Libs.private: -lpthread -lm
+Cflags: -I${includedir}

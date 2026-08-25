@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

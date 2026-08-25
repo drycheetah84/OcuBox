@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<BuildType Name="Release"/>
+		<BuildType Name="MinSizeRel"/>
+		<BuildType Name="RelWithDebInfo"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="aarch64-softmmu.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9f30f355-7c41-3151-af12-e598aeaa490c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn-common.vcxproj"/>
+	</Project>
+	<Project Path="sample_arm64.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a33da150-224c-3ce9-8b28-7d97d9263af8">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn.vcxproj"/>
+	</Project>
+	<Project Path="sample_ctl.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9cf27ebe-c070-3531-a01d-2ef6fc2349bf">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn.vcxproj"/>
+	</Project>
+	<Project Path="test_arm64.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="108a77dc-905f-3fc8-b6c7-53e4b5a2f75c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn.vcxproj"/>
+	</Project>
+	<Project Path="test_ctl.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1b47b3e3-84a4-3aa4-a9ae-cf1c4d75f216">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn.vcxproj"/>
+	</Project>
+	<Project Path="test_mem.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ab257281-a796-3a5f-a0c1-304d048346f3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="unicorn.vcxproj"/>
+	</Project>
+	<Project Path="unicorn.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="978bd9ca-e5c2-3bb4-ae1f-a4ba636de230">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aarch64-softmmu.vcxproj"/>
+		<BuildDependency Project="unicorn-common.vcxproj"/>
+	</Project>
+	<Project Path="unicorn-common.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d33ed5ea-bd9e-3057-818f-63f19f4de21f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="unicorn_archive.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f0490901-8768-371e-a102-388446d706d7">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aarch64-softmmu.vcxproj"/>
+		<BuildDependency Project="unicorn-common.vcxproj"/>
+		<BuildDependency Project="unicorn_static.vcxproj"/>
+	</Project>
+	<Project Path="unicorn_static.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ca283a63-c9d5-3b99-97b7-d50cbeff8cda">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aarch64-softmmu.vcxproj"/>
+		<BuildDependency Project="unicorn-common.vcxproj"/>
+	</Project>
+	<Folder Name="/CMakePredefinedTargets/">
+		<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="64cabc14-81bb-3327-a696-b606cdd6b092" DefaultStartup="true">
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<BuildDependency Project="aarch64-softmmu.vcxproj"/>
+			<BuildDependency Project="sample_arm64.vcxproj"/>
+			<BuildDependency Project="sample_ctl.vcxproj"/>
+			<BuildDependency Project="test_arm64.vcxproj"/>
+			<BuildDependency Project="test_ctl.vcxproj"/>
+			<BuildDependency Project="test_mem.vcxproj"/>
+			<BuildDependency Project="unicorn.vcxproj"/>
+			<BuildDependency Project="unicorn-common.vcxproj"/>
+			<BuildDependency Project="unicorn_archive.vcxproj"/>
+			<BuildDependency Project="unicorn_static.vcxproj"/>
+		</Project>
+		<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1908a26a-f94f-3fd1-9198-84163d6273b8">
+			<BuildDependency Project="ALL_BUILD.vcxproj"/>
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Debug|*" Project="false"/>
+			<Build Solution="Release|*" Project="false"/>
+			<Build Solution="MinSizeRel|*" Project="false"/>
+			<Build Solution="RelWithDebInfo|*" Project="false"/>
+		</Project>
+		<Project Path="RUN_TESTS.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="204ff03e-85b0-3ea5-b8bd-6a8444d08f1a">
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Debug|*" Project="false"/>
+			<Build Solution="Release|*" Project="false"/>
+			<Build Solution="MinSizeRel|*" Project="false"/>
+			<Build Solution="RelWithDebInfo|*" Project="false"/>
+		</Project>
+		<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="05a864dc-2e75-3d7b-8000-9b9a0071cb82"/>
+	</Folder>
+</Solution>

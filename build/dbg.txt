@@ -1,0 +1,341 @@
+
+[1mhollywood_emu[0m  [2mMeta Quest 2 (hollywood / Snapdragon XR2) boot[0m
+[2m--------------------------------------------------------------[0m
+
+[[33m....[0m] Initializing emulator[ [32mOK[0m ] Initializing emulator  [2mhost=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)[0m
+[[33m....[0m] Loading Quest 2 configuration  [DEBUG] ota.zip    | C:\Users\drych\Downloads\q2_52242990021400150.zip: 7 entries, CD at 1109996878 (507 bytes)
+[ [32mOK[0m ] Loading Quest 2 configuration  [2mbuild oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys[0m
+[[33m....[0m] Loading kernel  [INFO ] ota.payload | payload v2 block=4096 manifest=87458B parts=25
+  [INFO ] boot.img   | hdr v2 page=4096 board='' kernel=29658KB ramdisk=2613KB dtb=1123KB
+  [INFO ] boot.img   | addrs kernel=0x8000 ramdisk=0x1000000 tags=0x100 dtb=0x1f00000
+  [INFO ] boot.img   | arm64=true text_offset=0x80000 image_size=0x1dd2000
+  [INFO ] boot.img   | cmdline: androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[ [32mOK[0m ] Loading kernel  [2mARM64 Image 29658 KB, image_size=0x1dd2000[0m
+[[33m....[0m] Initializing virtual hardware  [DEBUG] bus        | map geni_uart at 0xa90000+0x4000 [OK]
+  [DEBUG] bus        | map gic-dist at 0x17a00000+0x10000 [STUB]
+  [DEBUG] bus        | map gic-redist at 0x17a60000+0x100000 [STUB]
+[ [32mOK[0m ] Initializing virtual hardware  [2mdram_base=0x80000000, 3 MMIO devices[0m
+[[33m....[0m] Loading boot image[ [32mOK[0m ] Loading boot image  [2mramdisk 2613 KB (cpio 6112 KB)[0m
+[[33m....[0m] Initializing memory  [INFO ] memory     | guest RAM 2048 MB at 0x80000000-0x100000000
+  [DEBUG] memory     | loaded 30369808 bytes at 0x80008000
+  [INFO ] boot.dtb   | /memory 'memory' ac=2 sc=2 1 entries
+  [INFO ] boot.dtb   |   entry base=0x0 size=0x0
+  [INFO ] boot.dtb   | /memory patched: base->0x80000000 size 0x0->0x80000000 (ac=2 sc=2)
+  [DEBUG] memory     | loaded 1150513 bytes at 0x81e08000
+  [DEBUG] memory     | loaded 2676669 bytes at 0x82000000
+[ [32mOK[0m ] Initializing memory  [2m2048 MB @ 0x80000000; kernel@0x80008000 dtb@0x81e08000 ramdisk@0x82000000[0m
+[[33m....[0m] Starting kernel[ [32mOK[0m ] Starting kernel  [2mPC=0x80008000 x0(dtb)=0x81e08000 pstate=0x3c5[0m
+[[33m....[0m] Attaching ARM64 execution backend  [INFO ] cpu.uc     | CPU model = ARM64 'max'
+  [INFO ] cpu.uc     | mapped RAM 0x80000000+0x80000000 (host-backed)
+  [INFO ] cpu.uc     | mapped MMIO geni_uart 0xa90000+0x4000
+  [INFO ] cpu.uc     | mapped MMIO gic-dist 0x17a00000+0x10000
+  [INFO ] cpu.uc     | mapped MMIO gic-redist 0x17a60000+0x100000
+  [INFO ] cpu.uc     | translation provided by built-in ARMv8 walker (UC_TLB_VIRTUAL)
+  [INFO ] cpu.uc     | state set: PC=0x80008000 X0=0x81e08000 PSTATE=0x3c5
+[ [32mOK[0m ] Attaching ARM64 execution backend  [2mUnicorn (ARM64 / QEMU-TCG)[0m
+[[33m....[0m] Executing Quest 2 kernel
+  [2m[cpu][0m executed 20M insns, PC=0xffffff8009188fa4
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff8009c31100
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+  [INFO ] cpu.uc     | exception intno=7 (BKPT) PC=0xffffff800821acec
+[[33mHANG[0m] Kernel is spinning  [33mhot loop / spin-wait detected (guest is busy-waiting on hardware state)[0m
+       [2mreal execution confirmed: 38103081 instructions ran before the spin-wait at PC=0xffffff80082114f8.[0m
+
+[1m=== ARM64 EXCEPTION ===[0m
+
+  PC     : 0xffffff80082114f8
+  SP     : 0xffffff8009d1bd60
+  PSTATE : 0x00000000600003c5
+
+  X0 : 0x000000000000001e    X1 : 000000000000000000
+  X2 : 0x0000000000000001    X3 : 0x0000000000006465
+  X4 : 0x0000000000000004    X5 : 0x00000000ffffd20c
+  X6 : 0xffffff8009f2a7da    X7 : 0x656c69616620746f
+  X8 : 000000000000000000    X9 : 000000000000000000
+  X10: 0xffffffffffffffff    X11: 000000000000000000
+  X12: 000000000000000000    X13: 0x0000000000000040
+  X14: 0xffffff80092e5ef8    X15: 0xffffff8009198720
+  X16: 000000000000000000    X17: 000000000000000000
+  X18: 000000000000000000    X19: 000000000000000000
+  X20: 0xffffff8009f02000    X21: 000000000000000000
+  X22: 0xffffff8009d5b000    X23: 000000000000000000
+  X24: 0x00000000f2000800    X25: 000000000000000000
+  X26: 0xffffff8009d1b080    X27: 000000000000000000
+  X28: 0xffffff8009d53580    X29: 0xffffff8009d1bd60
+  X30: 0xffffff80082114f8
+
+Fault:
+  Type    : hot loop / spin-wait detected (guest is busy-waiting on hardware state)
+
+Execution:
+  Instructions executed : 38103081
+
+Code around PC:
+  0xffffff80082114f0: 9118c800  add x0, x0, #0x632      
+  0xffffff80082114f4: 943e2dcf  bl #0xffffff800919cc30  
+  0xffffff80082114f8: 14000000  b #0xffffff80082114f8    <== PC
+  0xffffff80082114fc: d10183ff  sub sp, sp, #0x60       
+  0xffffff8008211500: a9027bfd  stp x29, x30, [sp, #0x20]
+  0xffffff8008211504: 910083fd  add x29, sp, #0x20      
+  0xffffff8008211508: a9035ff8  stp x24, x23, [sp, #0x30]
+  0xffffff800821150c: a90457f6  stp x22, x21, [sp, #0x40]
+
+Page-table walk of 0xffffff80082114f8  (TTBR1=0x81dd7000, VA39/4KB):
+  ESR_EL1=0xf2000800  FAR_EL1=0  VBAR_EL1=0xffffff8008209800  MAIR_EL1=0xbbff440c0400
+  ESR.EC=0x3c (?)  ISS=0x800
+  L1[00000] @ 0x81dd7000 = 0x0000000081dd8003  (table)
+  L2[0x041] @ 0x81dd8208 = 0x0000000080000711  (block)
+  => PA 0x800114f8  (MAPPED)
+
+[1m== recovered kernel log (printk @ phys 0x81d083e0) ==[0m
+  Linux version 4.19.325-cip128-st12-g49638c7a8637 (twsvcscm@5da3-cb39-0004-0000.twshared28741.01.snb1.tw.fbinfra.net) (Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6), LLD 14.0.7) #1 SMP PREEMPT Thu Aug 20 01:00:45 PDT 2026
+  Machine model: Qualcomm Technologies, Inc. kona v2 SoC
+  Reserved memory: created CMA memory pool at 0x00000000f5800000, size 164 MiB
+  OF: reserved mem: initialized node secure_display_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f4400000, size 20 MiB
+  OF: reserved mem: initialized node cnss_wlan_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f3c00000, size 8 MiB
+  OF: reserved mem: initialized node sdsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f2c00000, size 16 MiB
+  OF: reserved mem: initialized node sp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1c00000, size 16 MiB
+  OF: reserved mem: initialized node user_contig_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000f1000000, size 12 MiB
+  OF: reserved mem: initialized node adsp_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000efc00000, size 20 MiB
+  OF: reserved mem: initialized node qseecom_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ef800000, size 4 MiB
+  OF: reserved mem: initialized node cdsp_region, compatible id shared-dma-pool
+  Reserved memory: created DMA memory pool at 0x00000000ffc00000, size 0 MiB
+  OF: reserved mem: initialized node mailbox_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ee800000, size 16 MiB
+  OF: reserved mem: initialized node qseecom_ta_region, compatible id shared-dma-pool
+  Reserved memory: created CMA memory pool at 0x00000000ec800000, size 32 MiB
+  OF: reserved mem: initialized node linux,cma, compatible id shared-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000080880000, size 0 MiB
+  OF: reserved mem: initialized node res_xbl_uefi_log_region@80880000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086200000, size 5 MiB
+  OF: reserved mem: initialized node pil_camera_region@86200000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008681a000, size 0 MiB
+  OF: reserved mem: initialized node pil_gpu_region@8681a000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086900000, size 5 MiB
+  OF: reserved mem: initialized node pil_npu_region@86900000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000086e00000, size 5 MiB
+  OF: reserved mem: initialized node pil_video_region@86e00000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087300000, size 5 MiB
+  OF: reserved mem: initialized node pil_cvp_region@87300000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x0000000087800000, size 20 MiB
+  OF: reserved mem: initialized node pil_cdsp_region@87800000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008a100000, size 29 MiB
+  OF: reserved mem: initialized node pil_adsp_region@8a100000, compatible id removed-dma-pool
+  Removed memory: created DMA memory pool at 0x000000008be00000, size 1 MiB
+  OF: reserved mem: initialized node pil_spss_region@8be00000, compatible id removed-dma-pool
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  ------------[ cut here ]------------
+  Insufficient stack space to handle exception!
+  ESR: 0xf2000800 -- BRK (AArch64)
+  FAR: 0x0000000000000000
+  Task stack:     [0xffffff8009d38000..0xffffff8009d3c000]
+  IRQ stack:      [0x0000000000000000..0x0000000000004000]
+  Overflow stack: [0xffffff8009d1b080..0xffffff8009d1c080]
+  CPU: 0 PID: 0 Comm: swapper Not tainted 4.19.325-cip128-st12-g49638c7a8637 #1
+  Hardware name: Qualcomm Technologies, Inc. kona v2 SoC (DT)
+  pstate: 00400000 (nzcv daif +PAN -UAO)
+  pc : ffffff800821acec
+  lr : ffffff800821acec
+  sp : ffffff8009d38010
+  x29: ffffff8009d38010 x28: ffffff8009d53580 
+  x27: 0000000000000000 x26: 0000000000000000 
+  x25: 0000000000000000 x24: 000000000000003d 
+  x23: ffffff8009eb8278 x22: ffffff8009d53580 
+  x21: ffffff800954a4a7 x20: ffffff8009d38048 
+  x19: 00000000f2000800 x18: 0000000000000000 
+  x17: 0000000000000000 x16: 0000000000000000 
+  x15: ffffff8009198720 x14: ffffff80092e5ef8 
+  x13: 0000000000000040 x12: 0000000000000000 
+  x11: 0000000000000000 x10: ffffffffffffffff 
+  x9 : 0000000000000000 x8 : 0000000000000000 
+  x7 : 656820747563205b x6 : ffffff8009f2a7e0 
+  x5 : 00000000ffffe964 x4 : 000000000000000c 
+  x3 : 2d2d2d2d2d2d2d2d x2 : 0000000000000001 
+  x1 : 0000000000000000 x0 : 0000000000000024 
+  Kernel panic - not syncing: kernel stack overflow
+  CPU: 0 PID: 0 Comm: swapper Not tainted 4.19.325-cip128-st12-g49638c7a8637 #1
+  Hardware name: Qualcomm Technologies, Inc. kona v2 SoC (DT)
+  Call trace:
+   dump_backtrace+0x0/0x1bc
+   show_stack+0x14/0x1c
+   dump_stack+0xb8/0xf0
+   panic+0x15c/0x2cc
+   check_panic_on_warn+0x0/0x68
+   handle_bad_stack+0x118/0x12c
+   __bad_stack+0xc0/0xc4
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   arm64_notify_die+0x88/0x90
+   do_debug_exception+0xb4/0xf0
+   el1_dbg+0x18/0xa8
+   map_kernel+0x148/0x14c
+   paging_init+0x5c/0x3e8
+   setup_arch+0x150/0x1d0
+   start_kernel+0x64/0x368
+  Reboot failed -- System halted
+
+
+[1m== diagnostics ==[0m
+[1mCPU[0m
+  Architecture : ARM64 (AArch64)
+  Backend      : Unicorn (ARM64 / QEMU-TCG)
+  Entry PC     : 0x80008000
+  x0 (DTB ptr) : 0x81e08000
+[1mMemory[0m
+  Guest RAM    : 2048 MB @ 0x80000000-0x100000000
+[1mKernel[0m
+  Android build: oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+  Image        : loaded (29658 KB)
+  Entry        : 0x80008000
+  DTB          : loaded @ 0x81e08000
+  Initramfs    : loaded @ 0x82000000 (6112 KB)
+  Cmdline      : androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[1mDevices[0m
+  geni_uart        @ 0x00a90000  [32mOK[0m
+  gic-dist         @ 0x17a00000  [33mSTUB[0m
+  gic-redist       @ 0x17a60000  [33mSTUB[0m
+  arch_timer                           [2mPLANNED[0m
+  ufs_storage                          [2mPLANNED[0m
+  syncboss_spi                         [2mPLANNED[0m
+  kgsl_gpu                             [2mPLANNED[0m
+  display_dsi                          [2mPLANNED[0m
+  sensors                              [2mPLANNED[0m
+

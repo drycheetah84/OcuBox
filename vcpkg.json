@@ -1,0 +1,13 @@
+{
+  "name": "hollywood-emu",
+  "version": "0.1.0",
+  "description": "Windows-hosted emulator for the Meta Quest 2 (hollywood / Snapdragon XR2 Kona) OS",
+  "builtin-baseline": "00c5775211f45cd08b37fce0484b4cb940e422ab",
+  "dependencies": [
+    "liblzma",
+    "bzip2",
+    "zlib",
+    "unicorn",
+    { "name": "capstone", "features": ["arm64"] }
+  ]
+}

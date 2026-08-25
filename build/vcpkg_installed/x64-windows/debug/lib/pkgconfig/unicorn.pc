@@ -1,0 +1,10 @@
+prefix=${pcfiledir}/../..
+Name: unicorn
+Description: Unicorn emulator engine
+Version: 2.1.4
+libdir=${prefix}/lib
+includedir=${prefix}/../include
+Libs: "-L${libdir}" -lunicorn
+Libs.private:  
+Cflags: "-I${includedir}"
+

@@ -1,0 +1,16 @@
+-- Using cached capstone-engine-capstone-5.0.9.tar.gz
+-- Cleaning sources at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/src/5.0.9-9b23fb962a.clean. Use --editable to skip cleaning for the packages you specify.
+-- Extracting source C:/Users/drych/AppData/Local/vcpkg/downloads/capstone-engine-capstone-5.0.9.tar.gz
+-- Applying patch 001-silence-windows-crt-secure-warnings.patch
+-- Applying patch 002-force-exportname-capstone.patch
+-- Using source at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/src/5.0.9-9b23fb962a.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/lib/pkgconfig/capstone.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/drych/AppData/Local/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/debug/lib/pkgconfig/capstone.pc
+-- Installing: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/share/capstone/copyright
+-- Performing post-build validation

@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\exec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\exec-vary.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\softmmu\cpus.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\softmmu\ioport.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\softmmu\memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\softmmu\memory_mapping.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\fpu\softfloat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\optimize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\tcg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\tcg-op.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\tcg-op-gvec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\tcg\tcg-op-vec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\cpu-exec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\cpu-exec-common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\cputlb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\tcg-all.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\tcg-runtime.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\tcg-runtime-gvec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\translate-all.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\accel\tcg\translator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\softmmu\unicorn_vtlb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\cpu64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\cpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\crypto_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\debug_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper-a64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\iwmmxt_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\neon_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\op_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\pauth_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\psci.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\sve_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\tlb_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\translate-a64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\translate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\translate-sve.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\vec_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\vfp_helper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\unicorn_aarch64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{67C9C484-3CF9-3648-995C-EC4090C14275}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

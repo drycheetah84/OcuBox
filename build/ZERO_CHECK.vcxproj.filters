@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\build\CMakeFiles\d92bb931435e480b676067fb779c9249\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FF5887C7-5E08-39F4-B8FB-81607275B375}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

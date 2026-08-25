@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\glib_compat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\gtestutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\garray.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\gtree.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\grand.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\glist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\gmem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\gpattern.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\glib_compat\gslice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\bitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\bitops.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\crc32c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\cutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\getauxval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\guest-random.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\host-utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\osdep.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\qdist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\qemu-timer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\qemu-timer-common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\range.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\qht.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\pagesize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\cacheinfo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\crypto\aes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\oslib-win32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\qemu-thread-win32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\setjmp-wrapper-win32.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{47D06BF1-ACD2-3954-8B9C-226A9B62C060}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

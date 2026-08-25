@@ -1,0 +1,13 @@
+Package: capstone
+Version: 5.0.9
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 45f61baf48280441b03a02e76838299537db59a1975cabec2b0893e6be6120da
+Description: Multi-architecture disassembly framework
+
+Package: capstone
+Feature: arm64
+Architecture: x64-windows
+Multi-Arch: same
+Description: Capstone disassembly support for ARM64

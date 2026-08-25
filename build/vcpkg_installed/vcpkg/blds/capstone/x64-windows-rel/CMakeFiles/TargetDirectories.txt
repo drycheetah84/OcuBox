@@ -1,0 +1,10 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/capstone.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/capstone_shared.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/UNINSTALL.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/package.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/package_source.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/edit_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/rebuild_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/list_install_components.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/install.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/x64-windows-rel/CMakeFiles/install/local.dir

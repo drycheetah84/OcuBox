@@ -1,0 +1,12 @@
+prefix=D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/debug
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: capstone
+Description: Capstone disassembly engine
+Version: 5.0.9
+URL: https://www.capstone-engine.org/
+archive=${libdir}/libcapstone.a
+Libs: -L${libdir} -lcapstone
+Cflags: -I${includedir}/capstone

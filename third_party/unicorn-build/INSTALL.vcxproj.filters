@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\projects\eurka_emu\third_party\unicorn-build\CMakeFiles\92872767e4ec8239ae63102d47453ac8\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{AF585459-5D44-38A1-9825-AF067FE57FC7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,8 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/bz2.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/bzip2.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/bzip2recover.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/edit_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/rebuild_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/list_install_components.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/install.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/bzip2/x64-windows-rel/CMakeFiles/install/local.dir

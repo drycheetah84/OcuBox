@@ -1,0 +1,16 @@
+Downloading https://github.com/unicorn-engine/unicorn/archive/2.1.4.tar.gz -> unicorn-engine-unicorn-2.1.4.tar.gz
+Successfully downloaded unicorn-engine-unicorn-2.1.4.tar.gz
+-- Extracting source C:/Users/drych/AppData/Local/vcpkg/downloads/unicorn-engine-unicorn-2.1.4.tar.gz
+-- Applying patch fix-build.patch
+-- Applying patch fix-msvc-shared.patch
+-- Using source at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/unicorn/src/2.1.4-76b3dff2cc.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/lib/pkgconfig/unicorn.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/drych/AppData/Local/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/debug/lib/pkgconfig/unicorn.pc
+-- Installing: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/share/unicorn/copyright
+-- Performing post-build validation

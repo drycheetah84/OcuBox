@@ -1,0 +1,92 @@
+
+[1mhollywood_emu[0m  [2mMeta Quest 2 (hollywood / Snapdragon XR2) boot[0m
+[2m--------------------------------------------------------------[0m
+
+[[33m....[0m] Initializing emulator[ [32mOK[0m ] Initializing emulator  [2mhost=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)[0m
+[[33m....[0m] Loading Quest 2 configuration[ [32mOK[0m ] Loading Quest 2 configuration  [2mbuild oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys[0m
+[[33m....[0m] Loading kernel[ [32mOK[0m ] Loading kernel  [2mARM64 Image 29658 KB, image_size=0x1dd2000[0m
+[[33m....[0m] Initializing virtual hardware[ [32mOK[0m ] Initializing virtual hardware  [2mdram_base=0x80000000, 3 MMIO devices[0m
+[[33m....[0m] Loading boot image[ [32mOK[0m ] Loading boot image  [2mramdisk 2613 KB (cpio 6112 KB)[0m
+[[33m....[0m] Initializing memory[ [32mOK[0m ] Initializing memory  [2m2048 MB @ 0x80000000; kernel@0x80080000 dtb@0x81e80000 ramdisk@0x82000000[0m
+[[33m....[0m] Starting kernel[ [32mOK[0m ] Starting kernel  [2mPC=0x80080000 x0(dtb)=0x81e80000 pstate=0x3c5[0m
+[[33m....[0m] Attaching ARM64 execution backend[ [32mOK[0m ] Attaching ARM64 execution backend  [2mUnicorn (ARM64 / QEMU-TCG)[0m
+[[33m....[0m] Executing Quest 2 kernel
+[[31mFAIL[0m] Kernel execution stopped  [31mrepeated CPU exception: PREFETCH_ABORT (instruction abort) re-raised at the same PC (cannot be delivered -- e.g. VBAR not set)[0m
+
+[1m=== ARM64 EXCEPTION ===[0m
+
+  PC     : 0x0000000081021278
+  SP     : 000000000000000000
+  PSTATE : 0x00000000600001c5
+
+  X0 : 0x0000000034f5d91d    X1 : 0x0000000081e4b000
+  X2 : 0x0000000081e4f000    X3 : 0x0000000081e4b000
+  X4 : 0x0000000081e4f000    X5 : 0x0000000000000004
+  X6 : 0x0000000000000005    X7 : 0x0000000000000711
+  X8 : 000000000000000000    X9 : 000000000000000000
+  X10: 0x00400034b5593519    X11: 0x000000000000004f
+  X12: 0x0000000081e00711    X13: 0x0000000082000000
+  X14: 0x0000000081e51000    X15: 000000000000000000
+  X16: 000000000000000000    X17: 000000000000000000
+  X18: 000000000000000000    X19: 0x0000000034f5d91d
+  X20: 0x0000000030500800    X21: 0x0000000081e80000
+  X22: 000000000000000000    X23: 000000000000000000
+  X24: 000000000000000000    X25: 000000000000000000
+  X26: 000000000000000000    X27: 000000000000000000
+  X28: 0x0000000081aa0018    X29: 000000000000000000
+  X30: 0x0000000081021374
+
+Fault:
+  Type    : repeated CPU exception: PREFETCH_ABORT (instruction abort) re-raised at the same PC (cannot be delivered -- e.g. VBAR not set)
+
+Execution:
+  Instructions executed : 6641
+
+Code around PC:
+  0x81021270: d5033fdf  isb                     
+  0x81021274: d5181000  msr sctlr_el1, x0       
+  0x81021278: d5033fdf  isb                      <== PC
+  0x8102127c: d508751f  ic iallu                
+  0x81021280: d503379f  dsb nsh                 
+  0x81021284: d5033fdf  isb                     
+  0x81021288: d65f03c0  ret                     
+  0x8102128c: d65f03c0  ret                     
+
+Page-table walk of 0x81021278  (TTBR0=0x81e4b000, VA39/4KB):
+  ESR_EL1=0  FAR_EL1=0  VBAR_EL1=0  MAIR_EL1=0xbbff440c0400
+  L1[0x002] @ 0x81e4b010 = 0x0000000081e4c003  (table)
+  L2[0x008] @ 0x81e4c040 = 0x0000000081000711  (block)
+  => PA 0x81021278  (MAPPED)
+
+(kernel printk ring buffer not found in RAM)
+
+
+[1m== diagnostics ==[0m
+[1mCPU[0m
+  Architecture : ARM64 (AArch64)
+  Backend      : Unicorn (ARM64 / QEMU-TCG)
+  Entry PC     : 0x80080000
+  x0 (DTB ptr) : 0x81e80000
+[1mMemory[0m
+  Guest RAM    : 2048 MB @ 0x80000000-0x100000000
+[1mKernel[0m
+  Android build: oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+  Image        : loaded (29658 KB)
+  Entry        : 0x80080000
+  DTB          : loaded @ 0x81e80000
+  Initramfs    : loaded @ 0x82000000 (6112 KB)
+  Cmdline      : androidboot.memcg=1 buildvariant=user cgroup_disable=pressure lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 printk.devkmsg=on service_locator.enable=1 softdog.soft_panic=1 swiotlb=2048 loop.max_part=7 print-fatal-signals=1 dhash_entries=16384 ihash_entries=16384 mhash_entries=2048 mphash_entries=2048 androidboot.hardware=hollywood
+[1mDevices[0m
+  geni_uart        @ 0x00a90000  [32mOK[0m
+  gic-dist         @ 0x17a00000  [33mSTUB[0m
+  gic-redist       @ 0x17a60000  [33mSTUB[0m
+  arch_timer                           [2mPLANNED[0m
+  ufs_storage                          [2mPLANNED[0m
+  syncboss_spi                         [2mPLANNED[0m
+  kgsl_gpu                             [2mPLANNED[0m
+  display_dsi                          [2mPLANNED[0m
+  sensors                              [2mPLANNED[0m
+
+[31mBoot stalled at stage:[0m Executing Quest 2 kernel
+Last successful stage : Attaching ARM64 execution backend
+

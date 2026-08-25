@@ -1,0 +1,131 @@
+﻿-- Running vcpkg install
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+The following packages are already installed:
+    bzip2[core,tool]:x64-windows@1.0.8#6
+    liblzma:x64-windows@5.8.3
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+    zlib:x64-windows@1.3.2#2
+The following packages will be built and installed:
+    capstone:x64-windows@5.0.9 -- git+https://github.com/microsoft/vcpkg@aae20c01a57ae824b47929cc818e8dce945269bb
+    unicorn:x64-windows@2.1.4 -- git+https://github.com/microsoft/vcpkg@032ac11fc54c36682e1dc5c073e14782dc6bfe87
+Restored 0 package(s) from C:\Users\drych\AppData\Local\vcpkg\archives in 69 us. Use --debug to see more details.
+Installing 1/2 capstone:x64-windows@5.0.9...
+capstone:x64-windows@5.0.9 package ABI: 8068c31af0ed6fbc2e7833bee868c82b78351a5f56e6639844378deb508b933f
+Building capstone:x64-windows@5.0.9...
+C:\Users\drych\AppData\Local\vcpkg\registries\git-trees\aae20c01a57ae824b47929cc818e8dce945269bb: info: installing from git registry git+https://github.com/microsoft/vcpkg@aae20c01a57ae824b47929cc818e8dce945269bb
+Downloading https://github.com/capstone-engine/capstone/archive/5.0.9.tar.gz -> capstone-engine-capstone-5.0.9.tar.gz
+Successfully downloaded capstone-engine-capstone-5.0.9.tar.gz
+-- Extracting source C:/Users/drych/AppData/Local/vcpkg/downloads/capstone-engine-capstone-5.0.9.tar.gz
+-- Applying patch 001-silence-windows-crt-secure-warnings.patch
+-- Applying patch 002-force-exportname-capstone.patch
+-- Using source at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/capstone/src/5.0.9-9b23fb962a.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/lib/pkgconfig/capstone.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/drych/AppData/Local/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/debug/lib/pkgconfig/capstone.pc
+-- Installing: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/capstone_x64-windows/share/capstone/copyright
+-- Performing post-build validation
+Starting submission of capstone:x64-windows@5.0.9 to 1 binary cache(s) in the background
+Elapsed time to handle capstone:x64-windows: 8 s
+Installing 2/2 unicorn:x64-windows@2.1.4...
+unicorn:x64-windows@2.1.4 package ABI: eeed57dd65b8aea392740e06cdf27da6f7ea8606fc90f043a5635955c85e6da0
+Building unicorn:x64-windows@2.1.4...
+C:\Users\drych\AppData\Local\vcpkg\registries\git-trees\032ac11fc54c36682e1dc5c073e14782dc6bfe87: info: installing from git registry git+https://github.com/microsoft/vcpkg@032ac11fc54c36682e1dc5c073e14782dc6bfe87
+Downloading https://github.com/unicorn-engine/unicorn/archive/2.1.4.tar.gz -> unicorn-engine-unicorn-2.1.4.tar.gz
+Successfully downloaded unicorn-engine-unicorn-2.1.4.tar.gz
+-- Extracting source C:/Users/drych/AppData/Local/vcpkg/downloads/unicorn-engine-unicorn-2.1.4.tar.gz
+-- Applying patch fix-build.patch
+-- Applying patch fix-msvc-shared.patch
+-- Using source at D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/unicorn/src/2.1.4-76b3dff2cc.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/lib/pkgconfig/unicorn.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/drych/AppData/Local/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/debug/lib/pkgconfig/unicorn.pc
+-- Installing: D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/share/unicorn/copyright
+-- Performing post-build validation
+Starting submission of unicorn:x64-windows@2.1.4 to 1 binary cache(s) in the background
+Elapsed time to handle unicorn:x64-windows: 1.8 min
+Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+Packages installed in this vcpkg installation declare the following licenses:
+BSD-3-Clause
+GPL-2.0-only
+The package bzip2 is compatible with built-in CMake targets:
+
+    find_package(BZip2 REQUIRED)
+    target_link_libraries(main PRIVATE BZip2::BZip2)
+
+capstone provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(capstone CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE capstone::capstone)
+
+capstone provides pkg-config modules:
+
+  # Capstone disassembly engine
+  capstone
+
+liblzma is compatible with built-in CMake targets:
+
+    find_package(LibLZMA REQUIRED)
+    target_link_libraries(main PRIVATE LibLZMA::LibLZMA)
+
+liblzma provides CMake targets:
+
+    find_package(liblzma CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE liblzma::liblzma)
+
+unicorn provides pkg-config modules:
+
+  # Unicorn emulator engine
+  unicorn
+
+zlib is compatible with built-in CMake targets:
+
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(main PRIVATE ZLIB::ZLIB)
+
+zlib provides pkg-config modules:
+
+  # zlib compression library
+  zlib
+
+Completed submission of capstone:x64-windows@5.0.9 to 1 binary cache(s) in 124 ms
+Waiting for 1 remaining binary cache submissions...
+Completed submission of unicorn:x64-windows@2.1.4 to 1 binary cache(s) in 4.6 s (1/1)
+All requested installations completed successfully in: 1.9 min
+-- Running vcpkg install - done
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.22631.
+cmake.exe : CMake Error at C:/Program Files/Microsoft Visual Studio/18/Community/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:910 (_find_package):
+At line:3 char:1
++ & $cmake -S D:\projects\eurka_emu -B D:\projects\eurka_emu\build -G " ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (CMake Error at ..._find_package)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Could not find a package configuration file provided by "unicorn" with any
+  of the following names:
+
+    unicorn.cps
+    unicornConfig.cmake
+    unicorn-config.cmake
+
+  Add the installation prefix of "unicorn" to CMAKE_PREFIX_PATH or set
+  "unicorn_DIR" to a directory containing one of the above files.  If
+  "unicorn" provides a separate development package or SDK, be sure it has
+  been installed.
+Call Stack (most recent call first):
+  CMakeLists.txt:16 (find_package)
+
+
+-- Configuring incomplete, errors occurred!

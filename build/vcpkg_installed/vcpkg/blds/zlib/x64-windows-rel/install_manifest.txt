@@ -1,0 +1,17 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/z.lib
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/bin/z.dll
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/cmake/zlib/ZLIB-shared.cmake
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/cmake/zlib/ZLIB-shared-release.cmake
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/cmake/zlib/ZLIBConfig.cmake
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/cmake/zlib/ZLIBConfigVersion.cmake
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/include/zconf.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/include/zlib.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/man/man3/zlib.3
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/LICENSE
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/algorithm.txt
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/crc-doc.1.0.pdf
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/rfc1950.txt
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/rfc1951.txt
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/rfc1952.txt
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/share/doc/zlib/zlib/txtvsbin.txt
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/lib/pkgconfig/zlib.pc

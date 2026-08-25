@@ -1,0 +1,372 @@
+{
+  "payload": {
+    "version": 2,
+    "headerSize": 24,
+    "manifestSize": 87458,
+    "metaSigSize": 267,
+    "dataBlobStart": 87749,
+    "blockSize": 4096,
+    "payloadOffsetInZip": 4985
+  },
+  "partitions": [
+    {
+      "name": "system_ext",
+      "size": 1323028480,
+      "sha256": "96b4f64e775c8a859345ae4e22246036f88c6e2e00430ce5b1e3789794750534",
+      "numOps": 631,
+      "opTypes": {
+        "REPLACE_XZ": 612,
+        "REPLACE": 7,
+        "REPLACE_BZ": 12
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 538468229,
+        "dataLength": 755476
+      }
+    },
+    {
+      "name": "system",
+      "size": 953757696,
+      "sha256": "65cf00827b50d36853aa73777e4a8edfc62456a15c41fb84af159b0eb3487ae7",
+      "numOps": 455,
+      "opTypes": {
+        "REPLACE_XZ": 450,
+        "REPLACE": 4,
+        "REPLACE_BZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 207337518,
+        "dataLength": 582364
+      }
+    },
+    {
+      "name": "vendor",
+      "size": 300724224,
+      "sha256": "e2b7251e9f2035e48f49f8af7adb65c554aa79332913e99d0cc426de451430cc",
+      "numOps": 144,
+      "opTypes": {
+        "REPLACE_XZ": 144
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1014229133,
+        "dataLength": 376216
+      }
+    },
+    {
+      "name": "product",
+      "size": 207855616,
+      "sha256": "97817ab3450bd4f588e3ac8acf0a59c754d8b786062eb7ab9208f8c991f5f26f",
+      "numOps": 100,
+      "opTypes": {
+        "REPLACE_XZ": 100
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 94871168,
+        "dataLength": 1915708
+      }
+    },
+    {
+      "name": "odm",
+      "size": 158773248,
+      "sha256": "2d063cb8ff2f598af925ac92093fc9c6dbc4987f53148f6ee20a223515328a4f",
+      "numOps": 76,
+      "opTypes": {
+        "REPLACE_XZ": 75,
+        "REPLACE": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 25964508,
+        "dataLength": 933324
+      }
+    },
+    {
+      "name": "boot",
+      "size": 83886080,
+      "sha256": "699fe2b3ffa08e6fac6d4870ed6e8c31eaa16c706343ff3a83d9051be69aa37f",
+      "numOps": 40,
+      "opTypes": {
+        "REPLACE_XZ": 17,
+        "REPLACE_BZ": 23
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 410114,
+        "dataLength": 775680
+      }
+    },
+    {
+      "name": "recovery",
+      "size": 67108864,
+      "sha256": "84ae4ac45868ceaea0f59dc973014adfc89d903a2f208799ab1892d1c30b16fb",
+      "numOps": 32,
+      "opTypes": {
+        "REPLACE_XZ": 23,
+        "REPLACE_BZ": 9
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 182517892,
+        "dataLength": 775680
+      }
+    },
+    {
+      "name": "modem",
+      "size": 43003904,
+      "sha256": "3fb71c674765fe65c492a5084d415435f8f6903e871fb7f169538efd96032303",
+      "numOps": 21,
+      "opTypes": {
+        "REPLACE_XZ": 20,
+        "REPLACE_BZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13288038,
+        "dataLength": 495836
+      }
+    },
+    {
+      "name": "dtbo",
+      "size": 8388608,
+      "sha256": "429b4234349ba1db6d8e728c6b6ca8fe44320dd7c94d9d7bb760801e07c6aac8",
+      "numOps": 4,
+      "opTypes": {
+        "REPLACE_XZ": 1,
+        "REPLACE_BZ": 3
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13051322,
+        "dataLength": 30772
+      }
+    },
+    {
+      "name": "xbl",
+      "size": 3637248,
+      "sha256": "55e0047dd8014e2be6b6f686df7b4de95cdf9a76ddf2948d9cc1f781cbdd0819",
+      "numOps": 2,
+      "opTypes": {
+        "REPLACE_XZ": 2
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1107307777,
+        "dataLength": 1618280
+      }
+    },
+    {
+      "name": "tz",
+      "size": 3207168,
+      "sha256": "9384241f1169e4953992fc06723507e8ac217006a5dfb92e47826068500dc8d3",
+      "numOps": 2,
+      "opTypes": {
+        "REPLACE_XZ": 2
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1013330457,
+        "dataLength": 468480
+      }
+    },
+    {
+      "name": "cmnlib64",
+      "size": 524288,
+      "sha256": "90e62e5d28d9c1c8d583b974d3a713a414366ac0c54dbe571dd0e87f65d19c6d",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 12839446,
+        "dataLength": 194980
+      }
+    },
+    {
+      "name": "hyp",
+      "size": 450560,
+      "sha256": "4a8972c267fccac617789c1bcc3a6edc21f5a0500367dbb045f4504ac31bc323",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13082274,
+        "dataLength": 117044
+      }
+    },
+    {
+      "name": "cmnlib",
+      "size": 401408,
+      "sha256": "f001183af51d906dddeed0bb0b78d4bef4508931f6163f7855b33d20079954e3",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 12643950,
+        "dataLength": 195496
+      }
+    },
+    {
+      "name": "abl",
+      "size": 274432,
+      "sha256": "75dc2174995fd39588bcbbd8b3455afc7bad4999a8914e0c40b9cc1509bcef5c",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 92734,
+        "dataLength": 238568
+      }
+    },
+    {
+      "name": "keymaster",
+      "size": 253952,
+      "sha256": "d47a59f743fa622f2f7a3733574c7b335d18661a6dbb3ea811b7abce1661533f",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13208370,
+        "dataLength": 79668
+      }
+    },
+    {
+      "name": "aop",
+      "size": 204800,
+      "sha256": "2f9a8e994bb5e1bf30ea0758446020333a894fca5063f867fd43a73465c1ef62",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 331302,
+        "dataLength": 78812
+      }
+    },
+    {
+      "name": "uefisecapp",
+      "size": 126976,
+      "sha256": "f410a455ce2c3a4803160582d59fa84e701e002f985b6b143d7180647ab5f946",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1014179785,
+        "dataLength": 45172
+      }
+    },
+    {
+      "name": "xbl_config",
+      "size": 94208,
+      "sha256": "7e65af2ea5a3c3621b73fd1ea67caa848fecd7682ebc6582a6a7f8ef46265341",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1109978805,
+        "dataLength": 16500
+      }
+    },
+    {
+      "name": "devcfg",
+      "size": 61440,
+      "sha256": "9f1b2f2c5b6545f2e30d177aa2d0a92ca7976e64b576abb78fe0dcd64c124126",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13034426,
+        "dataLength": 16896
+      }
+    },
+    {
+      "name": "qupfw",
+      "size": 57344,
+      "sha256": "95362fc9e24f8876044e5af3bfe90a286fc5d3793971c520e520f7d51989a122",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 182502624,
+        "dataLength": 15268
+      }
+    },
+    {
+      "name": "imagefv",
+      "size": 20480,
+      "sha256": "850e7b3ec990c29ffa5a91565fa2dcafa6d5977b66e4f7954c8c725114e935b4",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 13199318,
+        "dataLength": 9052
+      }
+    },
+    {
+      "name": "vbmeta",
+      "size": 4096,
+      "sha256": "e34d140f8116d3dcd1c533036cf2cbb00c46e887acbd0297daecec700d30f725",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1014224957,
+        "dataLength": 1416
+      }
+    },
+    {
+      "name": "vbmeta_system",
+      "size": 4096,
+      "sha256": "25533665f6e0bcd90e4cb4a27df39ee9519b63124b4af7e3eafec1f613158114",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1014226373,
+        "dataLength": 1424
+      }
+    },
+    {
+      "name": "vbmeta_vendor",
+      "size": 4096,
+      "sha256": "b54b69d7da7e3b557bb99ef895166865fcd491574c4f912ff21a5b897e2822d4",
+      "numOps": 1,
+      "opTypes": {
+        "REPLACE_XZ": 1
+      },
+      "firstOp": {
+        "type": "REPLACE_XZ",
+        "dataOffsetInZip": 1014227797,
+        "dataLength": 1336
+      }
+    }
+  ]
+}

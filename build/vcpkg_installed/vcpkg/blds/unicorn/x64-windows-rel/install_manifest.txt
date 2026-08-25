@@ -1,0 +1,15 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/lib/unicorn.lib
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/bin/unicorn.dll
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/arm.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/arm64.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/m68k.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/mips.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/platform.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/ppc.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/riscv.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/s390x.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/sparc.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/tricore.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/unicorn.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/include/unicorn/x86.h
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/unicorn_x64-windows/lib/pkgconfig/unicorn.pc

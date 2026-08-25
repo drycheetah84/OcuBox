@@ -1,0 +1,14 @@
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/aarch64-softmmu.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/unicorn-common.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/unicorn.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/unicorn_static.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/unicorn_archive.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/sample_arm64.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/sample_ctl.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/test_arm64.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/test_mem.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/test_ctl.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/RUN_TESTS.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/INSTALL.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/ALL_BUILD.dir
+D:/projects/eurka_emu/third_party/unicorn-build/CMakeFiles/ZERO_CHECK.dir

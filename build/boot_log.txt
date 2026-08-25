@@ -1,0 +1,22 @@
+﻿
+hollywood_emu  Meta Quest 2 (hollywood / Snapdragon XR2) boot
+--------------------------------------------------------------
+
+[....] Initializing emulator
+[ OK ] Initializing emulator  host=win-x64  target=Qualcomm SM8250 Kona (Snapdragon XR2)
+[....] Loading Quest 2 configuration
+[ OK ] Loading Quest 2 configuration  build oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/abl_signing_keys:release,amss_signing_keys:release,release-keys
+[....] Loading kernel
+[ OK ] Loading kernel  ARM64 Image 29658 KB, image_size=0x1dd2000
+[....] Initializing virtual hardware
+[ OK ] Initializing virtual hardware  dram_base=0x80000000, 3 MMIO devices
+[....] Loading boot image
+[ OK ] Loading boot image  ramdisk 2613 KB (cpio 6112 KB)
+[....] Initializing memory
+[ OK ] Initializing memory  2048 MB @ 0x80000000; kernel@0x80008000 dtb@0x81e08000 ramdisk@0x82000000
+[....] Starting kernel
+[ OK ] Starting kernel  PC=0x80008000 x0(dtb)=0x81e08000 pstate=0x3c5
+[....] Attaching ARM64 execution backend
+[ OK ] Attaching ARM64 execution backend  Unicorn (ARM64 / QEMU-TCG)
+[....] Executing Quest 2 kernel
+  [cpu] executed 20M insns, PC=0xffffff8009188fc8

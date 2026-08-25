@@ -1,0 +1,2 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/bzip2_x64-windows/debug/lib/bz2d.lib
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/pkgs/bzip2_x64-windows/debug/bin/bz2d.dll

@@ -1,0 +1,6 @@
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/liblzma.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/edit_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/rebuild_cache.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/list_install_components.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/install.dir
+D:/projects/eurka_emu/build/vcpkg_installed/vcpkg/blds/liblzma/x64-windows-dbg/CMakeFiles/install/local.dir

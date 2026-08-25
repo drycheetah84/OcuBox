@@ -1,0 +1,139 @@
+﻿MSBuild version 18.9.1+a81b43525 for .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  Assembling D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\util\setjmp-wrapper-win32.asm...
+  list.c
+  glib_compat.c
+  gtestutils.c
+  garray.c
+  gtree.c
+  grand.c
+  glist.c
+  gmem.c
+  gpattern.c
+  gslice.c
+  bitmap.c
+  bitops.c
+  crc32c.c
+  cutils.c
+  getauxval.c
+  guest-random.c
+  host-utils.c
+  osdep.c
+  qdist.c
+  qemu-timer.c
+  Generating Code...
+  Compiling...
+  qemu-timer-common.c
+  range.c
+  qht.c
+  pagesize.c
+  cacheinfo.c
+  aes.c
+  oslib-win32.c
+  qemu-thread-win32.c
+  Generating Code...
+  unicorn-common.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\unicorn-common.lib
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  exec.c
+  exec-vary.c
+  cpus.c
+  ioport.c
+  memory.c
+  memory_mapping.c
+  softfloat.c
+  optimize.c
+  tcg.c
+  tcg-op.c
+  tcg-op-gvec.c
+  tcg-op-vec.c
+  cpu-exec.c
+  cpu-exec-common.c
+  cputlb.c
+  tcg-all.c
+  tcg-runtime.c
+  tcg-runtime-gvec.c
+  translate-all.c
+  translator.c
+  Generating Code...
+  Compiling...
+  unicorn_vtlb.c
+  cpu64.c
+  cpu.c
+  crypto_helper.c
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\cpu.c(246,62): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_FPCCR_ASPEN_MASK>' and '<unnamed-enum-R_V7M_FPCCR_LSPEN_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+  debug_helper.c
+  helper-a64.c
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper-a64.c(91,18): warning C4319: '~': zero extending 'uint32_t' to 'uint64_t' of greater size [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+  helper.c
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c(1200,47): warning C4319: '~': zero extending 'uint32_t' to 'uint64_t' of greater size [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c(1315,45): warning C4319: '~': zero extending 'uint32_t' to 'uint64_t' of greater size [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c(7976,18): warning C4319: '~': zero extending 'unsigned int' to 'uint64_t' of greater size [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c(8971,45): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_MPU_CTRL_ENABLE_MASK>' and '<unnamed-enum-R_V7M_MPU_CTRL_HFNMIENA_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\helper.c(8975,41): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_MPU_CTRL_ENABLE_MASK>' and '<unnamed-enum-R_V7M_MPU_CTRL_HFNMIENA_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+  iwmmxt_helper.c
+  m_helper.c
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c(201,53): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_SFSR_AUVIOL_MASK>' and '<unnamed-enum-R_V7M_SFSR_SFARVALID_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c(2086,48): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_CFSR_PRECISERR_MASK>' and '<unnamed-enum-R_V7M_CFSR_BFARVALID_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c(2107,47): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_CFSR_DACCVIOL_MASK>' and '<unnamed-enum-R_V7M_CFSR_MMARVALID_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c(2156,37): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_EXCRET_RES1_MASK>' and '<unnamed-enum-R_V7M_EXCRET_DCRS_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+D:\projects\eurka_emu\third_party\unicorn-2.1.4\qemu\target\arm\m_helper.c(2174,37): warning C5287: operands are different enum types '<unnamed-enum-R_V7M_EXCRET_RES1_MASK>' and '<unnamed-enum-R_V7M_EXCRET_S_MASK>'; use an explicit cast to silence this warning [D:\projects\eurka_emu\third_party\unicorn-build\aarch64-softmmu.vcxproj]
+  neon_helper.c
+  op_helper.c
+  pauth_helper.c
+  psci.c
+  sve_helper.c
+  tlb_helper.c
+  translate-a64.c
+  translate.c
+  translate-sve.c
+  vec_helper.c
+  vfp_helper.c
+  Generating Code...
+  Compiling...
+  unicorn_aarch64.c
+  Generating Code...
+  aarch64-softmmu.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\aarch64-softmmu.lib
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  uc.c
+  vl.c
+  cpu.c
+  Generating Code...
+     Creating library D:/projects/eurka_emu/third_party/unicorn-build/Release/unicorn-import.lib and object D:/projects/eurka_emu/third_party/unicorn-build/Release/unicorn-import.exp
+  unicorn.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\unicorn.dll
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  sample_arm64.c
+  sample_arm64.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\sample_arm64.exe
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  sample_ctl.c
+  sample_ctl.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\sample_ctl.exe
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  test_arm64.c
+  test_arm64.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\test_arm64.exe
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  test_ctl.c
+  test_ctl.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\test_ctl.exe
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  test_mem.c
+  test_mem.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\test_mem.exe
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  uc.c
+  vl.c
+  cpu.c
+  Generating Code...
+  unicorn_static.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\unicorn_static.lib
+  Building Custom Rule D:/projects/eurka_emu/third_party/unicorn-2.1.4/CMakeLists.txt
+  unicorn_archive.vcxproj -> D:\projects\eurka_emu\third_party\unicorn-build\Release\unicorn.lib
+EXEC : CMake error : failed to create symbolic link 'D:/projects/eurka_emu/third_party/unicorn-build/Release/unicorn.o': A required privilege is not held by the client. [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+  
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: The command "setlocal [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E create_symlink unicorn.lib D:/projects/eurka_emu/third_party/unicorn-build/Release/unicorn.o [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: if %errorlevel% neq 0 goto :cmEnd [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: :cmEnd [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: :cmErrorLevel [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: exit /b %1 [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: :cmDone [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: if %errorlevel% neq 0 goto :VCEnd [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppCommon.targets(166,5): error MSB3073: :VCEnd" exited with code 1. [D:\projects\eurka_emu\third_party\unicorn-build\unicorn_archive.vcxproj]

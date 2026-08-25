@@ -1,0 +1,35 @@
+{
+  "machine": "hollywood",
+  "description": "Meta Quest 2 -- Qualcomm Snapdragon XR2 (SM8250 Kona)",
+  "android": {
+    "version": 14,
+    "fingerprint": "oculus/hollywood/hollywood:14/UP1A.231005.007.A1/52242990021400150:user/release-keys",
+    "security_patch": "2026-06-02"
+  },
+  "cpu": {
+    "arch": "arm64",
+    "cores": 8,
+    "hz": 300
+  },
+  "memory": {
+    "dram_base": "0x80000000",
+    "default_guest_mb": 2048,
+    "device_ram_mb": 6144
+  },
+  "soc": {
+    "name": "Qualcomm SM8250 Kona (Snapdragon XR2)",
+    "gic": { "version": 3, "dist": "0x17a00000", "redist": "0x17a60000" },
+    "console_uart": { "type": "qcom,geni-uart", "note": "address discovered from DTB at runtime" }
+  },
+  "quest_hardware": {
+    "syncboss": "sensor/tracking MCU over SPI (CONFIG_SYNCBOSS_SPI)",
+    "cameras": 4,
+    "gpu": "Adreno 650 via KGSL (CONFIG_QCOM_KGSL)",
+    "audio_codecs": ["AK4331", "CM710X"]
+  },
+  "boot_chain": [
+    "xbl", "xbl_config", "aop", "tz", "hyp", "cmnlib", "cmnlib64",
+    "keymaster", "uefisecapp", "devcfg", "abl", "qupfw", "imagefv",
+    "boot", "dtbo", "vbmeta"
+  ]
+}
