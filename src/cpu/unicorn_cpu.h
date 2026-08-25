@@ -125,6 +125,9 @@ private:
     uint32_t exc_storm_no_ = 0;
     uint64_t exc_vectored_ = 0;      // count of exceptions delivered to VBAR
     uint64_t last_tlb_miss_ = 0;     // last VA a TLB fill rejected (FAR for aborts)
+    bool mmu_on_ = false;            // set once a high (kernel) VA is translated -- i.e. the
+                                     // MMU + page tables are up. After that, a low-VA miss is a
+                                     // real user fault (enables EL0 demand paging), not idmap.
     uint64_t warns_skipped_ = 0;     // WARN/BUG brk instructions we recovered past
 
     // Emulated GICv3 CPU-interface (ICC_*) register file, keyed by encoding.

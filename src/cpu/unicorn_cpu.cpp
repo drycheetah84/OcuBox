@@ -491,6 +491,7 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
     uc_reg_read(uc_, UC_ARM64_REG_TTBR0_EL1, &ttbr0);
     uc_reg_read(uc_, UC_ARM64_REG_TTBR1_EL1, &ttbr1);
     const bool high = (vaddr >> 63) & 1;                       // kernel-half VAs -> TTBR1
+    if (high) mmu_on_ = true;   // high VAs only exist once the MMU + kernel page tables are up
     uint64_t table = (high ? ttbr1 : ttbr0) & 0x0000fffffffff000ull;
 
     if (table != 0) {
@@ -523,9 +524,18 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
         paddr = ram_->base() + (vaddr - kLinearBase);
         return true;
     }
-    // Kernel-half miss => real translation fault. Low-half miss => identity
-    // (covers execution before the MMU is enabled and idmap physical accesses).
+    // Kernel-half miss => real translation fault. Low-half miss: once the MMU is
+    // on, an unmapped user VA is a real fault (so EL0 demand-paging works -- e.g.
+    // /init's pages fault in on first access); only before the MMU comes up do we
+    // identity-map low addresses (pre-MMU / idmap physical accesses).
     if (high) return false;
+    if (mmu_on_) {
+        static int lo_miss_log = 0;
+        if (lo_miss_log < 200) { lo_miss_log++;
+            uint64_t pc = 0; uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
+            HW_WARN("cpu.uc", "EL0/low fault VA={:#x} at PC={:#x}", vaddr, pc); }
+        return false;
+    }
     paddr = vaddr; return true;
 }
 
