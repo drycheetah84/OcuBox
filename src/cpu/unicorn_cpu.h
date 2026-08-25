@@ -41,6 +41,10 @@ struct UnicornOptions {
     bool stop_on_undef = false;     // halt on the first undefined-instruction exception (debug)
     std::string fn_trace_ksyms;     // path to a ksyms.txt; if set, trace a fixed set of
                                     // timer/irq functions (entry args + return value)
+    bool trace_user = false;        // dump the exec->EL0 handoff (regs + initial stack:
+                                    // argc/argv/envp/auxv/TLS), then trace EL0 instructions
+                                    // and syscalls (SVC) -- userspace ABI diagnostics
+    uint64_t trace_user_insns = 20000; // cap on traced EL0 instructions
 };
 
 class UnicornCpu : public CpuBackend {
@@ -128,6 +132,12 @@ private:
     bool mmu_on_ = false;            // set once a high (kernel) VA is translated -- i.e. the
                                      // MMU + page tables are up. After that, a low-VA miss is a
                                      // real user fault (enables EL0 demand paging), not idmap.
+
+    // --trace-user state: dump EL0 entry once, then trace user instructions/syscalls.
+    bool user_entered_ = false;      // dumped the exec->EL0 handoff yet?
+    uint64_t user_traced_ = 0;       // EL0 instructions traced so far
+    uint64_t user_svc_count_ = 0;    // syscalls seen
+    void dump_el0_entry();           // decode & print initial userspace state + stack
     uint64_t warns_skipped_ = 0;     // WARN/BUG brk instructions we recovered past
 
     // Emulated GICv3 CPU-interface (ICC_*) register file, keyed by encoding.
