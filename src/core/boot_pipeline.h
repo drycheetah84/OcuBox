@@ -24,6 +24,9 @@ private:
     void print_arm64_exception(const cpu::RunResult& rr);
     void walk_page_table(uint64_t va);   // software AArch64 stage-1 walk (VA39/4KB)
     void dump_kmsg();                    // recover the kernel printk log from guest RAM
+    bool dump_kmsg_symbols();            // reliable index-based printk ring walk (uses fixed symbol VAs)
+    void list_dt();                      // print every DT node path + compatible (device survey)
+    void apply_dtb_profile(Bytes& dtb);  // minimal profile: status="disabled" the configured nodes
     void dump_dt();                      // print the timer + GIC device-tree nodes
     void patch_dtb_memory(Bytes& dtb);   // emulate the bootloader: fill /memory size
 

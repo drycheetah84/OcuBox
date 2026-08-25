@@ -1,32 +1,89 @@
 # Prerequisites
+
 *.d
 
-# Compiled Object files
+# External / vendor dependencies
+
+/edk2/
+/third_party/
+
+# Build output
+/build/
+
+# Compiled object files
+
 *.slo
 *.lo
 *.o
 *.obj
 
-# Precompiled Headers
+# Precompiled headers
+
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
+# Compiled dynamic libraries
+
 *.so
 *.dylib
 *.dll
 
 # Fortran module files
+
 *.mod
 *.smod
 
-# Compiled Static libraries
+# Compiled static libraries
+
 *.lai
 *.la
 *.a
 *.lib
 
 # Executables
+
 *.exe
 *.out
 *.app
+
+# Debug / profiling files
+
+*.pdb
+*.ilk
+*.dSYM/
+
+# IDE / editor files
+
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# CMake generated files
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# Logs / runtime output
+
+*.log
+logs/
+crashdumps/
+
+# Temporary files
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# OS files
+
+.DS_Store
+Thumbs.db
+desktop.ini

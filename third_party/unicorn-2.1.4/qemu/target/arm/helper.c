@@ -2417,23 +2417,14 @@ static void gt_ctl_write(CPUARMState *env, const ARMCPRegInfo *ri,
                          int timeridx,
                          uint64_t value)
 {
-#if 0
-    ARMCPU *cpu = env_archcpu(env);
+    /* Store the guest-written ENABLE(bit0)/IMASK(bit1). ISTATUS(bit2) is derived.
+     * The QEMU timer recalc / qemu_set_irq path is intentionally NOT used here:
+     * uc_arm64_timer_poll() (driven from the emulator's block hook and idle loop)
+     * recomputes ISTATUS from the counter vs CVAL and raises the CPU IRQ line.
+     * Without this store the kernel's CNTV_CTL_EL0 ENABLE write was silently
+     * dropped, so the virtual-timer clockevent never fired. */
     uint32_t oldval = env->cp15.c14_timer[timeridx].ctl;
-
     env->cp15.c14_timer[timeridx].ctl = deposit64(oldval, 0, 2, value);
-    if ((oldval ^ value) & 1) {
-        /* Enable toggled */
-        gt_recalc_timer(cpu, timeridx);
-    } else if ((oldval ^ value) & 2) {
-        /* IMASK toggled: don't need to recalculate,
-         * just set the interrupt line based on ISTATUS
-         */
-        int irqstate = (oldval & 4) && !(value & 2);
-
-        qemu_set_irq(cpu->gt_timer_outputs[timeridx], irqstate);
-    }
-#endif
 }
 
 static void gt_phys_timer_reset(CPUARMState *env, const ARMCPRegInfo *ri)
@@ -6653,17 +6644,6 @@ static void arm_hollywood_timer_poll(CPUState *cs)
     int pist = (cnt >= p->cval);
     p->ctl = deposit32(p->ctl, 2, 1, pist);
     hw_phys_out = (p->ctl & 1) && pist && !(p->ctl & 2);
-
-    {
-        static unsigned long _hw_poll_n = 0;
-        if ((_hw_poll_n++ % 20000) == 0) {
-            fprintf(stderr, "[hwtimer] cnt=%llu freq_hz=%llu vctl=%u vcval=%llu vout=%d | pctl=%u pcval=%llu pout=%d | voff=%llu\n",
-                    (unsigned long long)cnt, (unsigned long long)cpu->gt_cntfrq_hz,
-                    (unsigned)v->ctl, (unsigned long long)v->cval, hw_virt_out,
-                    (unsigned)p->ctl, (unsigned long long)p->cval, hw_phys_out,
-                    (unsigned long long)env->cp15.cntvoff_el2);
-        }
-    }
 
     hw_gic_update_irq(cs);
 }

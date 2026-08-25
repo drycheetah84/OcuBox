@@ -153,6 +153,83 @@ const FdtNode* Fdt::find(const std::string& path) const {
     return n;
 }
 
+std::string fdt_node_path(const FdtNode* n) {
+    if (!n) return {};
+    if (!n->parent) return "/";
+    std::vector<const FdtNode*> chain;
+    for (const FdtNode* c = n; c && c->parent; c = c->parent) chain.push_back(c);
+    std::string path;
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it) { path += '/'; path += (*it)->name; }
+    return path;
+}
+
+Bytes fdt_add_prop(std::span<const uint8_t> blob, const std::string& id,
+                   const std::string& pname, std::span<const uint8_t> value,
+                   bool& modified, std::string& out_path) {
+    modified = false;
+    Bytes out(blob.begin(), blob.end());          // default: unchanged copy
+    Fdt fdt;
+    try { fdt = Fdt::parse(blob); } catch (...) { return out; }
+    const FdtNode* node = (!id.empty() && id[0] == '/') ? fdt.find(id) : fdt.find_compatible(id);
+    if (!node || node->props.empty()) return out;  // need a property to anchor the insert
+    out_path = fdt_node_path(node);
+
+    uint32_t totalsize   = be32(blob.data() + 4);
+    uint32_t off_strings = be32(blob.data() + 12);
+    uint32_t size_strings= be32(blob.data() + 32);
+    uint32_t size_struct = be32(blob.data() + 36);
+
+    size_t ins = node->props.front().blob_offset - 12;   // start of the first FDT_PROP token
+
+    // Locate pname in the strings block, or append it (with its NUL).
+    const char* strings = reinterpret_cast<const char*>(blob.data()) + off_strings;
+    const uint32_t nsz = (uint32_t)pname.size() + 1;
+    long nameoff = -1;
+    for (uint32_t o = 0; o + nsz <= size_strings; ++o)
+        if (std::strcmp(strings + o, pname.c_str()) == 0) { nameoff = o; break; }
+    const bool append_name = (nameoff < 0);
+    if (append_name) nameoff = size_strings;
+
+    // Property token: FDT_PROP | len | nameoff | value (padded to 4).
+    const uint32_t vlen = (uint32_t)value.size();
+    const uint32_t vpad = align4(vlen);
+    Bytes prop(12 + vpad, 0);
+    auto p32 = [&](int o, uint32_t v){ prop[o]=(uint8_t)(v>>24); prop[o+1]=(uint8_t)(v>>16);
+                                       prop[o+2]=(uint8_t)(v>>8); prop[o+3]=(uint8_t)v; };
+    p32(0, FDT_PROP); p32(4, vlen); p32(8, (uint32_t)nameoff);
+    if (vlen) std::memcpy(prop.data() + 12, value.data(), vlen);
+    const uint32_t grow = (uint32_t)prop.size();
+
+    // The strings block content is [off_strings, off_strings+size_strings); a new
+    // name must be appended right after the content (nameoff = old size_strings),
+    // NOT after any trailing padding that may follow it in the blob.
+    const size_t strings_end = (size_t)off_strings + size_strings;
+    Bytes nb;
+    nb.reserve(blob.size() + grow + (append_name ? nsz : 0));
+    nb.insert(nb.end(), blob.begin(), blob.begin() + ins);               // up to insert point
+    nb.insert(nb.end(), prop.begin(), prop.end());                       // the new property
+    nb.insert(nb.end(), blob.begin() + ins, blob.begin() + off_strings); // rest of struct block
+    nb.insert(nb.end(), blob.begin() + off_strings, blob.begin() + strings_end); // strings content
+    if (append_name) { nb.insert(nb.end(), pname.begin(), pname.end()); nb.push_back(0); }
+    nb.insert(nb.end(), blob.begin() + strings_end, blob.end());         // trailing padding, if any
+
+    auto wr32 = [&](size_t o, uint32_t v){ nb[o]=(uint8_t)(v>>24); nb[o+1]=(uint8_t)(v>>16);
+                                           nb[o+2]=(uint8_t)(v>>8); nb[o+3]=(uint8_t)v; };
+    wr32(4,  totalsize + grow + (append_name ? nsz : 0));  // totalsize
+    wr32(12, off_strings + grow);                          // off_dt_strings
+    wr32(32, size_strings + (append_name ? nsz : 0));      // size_dt_strings
+    wr32(36, size_struct + grow);                          // size_dt_struct
+    modified = true;
+    return nb;
+}
+
+Bytes fdt_disable(std::span<const uint8_t> blob, const std::string& id,
+                  bool& modified, std::string& out_path) {
+    static const uint8_t kDisabled[] = { 'd','i','s','a','b','l','e','d',0 };
+    return fdt_add_prop(blob, id, "status", std::span<const uint8_t>(kDisabled, sizeof kDisabled),
+                        modified, out_path);
+}
+
 const FdtNode* Fdt::find_compatible(const std::string& s) const {
     const FdtNode* found = nullptr;
     auto dfs = [&](const FdtNode* n, auto&& self) -> void {

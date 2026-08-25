@@ -54,4 +54,23 @@ private:
     uint32_t boot_cpuid_ = 0;
 };
 
+// Return the '/'-rooted path of a node (walks parent links). "/" for the root.
+std::string fdt_node_path(const FdtNode* n);
+
+// Produce a new DTB blob with status="disabled" added to the first node matching
+// `id` (an exact '/'-rooted path if it starts with '/', otherwise a substring of
+// a node's `compatible`). On success sets modified=true and out_path to the
+// node's path; on no-match returns an unchanged copy with modified=false. The
+// blob is grown correctly (struct + strings + header sizes fixed up) so the
+// original DTB is never mutated in place -- callers keep the stock blob intact.
+Bytes fdt_disable(std::span<const uint8_t> blob, const std::string& id,
+                  bool& modified, std::string& out_path);
+
+// Add a property `pname`=`value` to the first node matching `id` (path or
+// compatible-substring). Grows the blob correctly. Used to advertise the
+// initramfs to the kernel via /chosen/linux,initrd-start / -end.
+Bytes fdt_add_prop(std::span<const uint8_t> blob, const std::string& id,
+                   const std::string& pname, std::span<const uint8_t> value,
+                   bool& modified, std::string& out_path);
+
 } // namespace hw::boot

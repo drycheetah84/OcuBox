@@ -50,13 +50,24 @@ void GicV3::write(uint64_t offset, uint64_t value, unsigned size) {
 uint64_t GicV3::dist_read(uint64_t off, unsigned) {
     switch (off) {
         case GICD_CTLR:  return gicd_ctlr_ & ~(1u << 31);   // RWP=0: no write pending
-        case GICD_TYPER: return 0x0000001F;                 // ITLinesNumber=31 -> 1020 SPIs
+        // ITLinesNumber=31 (-> 1020 SPIs) and IDbits=9 (bits[23:19]) so the kernel's
+        // GIC_ID_NR = 1<<(IDbits+1) = 1024. Without IDbits set, GIC_ID_NR would be 2
+        // and gic_irq_domain_map rejects every INTID>=2 with -EPERM (breaking the
+        // arch-timer PPI 27 mapping -> "arch_timer: No interrupt available").
+        case GICD_TYPER: return (9u << 19) | 0x1Fu;         // 0x0048001F
         case GICD_IIDR:  return 0x0000043B;                 // ARM implementer
         case GICD_PIDR2: return 0x30;                       // ArchRev=3 (GICv3)
         default:         return 0;                          // IGROUP/IPRIORITY/ICFG/... read 0
     }
 }
 void GicV3::dist_write(uint64_t off, uint64_t value, unsigned) {
+    // GICD_ISENABLER (0x100..0x17f): one bit per SPI enabled. Log which SPIs the
+    // kernel enables -- proof that an interrupt was successfully mapped+requested.
+    if (off >= 0x100 && off < 0x180 && value) {
+        unsigned base = (unsigned)((off - 0x100) / 4) * 32;
+        for (int b = 0; b < 32; ++b) if (value & (1u << b))
+            HW_WARN("gic", "GICD_ISENABLER: enable SPI intid {}", base + b);
+    }
     if (off == GICD_CTLR) gicd_ctlr_ = (uint32_t)value;
     // All other distributor writes (enables, priorities, configs) are accepted
     // and dropped -- we don't deliver interrupts yet.
@@ -86,6 +97,11 @@ uint64_t GicV3::redist_read(uint64_t off, unsigned size) {
 }
 void GicV3::redist_write(uint64_t off, uint64_t value, unsigned) {
     uint64_t reg = off % kRdFrameStride;
+    // SGI frame GICR_ISENABLER0 (SGI_base 0x10000 + 0x100): PPIs/SGIs enabled per CPU.
+    if (reg == 0x10100 && value) {
+        for (int b = 0; b < 32; ++b) if (value & (1u << b))
+            HW_WARN("gic", "GICR_ISENABLER0: enable PPI/SGI intid {}", b);
+    }
     if (reg == GICR_WAKER) gicr_waker_ = (uint32_t)value;   // driver clears ProcessorSleep
 }
 

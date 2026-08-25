@@ -117,6 +117,16 @@ tlb_miss:
     if (probe) {
         return false;
     }
+#if defined(TARGET_ARM) || defined(TARGET_AARCH64)
+    /* Deliver a real ARM translation fault to the guest (vectors to VBAR_EL1)
+     * so the guest kernel handles the bad access itself, instead of aborting
+     * emulation. NORETURN. */
+    {
+        void arm_uc_deliver_tlb_miss(CPUState *cs, vaddr addr,
+                                     MMUAccessType access_type, int mmu_idx);
+        arm_uc_deliver_tlb_miss(cs, address, rw, mmu_idx);
+    }
+#endif
     raise_mmu_exception(cs, address, rw, retaddr);
     return false;
 }

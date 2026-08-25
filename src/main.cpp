@@ -57,9 +57,13 @@ struct Args {
     bool owned_mem = false;
     bool step = false;
     bool cpu_tlb = false;   // use Unicorn's native CPU TLB (native MMU + native exceptions)
+    bool no_spin = false;   // disable spin-wait detection (for slow but progressing loops)
     bool stop_on_undef = false;
     bool trace_irq = false; // symbol-trace timer/irq functions (needs build/ksyms.txt)
     bool dump_dt = false;
+    bool list_dt = false;   // print every DT node path + compatible and exit
+    std::string profile = "stock";          // "stock" or "minimal"
+    std::vector<std::string> disable_nodes; // extra DT nodes to disable (compatible/path)
 };
 
 const char* arg_val(int argc, char** argv, int& i) {
@@ -194,6 +198,30 @@ int cmd_boot(const Args& a) {
     cfg.stop_on_mmio = a.stop_on_mmio;
     cfg.log_mmio = a.log_mmio;
     cfg.dump_dt = a.dump_dt;
+    cfg.list_dt = a.list_dt;
+    cfg.profile = a.profile;
+    // The "minimal" profile disables non-essential vendor devices (display, camera,
+    // GPU, sensors) so the kernel reaches userspace/initramfs. Nodes are named by a
+    // `compatible` substring; each is verified (found/skipped) and logged at boot.
+    // This list is built up iteratively from real probe failures -- it starts with
+    // the display stack (the current fatal SDE crash) and grows per attempt.
+    if (a.profile == "minimal") {
+        cfg.dtb_disable = {
+            // Display subsystem (SDE/MDSS/DSI) -- non-essential for a headless
+            // console boot, depends on unemulated display clocks/regulators, and
+            // its probe/cleanup paths crash/livelock (sde_rsc NULL-deref @489M,
+            // then devres_remove loop in sde-kms cleanup).
+            "/soc/qcom,sde_rscc@af20000",        // qcom,sde-rsc
+            "/soc/qcom,mdss_mdp@ae00000",        // qcom,sde-kms (display core)
+            "/soc/qcom,mdss_dsi_ctrl0@ae94000",  // qcom,dsi-ctrl-hw-v2.4
+            "/soc/qcom,mdss_dsi_ctrl1@ae96000",  // qcom,dsi-ctrl-hw-v2.4
+            "/soc/qcom,mdss_dsi_phy0@ae94400",   // qcom,dsi-phy-v4.1
+            "/soc/qcom,mdss_dsi_phy1@ae96400",   // qcom,dsi-phy-v4.1
+            "/soc/qcom,mdss_dsi_pll@ae94900",    // mdss_pll (Bad page state @642M)
+            "/soc/qcom,mdss_dsi_pll@ae96900",    // mdss_pll
+        };
+    }
+    for (const auto& d : a.disable_nodes) cfg.dtb_disable.push_back(d);
     core::Emulator emu(std::move(cfg));
 
     // Attach the real ARM64 execution backend (Unicorn / QEMU-TCG).
@@ -209,6 +237,7 @@ int cmd_boot(const Args& a) {
     if (a.cpu_tlb) { uopts.our_mmu = false; uopts.vector_exc = false; }  // native MMU + exceptions
     uopts.stop_on_undef = a.stop_on_undef;
     if (a.trace_irq) uopts.fn_trace_ksyms = "build/ksyms.txt";
+    if (a.no_spin) uopts.hot_threshold = 0;   // disable spin detection (rely on timeout)
     emu.backend = std::make_unique<cpu::UnicornCpu>(uopts);
 
     core::BootPipeline pipeline(emu);
@@ -248,9 +277,13 @@ int main(int argc, char** argv) {
         else if (s == "--owned-mem") a.owned_mem = true;
         else if (s == "--step") a.step = true;
         else if (s == "--cpu-tlb") a.cpu_tlb = true;
+        else if (s == "--no-spin") a.no_spin = true;
         else if (s == "--stop-on-undef") a.stop_on_undef = true;
         else if (s == "--trace-irq") a.trace_irq = true;
         else if (s == "--dump-dt") a.dump_dt = true;
+        else if (s == "--list-dt") a.list_dt = true;
+        else if (s == "--profile") a.profile = arg_val(argc, argv, i);
+        else if (s == "--disable-node") a.disable_nodes.push_back(arg_val(argc, argv, i));
         else if (s == "--debug") { a.verbose = true; a.log_mmio = true; }
         else if (s == "-v" || s == "--verbose") a.verbose = true;
         else if (s == "-h" || s == "--help") { usage(); return 0; }

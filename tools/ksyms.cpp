@@ -111,16 +111,27 @@ int main(int argc, char** argv) {
         }
         if (!nstart) continue;
         namesStart = nstart;
-        // decode names until we reach markers_start M -> that count is N.
-        { std::vector<std::string> tmp; size_t pos = namesStart;
-          while (pos < M) { uint8_t len = k[pos++]; std::string nm;
+        // num_syms is stored in its own 256-byte-aligned slot just before names.
+        // Scan backward from names_start for a plausible count (100k..120k here,
+        // but accept any 20k..2M) and use it as the authoritative N so that the
+        // names<->offsets pairing stays exact.
+        uint64_t stored_n = 0;
+        for (size_t o = namesStart - 8; o + 0x400 > namesStart && o >= 8; o -= 8) {
+            uint64_t v = U64(o);
+            if (v >= 20000 && v <= 2000000) { stored_n = v; break; }
+        }
+        if (!stored_n) continue;
+        N = stored_n;
+        { std::vector<std::string> tmp; tmp.reserve(N); size_t pos = namesStart;
+          for (uint64_t s = 0; s < N; s++) { uint8_t len = k[pos++]; std::string nm;
               for (int c = 0; c < len; c++) nm += ctok[k[pos + c]]; pos += len; tmp.push_back(std::move(nm)); }
-          N = tmp.size(); names = std::move(tmp);
+          names = std::move(tmp);
           numoff = 0; tt = ctt; ti = cti; for (int m = 0; m < 256; m++) tok[m] = ctok[m];
-          // offsets end at bestEnd (one past last), N entries -> offsets_start.
+          // offsets: exactly N entries ending at bestEnd (one past the last offset).
           offsetsStart_global = bestEnd - 4 * N;
-          printf("[dbg] names_start=0x%zx N=%llu offsets_start=0x%zx off[0]=%d\n",
-                 namesStart, (unsigned long long)N, offsetsStart_global, S32(offsetsStart_global));
+          printf("[dbg] names_start=0x%zx N=%llu(stored) offsets_start=0x%zx off[0]=%d off[N-1]=%d\n",
+                 namesStart, (unsigned long long)N, offsetsStart_global,
+                 S32(offsetsStart_global), S32(bestEnd - 4));
         }
         if (N) break;
     }

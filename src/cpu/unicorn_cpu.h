@@ -31,7 +31,7 @@ struct UnicornOptions {
     bool stop_on_unmapped = true;   // halt on the first unclaimed access
     bool log_mmio = false;          // log every device MMIO access
     uint64_t timeout_us = 20000000; // wall-clock cap (us) so a spin can't hang us
-    uint64_t hot_threshold = 3000000; // per-PC hit count that flags a spin-wait
+    uint64_t hot_threshold = 12000000; // per-PC hits within a window that flags a spin-wait (0=off)
     uint64_t heartbeat = 20000000;  // print progress every N insns (0 = off)
     bool code_hook = true;          // per-instruction hook (count/trace/spin) -- disable to test TCG interaction
     bool host_backed_ram = true;    // map guest RAM via uc_mem_map_ptr; false = uc_mem_map + copy
@@ -69,6 +69,9 @@ private:
     static uint64_t mmio_read_cb(uc_engine*, uint64_t offset, unsigned size, void* user);
     static void mmio_write_cb(uc_engine*, uint64_t offset, unsigned size, uint64_t value, void* user);
     static void code_cb(uc_engine*, uint64_t address, uint32_t size, void* user);
+    // Per-basic-block hook (fast path): instruction counting, timer poll, spin
+    // detection and heartbeat -- avoids the per-instruction UC_HOOK_CODE cost.
+    static void block_cb(uc_engine*, uint64_t address, uint32_t size, void* user);
     static bool unmapped_cb(uc_engine*, int type, uint64_t address, int size, int64_t value, void* user);
     static void intr_cb(uc_engine*, uint32_t intno, void* user);
     // TLB-fill hook: we perform ARMv8 stage-1 translation ourselves.
@@ -100,6 +103,8 @@ private:
 
     uint64_t insns_ = 0;
     uint64_t traced_ = 0;
+    uint64_t last_hb_ = 0;    // last heartbeat bucket (insns_/heartbeat)
+    uint64_t last_win_ = 0;   // last spin-window bucket (insns_/kSpinWindow)
     LastAccess last_mmio_;
     LastAccess fault_;
 
@@ -124,6 +129,10 @@ private:
 
     // Emulated GICv3 CPU-interface (ICC_*) register file, keyed by encoding.
     std::unordered_map<uint32_t, uint64_t> icc_;
+
+    // Spin detector histogram window: reset counts every this many instructions
+    // so a real spin (dominates a window) is caught but long finite loops aren't.
+    static constexpr uint64_t kSpinWindow = 0x4000000; // 64M instructions
 
     // Ring of recently executed PCs (crash forensics).
     static constexpr size_t kPcRing = 48;

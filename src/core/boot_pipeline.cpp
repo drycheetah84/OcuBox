@@ -169,6 +169,7 @@ int BootPipeline::run() {
         return std::format("dram_base={:#x}, {} MMIO devices", emu_.dram_base, emu_.bus.devices().size());
     });
 
+    if (emu_.config.list_dt && !failed_) { list_dt(); return 0; }
     if (emu_.config.dump_dt && !failed_) { dump_dt(); return 0; }
 
     // 5) Loading boot image ---------------------------------------------------
@@ -216,13 +217,39 @@ int BootPipeline::run() {
         if (!emu_.boot_img.dtb.empty()) {
             // Emulate the bootloader: patch the /memory node with the real RAM size.
             emu_.dtb_image.assign(emu_.boot_img.dtb.begin(), emu_.boot_img.dtb.end());
+            apply_dtb_profile(emu_.dtb_image);   // minimal profile: disable chosen nodes
             patch_dtb_memory(emu_.dtb_image);
             emu_.dtb_load = cursor;
+            // Advertise the initramfs so the kernel unpacks it instead of trying to
+            // mount a (nonexistent) block root. The ramdisk lands after the DTB; we
+            // reserve 4KB slack for the two /chosen properties we add, then write
+            // /chosen/linux,initrd-start / -end (8-byte big-endian phys addresses).
+            if (!emu_.boot_img.ramdisk.empty()) {
+                emu_.ramdisk_load = round_up(emu_.dtb_load + emu_.dtb_image.size() + 0x1000, 0x100000);
+                uint64_t rd_end = emu_.ramdisk_load + emu_.boot_img.ramdisk.size();
+                auto be64 = [](uint64_t v){ Bytes b(8); for (int i = 0; i < 8; ++i) b[i] = (uint8_t)(v >> (56 - 8*i)); return b; };
+                for (auto [name, val] : { std::pair{std::string("linux,initrd-start"), emu_.ramdisk_load},
+                                          std::pair{std::string("linux,initrd-end"),   rd_end} }) {
+                    bool mod = false; std::string p; Bytes v = be64(val);
+                    Bytes nb = boot::fdt_add_prop(emu_.dtb_image, "/chosen", name, v, mod, p);
+                    if (mod) { emu_.dtb_image = std::move(nb);
+                        HW_INFO("boot.dtb", "/chosen {} = {:#x}", name, val);
+                    } else HW_WARN("boot.dtb", "could not add /chosen/{} (no /chosen node?)", name);
+                }
+            }
+            // Verify the initrd properties survived in the final blob.
+            try {
+                auto f2 = boot::Fdt::parse(emu_.dtb_image);
+                if (const boot::FdtNode* ch = f2.find("/chosen")) {
+                    for (const auto& p : ch->props)
+                        HW_WARN("boot.dtb", "  /chosen prop: {} ({} bytes)", p.name, p.data.size());
+                } else HW_WARN("boot.dtb", "  /chosen NOT FOUND in final blob!");
+            } catch (const std::exception& e) { HW_WARN("boot.dtb", "  final blob re-parse FAILED: {}", e.what()); }
             emu_.ram->load(emu_.dtb_load, emu_.dtb_image);
             cursor = round_up(emu_.dtb_load + emu_.dtb_image.size(), 0x100000);
         }
         if (!emu_.boot_img.ramdisk.empty()) {
-            emu_.ramdisk_load = cursor;
+            if (!emu_.ramdisk_load) emu_.ramdisk_load = cursor;   // no-DTB fallback
             emu_.ram->load(emu_.ramdisk_load, emu_.boot_img.ramdisk);
         }
         return std::format("{} MB @ {:#x}; kernel@{:#x} dtb@{:#x} ramdisk@{:#x}",
@@ -266,6 +293,7 @@ int BootPipeline::run() {
                         GREEN, RST, DIM, rr.detail.c_str(),
                         (unsigned long long)rr.instructions_executed,
                         (unsigned long long)rr.pc, RST);
+            dump_kmsg();   // show boot progress even on a clean halt/timeout
             print_diagnostics("");
         } else if (rr.kind == cpu::RunResult::Kind::Spin) {
             // Not a crash: the CPU really executed, then got stuck busy-waiting on
@@ -434,6 +462,57 @@ void BootPipeline::walk_page_table(uint64_t va) {
 // Qualcomm DTBs ship a /memory node with size 0; the bootloader (ABL) writes in
 // the real RAM size before entering the kernel. We do the same, in place, so the
 // kernel's memblock has usable memory (otherwise every early allocation fails).
+void BootPipeline::list_dt() {
+    if (!emu_.fdt || !emu_.fdt->root()) { std::printf("(no DTB)\n"); return; }
+    std::printf("\n%s== device-tree node survey (path : compatible) ==%s\n", BOLD, RST);
+    int count = 0;
+    auto walk = [&](const boot::FdtNode* n, auto&& self) -> void {
+        std::string path = boot::fdt_node_path(n);
+        std::string comp = n->compatible();
+        const boot::FdtProp* st = n->prop("status");
+        std::printf("  %-52s %s%s\n", path.c_str(), comp.empty() ? "-" : comp.c_str(),
+                    st ? (std::string("  [status=") + st->str() + "]").c_str() : "");
+        count++;
+        for (auto& c : n->children) self(c.get(), self);
+    };
+    walk(emu_.fdt->root(), walk);
+    std::printf("%s== %d nodes ==%s\n\n", BOLD, count, RST);
+}
+
+// Apply the minimal-profile node disables (config.dtb_disable) to the DTB the
+// kernel will actually boot, leaving the stock blob (emu_.boot_img.dtb)
+// untouched. Every modification is logged. The stock and resulting minimal DTB
+// are written to profiles/ so the faithful config is always recoverable.
+void BootPipeline::apply_dtb_profile(Bytes& dtb) {
+    namespace fs = std::filesystem;
+    // Always preserve the stock DTB on disk.
+    try {
+        fs::create_directories("profiles/quest2-stock");
+        std::FILE* f = std::fopen("profiles/quest2-stock/quest2.dtb", "wb");
+        if (f) { std::fwrite(emu_.boot_img.dtb.data(), 1, emu_.boot_img.dtb.size(), f); std::fclose(f); }
+    } catch (...) {}
+
+    if (emu_.config.dtb_disable.empty()) return;   // stock profile: no changes
+
+    HW_WARN("dtb", "[{}] applying {} node disable(s):", emu_.config.profile,
+            emu_.config.dtb_disable.size());
+    for (const auto& id : emu_.config.dtb_disable) {
+        bool modified = false; std::string path;
+        Bytes nb = boot::fdt_disable(dtb, id, modified, path);
+        if (modified) { dtb = std::move(nb);
+            HW_WARN("dtb", "  disabled {}  ({})", path, id);
+        } else {
+            HW_WARN("dtb", "  NOT FOUND: {} (no matching node -- skipped)", id);
+        }
+    }
+    // Save the resulting minimal DTB for the record.
+    try {
+        fs::create_directories("profiles/quest2-minimal");
+        std::FILE* f = std::fopen("profiles/quest2-minimal/quest2.dtb", "wb");
+        if (f) { std::fwrite(dtb.data(), 1, dtb.size(), f); std::fclose(f); }
+    } catch (...) {}
+}
+
 void BootPipeline::patch_dtb_memory(Bytes& dtb) {
     if (!emu_.fdt || !emu_.fdt->root()) return;
     const boot::FdtNode* mem = nullptr;
@@ -559,7 +638,49 @@ void BootPipeline::dump_dt() {
     std::printf("\n");
 }
 
+// Walk the printk ring buffer using the kernel's own indices (reliable even
+// after the buffer wraps). Symbol VAs are fixed for the Quest 2 4.19 kernel
+// (extract with tools/ksyms.cpp; PA = VA - 0xffffff8008080000 + 0x80080000).
+// Returns true if it produced a coherent log.
+bool BootPipeline::dump_kmsg_symbols() {
+    if (!emu_.backend) return false;
+    constexpr uint64_t VA_log_buf      = 0xffffff8009be4670ull; // char *log_buf
+    constexpr uint64_t VA_log_buf_len  = 0xffffff8009be4678ull; // u32
+    constexpr uint64_t VA_log_first_idx= 0xffffff8009da03b8ull; // u32
+    constexpr uint64_t VA_log_next_idx = 0xffffff8009da0398ull; // u32
+    uint64_t buf_va = 0; uint32_t buf_len = 0, first = 0, next = 0;
+    if (!emu_.backend->read_mem(VA_log_buf, &buf_va, 8)) return false;
+    if (!emu_.backend->read_mem(VA_log_buf_len, &buf_len, 4)) return false;
+    if (!emu_.backend->read_mem(VA_log_first_idx, &first, 4)) return false;
+    if (!emu_.backend->read_mem(VA_log_next_idx, &next, 4)) return false;
+    if (buf_va < 0xffffff8000000000ull || buf_len < 0x1000 || buf_len > 0x400000) return false;
+    if (first >= buf_len || next >= buf_len) return false;
+
+    std::printf("\n%s== kernel log (printk ring @ %#llx, len %u, first=%u next=%u) ==%s\n",
+                BOLD, (unsigned long long)buf_va, buf_len, first, next, RST);
+    uint32_t idx = first; int printed = 0;
+    for (int n = 0; n < 60000; ++n) {
+        if (idx == next) break;
+        uint8_t hdr[16];
+        if (!emu_.backend->read_mem(buf_va + idx, hdr, 16)) break;
+        uint16_t len = (uint16_t)(hdr[8] | (hdr[9] << 8));
+        uint16_t text_len = (uint16_t)(hdr[10] | (hdr[11] << 8));
+        if (len == 0) { idx = 0; continue; }                 // wrapped to start
+        if (idx + 16 + text_len > buf_len) break;
+        if (text_len > 0 && text_len <= 1024) {
+            std::string line(text_len, '\0');
+            if (emu_.backend->read_mem(buf_va + idx + 16, line.data(), text_len)) {
+                std::printf("  %s\n", line.c_str()); printed++;
+            }
+        }
+        idx += len;
+    }
+    std::printf("%s== end kernel log (%d lines) ==%s\n", BOLD, printed, RST);
+    return printed > 0;
+}
+
 void BootPipeline::dump_kmsg() {
+    if (dump_kmsg_symbols()) return;   // reliable index-based walk first
     if (!emu_.ram) return;
     auto sp = emu_.ram->span();
     size_t scan = sp.size();   // full RAM: the relocated log buffer can be high

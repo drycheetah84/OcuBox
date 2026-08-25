@@ -5,6 +5,7 @@
 #include "memory/guest_memory.h"
 
 #include <chrono>
+#include <thread>
 #include <cstdio>
 #include <cstring>
 #include <unicorn/unicorn.h>
@@ -115,7 +116,14 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
 
     uc_hook h;
     if (opts_.code_hook) {
-        uc_hook_add(uc_, &h, UC_HOOK_CODE, (void*)code_cb, this, 1, 0);
+        // Fast path: a per-block hook carries instruction counting, the arch-timer
+        // poll, spin detection and the heartbeat. The per-instruction UC_HOOK_CODE
+        // (which forces TCG to instrument every instruction and is ~10-50x slower)
+        // is only added when we actually need per-instruction visibility.
+        uc_hook_add(uc_, &h, UC_HOOK_BLOCK, (void*)block_cb, this, 1, 0);
+        const bool need_insn_hook = opts_.trace || !opts_.fn_trace_ksyms.empty();
+        if (need_insn_hook)
+            uc_hook_add(uc_, &h, UC_HOOK_CODE, (void*)code_cb, this, 1, 0);
         uc_hook_add(uc_, &h, UC_HOOK_MEM_UNMAPPED, (void*)unmapped_cb, this, 1, 0);
         uc_hook_add(uc_, &h, UC_HOOK_MEM_PROT, (void*)unmapped_cb, this, 1, 0);
         uc_hook_add(uc_, &h, UC_HOOK_INTR, (void*)intr_cb, this, 1, 0);
@@ -136,12 +144,9 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
 // ("<hexaddr> <type> <name>" per line) so code_cb can trace their calls.
 void UnicornCpu::load_fn_trace() {
     static const char* kWatch[] = {
-        "arch_timer_of_init", "arch_timer_mem_of_init", "irq_of_parse_and_map",
-        "of_irq_get", "of_irq_parse_one", "of_irq_parse_raw", "of_irq_find_parent",
-        "irq_create_of_mapping", "irq_create_fwspec_mapping", "irq_find_matching_fwspec",
-        "__irq_domain_alloc_irqs", "irq_domain_alloc_irqs", "gic_irq_domain_translate",
-        "gic_irq_domain_alloc", "gic_irq_domain_select", "irq_domain_translate_twocell",
-        "irq_create_mapping_affinity", "__irq_create_mapping_affinity",
+        "irq_of_parse_and_map", "irq_create_fwspec_mapping",
+        "gic_irq_domain_translate", "gic_irq_domain_alloc", "gic_irq_domain_map",
+        "irq_domain_alloc_descs", "__irq_alloc_descs", "irq_set_percpu_devid",
     };
     std::FILE* f = std::fopen(opts_.fn_trace_ksyms.c_str(), "rb");
     if (!f) { HW_WARN("trace", "fn-trace: cannot open {}", opts_.fn_trace_ksyms); return; }
@@ -188,7 +193,32 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
             if (opts_.timeout_us && elapsed_us >= opts_.timeout_us) break;
         }
     } else {
-        e = uc_emu_start(uc_, pc, 0, opts_.timeout_us, max_instructions);
+        // Run with WFI/idle handling: when the guest executes WFI it has finished
+        // work and is waiting for an interrupt, so uc_emu_start returns cleanly.
+        // Poll the (host-time-based) generic timer and resume, so timer ticks keep
+        // flowing and the scheduler/idle loop makes progress. A genuine dead stall
+        // (waiting on an IRQ we never deliver) is bounded by the wall-clock timeout.
+        for (;;) {
+            uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
+            uint64_t el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - t0).count();
+            if (opts_.timeout_us && el >= opts_.timeout_us) break;
+            if (insns_ >= max_instructions) break;
+            uint64_t rem_to = opts_.timeout_us ? (opts_.timeout_us - el) : 0;
+            uint64_t rem_ins = max_instructions - insns_;
+            e = uc_emu_start(uc_, pc, 0, rem_to, rem_ins);
+            if (e != UC_ERR_OK || spin_) break;              // real stop / error / spin
+            if (insns_ >= max_instructions) break;           // hit the instruction cap
+            el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - t0).count();
+            if (opts_.timeout_us && el >= opts_.timeout_us) break;   // timed out
+            // Clean return with budget left => WFI idle halt. Advance the timer so a
+            // due tick raises the CPU IRQ line, then resume (WFI falls through once
+            // the interrupt is pending). Brief sleep so we don't spin at 100% while
+            // the host-time counter climbs to the programmed compare value.
+            uc_arm64_timer_poll(uc_);
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
     }
     elapsed_us = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::steady_clock::now() - t0).count();
@@ -299,15 +329,53 @@ std::vector<uint64_t> UnicornCpu::recent_pcs() const {
     return out;
 }
 
-void UnicornCpu::code_cb(uc_engine* uc, uint64_t address, uint32_t /*size*/, void* user) {
+// Fast path: fires once per translated basic block (not per instruction), so
+// TCG can run blocks natively. Carries instruction counting, the arch-timer
+// poll (interrupts are checked at block boundaries anyway), spin detection and
+// the heartbeat.
+void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
-    self->insns_++;
+    self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
     self->pc_ring_[self->pc_ring_pos_] = address;
     self->pc_ring_pos_ = (self->pc_ring_pos_ + 1) % kPcRing;
 
     // Drive the ARM generic timer: recompute its output and the CPU IRQ line.
-    // (Cheap poll; the timer fires an IRQ when the counter crosses the compare.)
-    if ((self->insns_ & 0xff) == 0) uc_arm64_timer_poll(uc);
+    uc_arm64_timer_poll(uc);
+
+    // Spin-wait detection (windowed): a real spin dominates a short window of
+    // execution; legitimate long loops complete and move on. Reset the histogram
+    // per window so cumulative counts over a long boot don't false-positive.
+    if (self->opts_.hot_threshold) {
+        uint64_t win = self->insns_ / kSpinWindow;
+        if (win != self->last_win_) {
+            self->last_win_ = win;
+            std::memset(self->hot_.data(), 0, self->hot_.size() * sizeof(uint32_t));
+        }
+        uint32_t& bucket = self->hot_[(uint32_t)(address >> 2) & kHotMask];
+        if (++bucket >= (uint32_t)self->opts_.hot_threshold && !self->spin_) {
+            self->spin_ = true;
+            self->spin_pc_ = address;
+            uc_emu_stop(uc);
+            return;
+        }
+    }
+
+    if (self->opts_.heartbeat) {
+        uint64_t hb = self->insns_ / self->opts_.heartbeat;
+        if (hb != self->last_hb_) {
+            self->last_hb_ = hb;
+            std::printf("  \x1b[2m[cpu]\x1b[0m executed %lluM insns, PC=%#llx\n",
+                        (unsigned long long)(self->insns_ / 1000000), (unsigned long long)address);
+            std::fflush(stdout);
+        }
+    }
+}
+
+// Per-instruction hook: only registered when tracing (--trace) or symbol
+// function-tracing (--trace-irq) is active. Does NOT count instructions (the
+// block hook owns the count) to avoid double-counting.
+void UnicornCpu::code_cb(uc_engine* uc, uint64_t address, uint32_t /*size*/, void* user) {
+    auto* self = static_cast<UnicornCpu*>(user);
 
     if (self->opts_.trace && self->traced_ < self->opts_.trace_limit) {
         self->traced_++;
@@ -334,21 +402,6 @@ void UnicornCpu::code_cb(uc_engine* uc, uint64_t address, uint32_t /*size*/, voi
             HW_WARN("trace", "{}< {} = {:#x}", std::string(self->fn_retstk_.size()*2, ' '), nm, x0);
             self->fn_trace_lines_++;
         }
-    }
-
-    // Spin-wait detection.
-    uint32_t& bucket = self->hot_[(uint32_t)(address >> 2) & kHotMask];
-    if (++bucket >= (uint32_t)self->opts_.hot_threshold && !self->spin_) {
-        self->spin_ = true;
-        self->spin_pc_ = address;
-        uc_emu_stop(uc);
-        return;
-    }
-
-    if (self->opts_.heartbeat && (self->insns_ % self->opts_.heartbeat) == 0) {
-        std::printf("  \x1b[2m[cpu]\x1b[0m executed %lluM insns, PC=%#llx\n",
-                    (unsigned long long)(self->insns_ / 1000000), (unsigned long long)address);
-        std::fflush(stdout);
     }
 }
 
@@ -457,6 +510,18 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
             if (i == 2) { paddr = next | (vaddr & 0xfffull); return true; }  // L3 page
             t = next;
         }
+    }
+    // Linear-map (PAGE_OFFSET) fallback. The arm64 linear map is a fixed-offset
+    // alias of all RAM: VA = PA - PHYS_OFFSET + PAGE_OFFSET (VA39: PAGE_OFFSET =
+    // 0xffffffc000000000). The kernel writes patched code through lm_alias() of
+    // .init.text during "alternatives: patching kernel code"; that page is not
+    // present in the page-table walk (map_mem leaves the init image out of the
+    // linear map), yet the guest expects the alias to reach the physical page.
+    // Resolve it directly so self-patching lands on the real RAM bytes.
+    constexpr uint64_t kLinearBase = 0xffffffc000000000ull;   // VA39 PAGE_OFFSET
+    if (vaddr >= kLinearBase && vaddr < kLinearBase + ram_->size()) {
+        paddr = ram_->base() + (vaddr - kLinearBase);
+        return true;
     }
     // Kernel-half miss => real translation fault. Low-half miss => identity
     // (covers execution before the MMU is enabled and idmap physical accesses).

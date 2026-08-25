@@ -142,6 +142,24 @@ void arm_cpu_do_transaction_failed(CPUState *cs, hwaddr physaddr,
     arm_deliver_fault(cpu, addr, access_type, mmu_idx, &fi);
 }
 
+/*
+ * Deliver a stage-1 translation fault to the guest for a miss reported by the
+ * emulator's virtual-TLB fill hook (UC_TLB_VIRTUAL). Without this, a TLB miss
+ * aborts emulation with UC_ERR_EXCEPTION; instead we raise a proper ARM data/
+ * prefetch abort so the guest kernel's own fault handler runs (e.g. it can OOPS
+ * on a NULL dereference in a driver and carry on, as real hardware would).
+ * NORETURN: arm_deliver_fault -> raise_exception -> cpu_loop_exit.
+ */
+void arm_uc_deliver_tlb_miss(CPUState *cs, vaddr addr,
+                             MMUAccessType access_type, int mmu_idx)
+{
+    ARMCPU *cpu = ARM_CPU(cs);
+    ARMMMUFaultInfo fi = { 0 };
+    fi.type = ARMFault_Translation;
+    fi.level = 1;
+    arm_deliver_fault(cpu, addr, access_type, mmu_idx, &fi);
+}
+
 bool arm_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
                       MMUAccessType access_type, int mmu_idx,
                       bool probe, uintptr_t retaddr)

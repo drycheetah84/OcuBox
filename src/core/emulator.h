@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace hw::core {
 
@@ -26,6 +27,12 @@ struct EmuConfig {
     bool stop_on_mmio = true;    // halt on first unclaimed memory access
     bool log_mmio = false;       // log every device MMIO access
     bool dump_dt = false;        // print timer/GIC device-tree nodes and exit
+    bool list_dt = false;        // list every DT node path + compatible and exit
+    // Boot profile: "stock" = unmodified Quest 2 DTB (faithful); "minimal" =
+    // disable non-essential vendor devices to reach userspace. dtb_disable holds
+    // extra node ids (compatible substrings or '/'-paths) to disable on top.
+    std::string profile = "stock";
+    std::vector<std::string> dtb_disable;
 };
 
 class Emulator {
