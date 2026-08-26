@@ -8,6 +8,12 @@ D:\projects\eurka_emu\src\memory\guest_memory.cpp;D:\projects\eurka_emu\build\hw
 D:\projects\eurka_emu\src\devices\device_bus.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\device_bus.obj
 D:\projects\eurka_emu\src\devices\geni_uart.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\geni_uart.obj
 D:\projects\eurka_emu\src\devices\gic.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\gic.obj
+D:\projects\eurka_emu\src\devices\qcom_rsc.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_rsc.obj
+D:\projects\eurka_emu\src\devices\qcom_gcc.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_gcc.obj
+D:\projects\eurka_emu\src\devices\qcom_ufs.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_ufs.obj
+D:\projects\eurka_emu\src\devices\ufs_disk.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\ufs_disk.obj
+D:\projects\eurka_emu\src\devices\irq.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\irq.obj
+D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_cmddb.obj
 D:\projects\eurka_emu\src\cpu\cpu_state.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\cpu_state.obj
 D:\projects\eurka_emu\src\cpu\unicorn_cpu.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\unicorn_cpu.obj
 D:\projects\eurka_emu\src\platform\kona.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\kona.obj

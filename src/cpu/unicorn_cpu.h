@@ -139,6 +139,7 @@ private:
     uint64_t user_svc_count_ = 0;    // syscalls seen
     void dump_el0_entry();           // decode & print initial userspace state + stack
     uint64_t warns_skipped_ = 0;     // WARN/BUG brk instructions we recovered past
+    uint32_t xlat_perms_ = 7;         // stage-1 perms (UC_PROT_*) from the last translate()
 
     // Emulated GICv3 CPU-interface (ICC_*) register file, keyed by encoding.
     std::unordered_map<uint32_t, uint64_t> icc_;

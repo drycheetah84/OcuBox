@@ -2269,11 +2269,19 @@ static CPAccessResult gt_stimer_access(CPUARMState *env,
     }
 }
 
+/* hollywood_emu: deterministic virtual time (ns). Advanced by executed
+ * instructions during active execution and fast-forwarded to the next armed
+ * timer deadline on WFI idle -- see uc_arm64_time_tick/uc_arm64_time_warp. This
+ * replaces the host wall-clock source so boots are reproducible and sleep-heavy
+ * probing does not consume real time. */
+uint64_t hw_virt_ns = 0;
+static uint64_t hw_time_last_insns = 0;
+
 static uint64_t gt_get_countervalue(CPUARMState *env)
 {
     ARMCPU *cpu = env_archcpu(env);
 
-    return qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) / gt_cntfrq_period_ns(cpu);
+    return hw_virt_ns / gt_cntfrq_period_ns(cpu);
 }
 
 static void gt_recalc_timer(ARMCPU *cpu, int timeridx)
@@ -6619,14 +6627,52 @@ static const ARMCPRegInfo actlr2_hactlr2_reginfo[] = {
 #define HW_PHYS_INTID 30   /* PPI 14: arch physical timer (non-secure) */
 static bool hw_virt_out, hw_phys_out, hw_virt_active, hw_phys_active;
 
+/* SPI (shared peripheral interrupt) delivery for emulated devices (e.g. UFS
+ * INTID 297). Level-triggered: pending[] follows the device line, enabled[]
+ * mirrors GICD_ISENABLER (forwarded by the emulator's GIC model), active[] masks
+ * an INTID between IAR ack and EOI. Single CPU. INTIDs 0..1019. */
+#define HW_NR_INTID 1020
+static uint32_t hw_spi_pending[HW_NR_INTID / 32];
+static uint32_t hw_spi_enabled[HW_NR_INTID / 32];
+static uint32_t hw_spi_active[HW_NR_INTID / 32];
+
+static int hw_spi_next_deliverable(void)   /* lowest INTID pending&enabled&!active, or -1 */
+{
+    for (int i = 0; i < HW_NR_INTID / 32; i++) {
+        uint32_t m = hw_spi_pending[i] & hw_spi_enabled[i] & ~hw_spi_active[i];
+        if (m) { int b = 0; while (!(m & 1u)) { m >>= 1; b++; } return i * 32 + b; }
+    }
+    return -1;
+}
+
 static void hw_gic_update_irq(CPUState *cs)
 {
-    bool pending = (hw_virt_out && !hw_virt_active) || (hw_phys_out && !hw_phys_active);
+    bool pending = (hw_virt_out && !hw_virt_active) || (hw_phys_out && !hw_phys_active)
+                   || hw_spi_next_deliverable() >= 0;
     if (pending) {
         cpu_interrupt(cs, CPU_INTERRUPT_HARD);
     } else {
         cpu_reset_interrupt(cs, CPU_INTERRUPT_HARD);
     }
+}
+
+/* Assert/deassert a device SPI line (level). Called by the emulator's device
+ * models via the uc_engine. */
+void uc_arm64_set_irq(struct uc_struct *uc, uint32_t intid, int level)
+{
+    if (intid >= HW_NR_INTID) return;
+    uint32_t w = intid >> 5, b = 1u << (intid & 31);
+    if (level) hw_spi_pending[w] |= b; else hw_spi_pending[w] &= ~b;
+    if (uc && uc->cpu) hw_gic_update_irq(uc->cpu);
+}
+
+/* Mirror GICD_ISENABLER/ICENABLER so delivery is gated by the guest's enable. */
+void uc_arm64_set_irq_enabled(struct uc_struct *uc, uint32_t intid, int enabled)
+{
+    if (intid >= HW_NR_INTID) return;
+    uint32_t w = intid >> 5, b = 1u << (intid & 31);
+    if (enabled) hw_spi_enabled[w] |= b; else hw_spi_enabled[w] &= ~b;
+    if (uc && uc->cpu) hw_gic_update_irq(uc->cpu);
 }
 
 static void arm_hollywood_timer_poll(CPUState *cs)
@@ -6656,11 +6702,87 @@ void uc_arm64_timer_poll(struct uc_struct *uc)
     }
 }
 
+/* Deterministic virtual time. HW_NS_PER_INSN sets the effective CPU speed
+ * relative to the counter frequency; 1 ns/insn ~= 1 GHz (a 19.2 MHz counter then
+ * ticks about every 52 instructions). Exact value only affects delay-loop
+ * calibration, which the guest self-calibrates against this same clock. */
+#define HW_NS_PER_INSN 1ULL
+
+extern uint64_t hw_virt_ns;   /* defined next to gt_get_countervalue */
+
+void uc_arm64_time_reset(struct uc_struct *uc)
+{
+    (void)uc; hw_virt_ns = 0; hw_time_last_insns = 0;
+}
+
+/* Advance virtual time by the instructions retired since the last call, then
+ * refresh the timer/IRQ lines. Called from the block hook. */
+void uc_arm64_time_tick(struct uc_struct *uc, uint64_t insns)
+{
+    if (insns < hw_time_last_insns) hw_time_last_insns = 0;   /* run restarted */
+    hw_virt_ns += (insns - hw_time_last_insns) * HW_NS_PER_INSN;
+    hw_time_last_insns = insns;
+    if (uc && uc->cpu) arm_hollywood_timer_poll(uc->cpu);
+}
+
+/* On WFI idle: jump virtual time forward to the earliest armed timer deadline so
+ * its interrupt becomes pending at once (no real-time wait). Returns 1 if a
+ * finite deadline existed (forward progress), 0 if no timer is armed -- meaning
+ * the guest is blocked on a device interrupt that cannot arrive while idle, i.e.
+ * a genuine dead stall. */
+int uc_arm64_time_warp(struct uc_struct *uc)
+{
+    if (!uc || !uc->cpu) return 0;
+    CPUARMState *env = &ARM_CPU(uc->cpu)->env;
+    uint64_t period = gt_cntfrq_period_ns(env_archcpu(env));
+    uint64_t best = ~(uint64_t)0;
+
+    ARMGenericTimer *v = &env->cp15.c14_timer[GTIMER_VIRT];
+    if ((v->ctl & 1) && !(v->ctl & 2)) {
+        uint64_t dl = (v->cval + env->cp15.cntvoff_el2) * period;
+        if (dl < best) best = dl;
+    }
+    ARMGenericTimer *p = &env->cp15.c14_timer[GTIMER_PHYS];
+    if ((p->ctl & 1) && !(p->ctl & 2)) {
+        uint64_t dl = p->cval * period;
+        if (dl < best) best = dl;
+    }
+    if (best == ~(uint64_t)0) { arm_hollywood_timer_poll(uc->cpu); return 0; }
+    if (best > hw_virt_ns) hw_virt_ns = best;
+    arm_hollywood_timer_poll(uc->cpu);
+    return 1;
+}
+
+/* Diagnostic: snapshot timer/IRQ state to explain why WFI won't wake.
+ * out[0]=cnt out[1]=virt_cval out[2]=virt_ctl out[3]=phys_cval out[4]=phys_ctl
+ * out[5]=hw_virt_out out[6]=hw_phys_out out[7]=first_pending_spi(or -1)
+ * out[8]=interrupt_request out[9]=cntvoff */
+void uc_arm64_timer_debug(struct uc_struct *uc, uint64_t *out)
+{
+    if (!uc || !uc->cpu) return;
+    CPUARMState *env = &ARM_CPU(uc->cpu)->env;
+    out[0] = gt_get_countervalue(env);
+    out[1] = env->cp15.c14_timer[GTIMER_VIRT].cval;
+    out[2] = env->cp15.c14_timer[GTIMER_VIRT].ctl;
+    out[3] = env->cp15.c14_timer[GTIMER_PHYS].cval;
+    out[4] = env->cp15.c14_timer[GTIMER_PHYS].ctl;
+    out[5] = hw_virt_out;
+    out[6] = hw_phys_out;
+    out[7] = (uint64_t)(int64_t)hw_spi_next_deliverable();
+    out[8] = uc->cpu->interrupt_request;
+    out[9] = env->cp15.cntvoff_el2;
+}
+
 static uint64_t hw_icc_iar1_read(CPUARMState *env, const ARMCPRegInfo *ri)
 {
     uint64_t intid = 1023; /* spurious */
     if (hw_virt_out && !hw_virt_active) { hw_virt_active = true; intid = HW_VIRT_INTID; }
     else if (hw_phys_out && !hw_phys_active) { hw_phys_active = true; intid = HW_PHYS_INTID; }
+    else { int s = hw_spi_next_deliverable();
+           if (s >= 0) { hw_spi_active[s >> 5] |= 1u << (s & 31); intid = (uint32_t)s; } }
+    { static unsigned long long iar_n = 0;
+      if (intid != 1023 && (++iar_n % 500000ULL) == 0)
+          fprintf(stderr, "[IAR-STORM] intid=%u count=%llu\n", (unsigned)intid, iar_n); }
     hw_gic_update_irq(env_cpu(env));
     return intid;
 }
@@ -6669,6 +6791,7 @@ static void hw_icc_eoir1_write(CPUARMState *env, const ARMCPRegInfo *ri, uint64_
     uint32_t intid = value & 0xffffff;
     if (intid == HW_VIRT_INTID) hw_virt_active = false;
     else if (intid == HW_PHYS_INTID) hw_phys_active = false;
+    else if (intid < HW_NR_INTID) hw_spi_active[intid >> 5] &= ~(1u << (intid & 31));
     hw_gic_update_irq(env_cpu(env));
 }
 /* =================================================================================== */

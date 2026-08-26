@@ -151,12 +151,17 @@ void arm_cpu_do_transaction_failed(CPUState *cs, hwaddr physaddr,
  * NORETURN: arm_deliver_fault -> raise_exception -> cpu_loop_exit.
  */
 void arm_uc_deliver_tlb_miss(CPUState *cs, vaddr addr,
-                             MMUAccessType access_type, int mmu_idx)
+                             MMUAccessType access_type, int mmu_idx,
+                             bool is_perm)
 {
     ARMCPU *cpu = ARM_CPU(cs);
     ARMMMUFaultInfo fi = { 0 };
-    fi.type = ARMFault_Translation;
-    fi.level = 1;
+    /* is_perm: the page IS mapped but its permissions denied this access (e.g. a
+     * store to a read-only page). Report a stage-1 permission fault at the last
+     * level so the guest kernel runs its write-protect handler (copy-on-write),
+     * not a translation fault (which claims the page is absent). */
+    fi.type = is_perm ? ARMFault_Permission : ARMFault_Translation;
+    fi.level = is_perm ? 3 : 1;
     arm_deliver_fault(cpu, addr, access_type, mmu_idx, &fi);
 }
 

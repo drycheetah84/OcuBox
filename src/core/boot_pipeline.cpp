@@ -3,11 +3,18 @@
 #include "common/log.h"
 #include "devices/geni_uart.h"
 #include "devices/gic.h"
+#include "devices/qcom_rsc.h"
+#include "devices/qcom_gcc.h"
+#include "devices/qcom_ufs.h"
+#include "devices/qcom_rng.h"
+#include "devices/ufs_disk.h"
 #include "devices/stub_device.h"
+#include "platform/qcom_cmddb.h"
 #include "ota/payload.h"
 #include "ota/zip_reader.h"
 #include "platform/kona.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -166,6 +173,22 @@ int BootPipeline::run() {
         }
         emu_.bus.add(std::make_unique<dev::GicV3>(gicd, gicd_sz, gicr, gicr_sz));
 
+        // RPMh RSC (apps_rsc @ 0x18200000, drv-0/1/2). With the STANDALONE cmd-db
+        // below, the rpmh vote paths are no-ops, so this only needs to let the
+        // rpmh-rsc driver probe (config register) and satisfy write-sync readbacks
+        // -- which in turn lets clk-rpmh + the rpmh-regulators + GCC come up so the
+        // UFS clocks/regulators resolve. (kona.dtsi: reg 0x18200000 x3 @0x10000.)
+        emu_.bus.add(std::make_unique<dev::QcomRsc>(0x18200000ull, 0x30000ull, "apps_rsc"));
+
+        // Global Clock Controller (gcc-kona @ 0x100000, 0x1f0000). Models the RCG
+        // update / branch CLK_OFF / GDSC PWR_ON / GPLL0-lock status bits the UFS
+        // clock+power bring-up polls on (permissive zero-RAM leaves them stuck).
+        emu_.bus.add(std::make_unique<dev::QcomGcc>(0x100000ull, 0x1f0000ull));
+
+        // PRNG (msm_rng @ 0x793000). Supplies hardware entropy so the hwrng
+        // kthread stops hot-looping ("no data available") and crng init proceeds.
+        emu_.bus.add(std::make_unique<dev::QcomRng>(0x793000ull, 0x1000ull));
+
         return std::format("dram_base={:#x}, {} MMIO devices", emu_.dram_base, emu_.bus.devices().size());
     });
 
@@ -197,21 +220,81 @@ int BootPipeline::run() {
         emu_.ram_size = emu_.config.ram_mb * 1024ull * 1024ull;
         emu_.ram = std::make_unique<mem::GuestMemory>(emu_.dram_base, emu_.ram_size);
 
+        // Populate the Qualcomm Command DB (normally written by XBL/SBL) into its
+        // reserved region. Without it the whole rpmh clock/regulator tree defers
+        // ("Invalid Command DB Magic") and UFS never probes. STANDALONE bit set ->
+        // rpmh votes are no-ops (no RSC command traffic needed).
+        {
+            Bytes cdb = platform::build_cmd_db();
+            if (emu_.ram->contains(platform::kCmdDbBase, cdb.size())) {
+                emu_.ram->load(platform::kCmdDbBase, cdb);
+                HW_INFO("boot.mem", "cmd-db: wrote {}-byte STANDALONE blob @ {:#x}",
+                        cdb.size(), platform::kCmdDbBase);
+            }
+        }
+
+        // UFS host controller (ufshc @ 0x1d84000, IRQ = GIC SPI 265 -> INTID 297).
+        // Created here (not in the device stage) because it DMAs guest RAM, which
+        // exists only now. Backed by a synthesized GPT disk served from the OTA.
+        {
+            auto disk = std::make_shared<dev::UfsDisk>();
+            // Back the GPT partitions with real OTA contents. The active slot is
+            // `slot_suffix` (default _a): a GPT name "<part>_a" is served from the
+            // OTA partition "<part>"; the inactive _b slot and non-OTA partitions
+            // (metadata/misc/userdata) stay zero. Reconstructed lazily + cached.
+            const std::string suffix = emu_.config.slot_suffix.empty() ? "_a" : emu_.config.slot_suffix;
+            disk->set_partition_source([this, zip, &payload, suffix](const std::string& gpt_name) -> Bytes {
+                if (!zip) return {};
+                if (gpt_name.size() <= suffix.size() ||
+                    gpt_name.compare(gpt_name.size() - suffix.size(), suffix.size(), suffix) != 0)
+                    return {};                                   // inactive slot / no OTA image
+                std::string base = gpt_name.substr(0, gpt_name.size() - suffix.size());
+                if (!payload.find(base)) return {};
+                HW_INFO("boot.ufs", "extracting OTA partition '{}' for {}", base, gpt_name);
+                return ota::extract_partition(*zip, payload, base);
+            });
+            emu_.bus.add(std::make_unique<dev::QcomUfs>(0x1d84000ull, 0x3000ull, 297,
+                                                        emu_.ram.get(), disk));
+            emu_.bus.add(std::make_unique<dev::QcomIce>(0x1d90000ull, 0x8000ull));    // inline crypto
+            emu_.bus.add(std::make_unique<dev::QcomUfsPhy>(0x1d87000ull, 0x1000ull)); // UFS QMP-v4 PHY
+            HW_INFO("boot.mem", "ufs: controller @ 0x1d84000 (irq 297), disk {} blocks x {}B, {} parts",
+                    disk->block_count(), disk->block_size(), disk->parts().size());
+        }
+
         // Kernel load address. Per the ARM64 boot protocol the Image must sit at
         // `text_offset` bytes above a 2MB-aligned base. The boot image's
         // kernel_addr (offset 0x8000) is NOT what the kernel assumes -- using it
         // makes map_kernel() BUG on the alignment. Use the Image header's
         // text_offset from a 2MB-aligned DRAM base.
-        uint64_t base2m = round_up(emu_.dram_base, 0x200000);
+        // The stock Quest DTB reserves the low ~200MB (from 0x80000000) for the
+        // hypervisor, XBL, SMEM, cmd-db and a large no-map removed_region. Loading
+        // the kernel at the RAM base (0x80080000) puts the image, DTB and initramfs
+        // INSIDE no-map holes -- the guest has no struct pages there, so its buddy
+        // allocator hands the same physical page out twice (userspace page aliasing
+        // + "Bad page state"). A real bootloader loads Linux in genuine usable RAM
+        // above those firmware regions; do the same: find the first free 2MB-aligned
+        // run large enough for the kernel image + DTB + initramfs together.
+        uint64_t kspan = round_up(std::max<uint64_t>(emu_.boot_img.kernel.size(),
+                                                     emu_.boot_img.kernel_image_size), 0x200000);
+        uint64_t rd_span  = round_up(emu_.boot_img.ramdisk.size() + 0x100000, 0x100000);
+        uint64_t dtb_span = round_up(emu_.boot_img.dtb.size() + 0x10000, 0x100000);
+        uint64_t need = kspan + dtb_span + rd_span + 0x400000;     // + slack
+        uint64_t base2m = find_free_load_base(need, 0x200000);
+        if (!base2m) {                                            // no gap: fall back to base
+            base2m = round_up(emu_.dram_base, 0x200000);
+            HW_WARN("boot.mem", "no reserved-safe region for {:#x} bytes; using base {:#x}",
+                    need, base2m);
+        } else {
+            HW_INFO("boot.mem", "load base {:#x} (need {:#x}) -- avoids all reserved-memory",
+                    base2m, need);
+        }
         emu_.kernel_load = base2m + emu_.boot_img.kernel_text_offset;
         if (!emu_.ram->contains(emu_.kernel_load, emu_.boot_img.kernel.size()))
             emu_.kernel_load = emu_.dram_base + 0x80000;
         emu_.ram->load(emu_.kernel_load, emu_.boot_img.kernel);
 
-        // Place DTB and ramdisk sequentially after the kernel image to guarantee
-        // no overlap (bootloader-accurate placement is refined once the CPU runs).
-        uint64_t kspan = round_up(std::max<uint64_t>(emu_.boot_img.kernel.size(),
-                                                     emu_.boot_img.kernel_image_size), 0x200000);
+        // Place DTB and ramdisk sequentially after the kernel image (all inside the
+        // reserved-safe run chosen above, so none overlap a no-map region).
         uint64_t cursor = emu_.kernel_load + kspan;
 
         if (!emu_.boot_img.dtb.empty()) {
@@ -237,6 +320,88 @@ int BootPipeline::run() {
                     } else HW_WARN("boot.dtb", "could not add /chosen/{} (no /chosen node?)", name);
                 }
             }
+            // Set the full kernel command line the bootloader (ABL) supplies. The
+            // stock DTB /chosen/bootargs is only a tuning stub (rcu/kpti); ABL
+            // appends the boot-image cmdline plus androidboot.* runtime params. In
+            // particular Android first-stage init needs androidboot.slot_suffix to
+            // resolve `slotselect` fstab entries (without it: "Error updating for
+            // slotselect" -> FirstStageMount fails) and androidboot.boot_devices to
+            // build the by-name/ symlink path for the UFS controller.
+            {
+                std::string full;
+                if (const boot::FdtNode* ch = emu_.fdt->find("/chosen"))
+                    if (const boot::FdtProp* ba = ch->prop("bootargs")) full = ba->str();
+                if (!emu_.boot_img.cmdline.empty()) { if (!full.empty()) full += " "; full += emu_.boot_img.cmdline; }
+                full += " androidboot.slot_suffix=" + emu_.config.slot_suffix;
+                full += " androidboot.boot_devices=soc/1d84000.ufshc";
+                // Verified Boot: present an unlocked bootloader (as a fastboot-
+                // unlocked Quest does) so first-stage AVB is non-fatal on the vbmeta
+                // digest, with a valid hash algorithm so the digest parse succeeds.
+                // The vbmeta/partition data is the real signed OTA content; dm-verity
+                // still uses the real hashtree descriptors from it.
+                full += " androidboot.verifiedbootstate=orange";
+                full += " androidboot.vbmeta.device_state=unlocked";
+                full += " androidboot.vbmeta.hash_alg=sha256";
+                Bytes v(full.begin(), full.end()); v.push_back(0);   // NUL-terminated string
+                bool mod = false; std::string p;
+                Bytes nb = boot::fdt_set_prop(emu_.dtb_image, "/chosen", "bootargs", v, mod, p);
+                if (mod) { emu_.dtb_image = std::move(nb);
+                    HW_INFO("boot.dtb", "/chosen/bootargs = {}", full);
+                } else HW_WARN("boot.dtb", "could not set /chosen/bootargs");
+            }
+            // Enable the UFS storage stack. The stock boot.img DTB ships the UFS
+            // controller + PHY DISABLED (with the PHY missing its compatible); on
+            // real hardware the ABL-applied dtbo overlay (hollywood-ufs.dtsi) sets
+            // status="ok", the PHY compatible, and the PMIC supplies. We replicate
+            // just the UFS portion so the real ufshcd/ufs-qcom stack probes without
+            // re-enabling the display/camera we disabled for the minimal profile.
+            {
+                auto set_bytes = [&](const char* path, const char* name, Bytes v) {
+                    bool m = false; std::string p;
+                    Bytes nb = boot::fdt_set_prop(emu_.dtb_image, path, name, v, m, p);
+                    if (m) emu_.dtb_image = std::move(nb);
+                    else HW_WARN("boot.dtb", "UFS: could not set {} {}", path, name);
+                };
+                auto set_str  = [&](const char* path, const char* name, const std::string& val) {
+                    Bytes v(val.begin(), val.end()); v.push_back(0); set_bytes(path, name, std::move(v)); };
+                auto set_cell = [&](const char* path, const char* name, uint32_t val) {
+                    Bytes v{ (uint8_t)(val>>24),(uint8_t)(val>>16),(uint8_t)(val>>8),(uint8_t)val };
+                    set_bytes(path, name, std::move(v)); };
+                set_str("/soc/ufshc@1d84000",      "status",     "ok");
+                set_str("/soc/ufsphy_mem@1d87000", "status",     "ok");
+                set_str("/soc/ufsphy_mem@1d87000", "compatible", "qcom,ufs-phy-qmp-v4");
+                // PHY PMIC supplies (hollywood-ufs.dtsi): vdda-phy=L5A, vdda-pll=L9A.
+                // The qmp-v4 PHY driver requires these (unlike the controller, which
+                // tolerates dummy regulators) or it NULL-derefs in cfg_vreg.
+                set_cell("/soc/ufsphy_mem@1d87000", "vdda-phy-supply", 104);       // &L5A
+                set_cell("/soc/ufsphy_mem@1d87000", "vdda-pll-supply", 105);       // &L9A
+                set_cell("/soc/ufsphy_mem@1d87000", "vdda-phy-max-microamp", 89900);
+                set_cell("/soc/ufsphy_mem@1d87000", "vdda-pll-max-microamp", 18800);
+                set_bytes("/soc/ufsphy_mem@1d87000","vdda-phy-always-on", Bytes{});  // bool
+                // Controller PMIC supplies (VCC=L17A, VCCQ=L6A, VCCQ2=S4A, vdd-hba=gdsc).
+                set_cell("/soc/ufshc@1d84000", "vcc-supply",    570);   // &L17A
+                set_cell("/soc/ufshc@1d84000", "vccq-supply",   564);   // &L6A
+                set_cell("/soc/ufshc@1d84000", "vccq2-supply",  143);   // &S4A
+                set_cell("/soc/ufshc@1d84000", "vdd-hba-supply", 98);   // &ufs_phy_gdsc
+                // Regulator limits ufshcd_populate_vreg requires once a supply is
+                // present (hollywood-ufs.dtsi values).
+                set_bytes("/soc/ufshc@1d84000", "vdd-hba-fixed-regulator", Bytes{});   // bool
+                set_cell("/soc/ufshc@1d84000", "vcc-max-microamp",   800000);
+                set_cell("/soc/ufshc@1d84000", "vccq-max-microamp",  800000);
+                set_cell("/soc/ufshc@1d84000", "vccq2-max-microamp", 800000);
+                { Bytes vl{0,0x26,0x35,0xc0, 0,0x2d,0x02,0xe0}; // vcc-voltage-level <2504000 2950000>
+                  set_bytes("/soc/ufshc@1d84000", "vcc-voltage-level", std::move(vl)); }
+
+                // AVB chain: the real vbmeta_a chains to vbmeta_system + vbmeta_vendor.
+                // The stock DT /firmware/android/vbmeta parts list ("vbmeta,boot,
+                // system,vendor,dtbo") omits them, so first-stage init never creates
+                // their by-name symlinks and avb_slot_verify fails with "Device path
+                // not found: /dev/block/by-name/vbmeta_system_a" (result 2). Add the
+                // chained vbmeta partitions so init sets them up (data is real, from
+                // the OTA).
+                set_str("/firmware/android/vbmeta", "parts",
+                        "vbmeta,boot,system,vendor,dtbo,vbmeta_system,vbmeta_vendor");
+            }
             // Verify the initrd properties survived in the final blob.
             try {
                 auto f2 = boot::Fdt::parse(emu_.dtb_image);
@@ -256,6 +421,8 @@ int BootPipeline::run() {
                            emu_.config.ram_mb, emu_.dram_base, emu_.kernel_load,
                            emu_.dtb_load, emu_.ramdisk_load);
     });
+
+    if (!failed_) dump_memory_map();   // print the physical topology + overlap check
 
     // 7) Starting kernel ------------------------------------------------------
     stage("Starting kernel", [&] {
@@ -569,6 +736,97 @@ void BootPipeline::patch_dtb_memory(Bytes& dtb) {
         HW_WARN("boot.dtb", "patch changed blob SIZE {}->{}: CORRUPTION",
                 emu_.boot_img.dtb.size(), dtb.size());
     }
+}
+
+// Print the guest physical memory topology as Linux will see it: the /memory
+// window, every /reserved-memory child (base/size/no-map/reusable), and where WE
+// placed the kernel image (footprint = image_size), DTB and initramfs. Flags any
+// overlap between a loaded image and a reserved region -- the prime suspect for
+// buddy-allocator / struct-page corruption.
+uint64_t BootPipeline::find_free_load_base(uint64_t total_size, uint64_t align) {
+    struct R { uint64_t base, end; };
+    std::vector<R> res;
+    if (emu_.fdt) if (const boot::FdtNode* rm = emu_.fdt->find("/reserved-memory")) {
+        for (const auto& c : rm->children)
+            for (auto& pr : c->reg())
+                if (pr.second) res.push_back({ pr.first, pr.first + pr.second });
+    }
+    std::sort(res.begin(), res.end(), [](const R& a, const R& b){ return a.base < b.base; });
+    const uint64_t ram_lo = emu_.dram_base, ram_hi = emu_.dram_base + emu_.ram_size;
+    uint64_t cand = round_up(ram_lo, align);
+    for (;;) {
+        bool moved = false;
+        for (auto& r : res)
+            if (cand < r.end && r.base < cand + total_size) {   // [cand,cand+size) hits r
+                cand = round_up(r.end, align);
+                moved = true;
+            }
+        if (cand + total_size > ram_hi) return 0;               // no room
+        if (!moved) return cand;                                // clean run found
+    }
+}
+
+void BootPipeline::dump_memory_map() {
+    if (!emu_.fdt || !emu_.fdt->root()) return;
+    std::printf("\n%s== GUEST PHYSICAL MEMORY MAP ==%s\n", BOLD, RST);
+    const uint64_t ram_lo = emu_.dram_base, ram_hi = emu_.dram_base + emu_.ram_size;
+    std::printf("  /memory (patched): %#llx .. %#llx  (%llu MB)\n",
+                (unsigned long long)ram_lo, (unsigned long long)ram_hi,
+                (unsigned long long)(emu_.ram_size / (1024 * 1024)));
+
+    // Our loaded images (as physical spans).
+    struct Span { const char* name; uint64_t base, end; };
+    std::vector<Span> ours;
+    uint64_t kimg = std::max<uint64_t>(emu_.boot_img.kernel.size(), emu_.boot_img.kernel_image_size);
+    ours.push_back({ "kernel(image_size)", emu_.kernel_load, emu_.kernel_load + kimg });
+    if (!emu_.dtb_image.empty()) ours.push_back({ "dtb", emu_.dtb_load, emu_.dtb_load + emu_.dtb_image.size() });
+    if (emu_.ramdisk_load) ours.push_back({ "initramfs", emu_.ramdisk_load, emu_.ramdisk_load + emu_.boot_img.ramdisk.size() });
+    std::printf("  %sour image placement:%s\n", BOLD, RST);
+    for (auto& s : ours)
+        std::printf("    %-18s %#llx .. %#llx  (%llu KB)\n", s.name,
+                    (unsigned long long)s.base, (unsigned long long)s.end,
+                    (unsigned long long)((s.end - s.base) / 1024));
+
+    // Reserved-memory children.
+    const boot::FdtNode* rm = emu_.fdt->find("/reserved-memory");
+    if (!rm) { std::printf("  (no /reserved-memory node)\n"); return; }
+    std::printf("  %s/reserved-memory regions:%s\n", BOLD, RST);
+    std::vector<Span> resv;
+    for (const auto& c : rm->children) {
+        auto regs = c->reg();
+        bool nomap = c->prop("no-map") != nullptr;
+        bool reusable = c->prop("reusable") != nullptr;
+        const boot::FdtProp* sz = c->prop("size");     // dynamic-placement CMA (no fixed reg)
+        if (regs.empty() && sz) {
+            std::printf("    %-34s DYNAMIC size=%#llx %s%s\n", c->name.c_str(),
+                        (unsigned long long)(sz->data.size() >= 8 ? sz->u64() : sz->u32()),
+                        nomap ? "no-map " : "", reusable ? "reusable" : "");
+            continue;
+        }
+        for (auto& [base, size] : regs) {
+            bool in_ram = (base >= ram_lo && base < ram_hi);
+            std::printf("    %-34s %#llx .. %#llx (%llu KB) %s%s%s\n", c->name.c_str(),
+                        (unsigned long long)base, (unsigned long long)(base + size),
+                        (unsigned long long)(size / 1024),
+                        nomap ? "no-map " : "", reusable ? "reusable " : "",
+                        in_ram ? "" : "[OUTSIDE /memory]");
+            if (size) resv.push_back({ nomap ? "no-map" : "reserved", base, base + size });
+        }
+    }
+
+    // Overlap check: any of our loaded images vs any reserved region.
+    std::printf("  %soverlap check (loaded image vs reserved region):%s\n", BOLD, RST);
+    bool any = false;
+    for (auto& o : ours)
+        for (auto& r : resv)
+            if (o.base < r.end && r.base < o.end) {
+                any = true;
+                std::printf("    %s*** OVERLAP: %s [%#llx..%#llx] intersects %s [%#llx..%#llx] ***%s\n",
+                            RED, o.name, (unsigned long long)o.base, (unsigned long long)o.end,
+                            r.name, (unsigned long long)r.base, (unsigned long long)r.end, RST);
+            }
+    if (!any) std::printf("    none\n");
+    std::printf("\n");
 }
 
 void BootPipeline::dump_dt() {

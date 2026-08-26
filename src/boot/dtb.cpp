@@ -223,6 +223,49 @@ Bytes fdt_add_prop(std::span<const uint8_t> blob, const std::string& id,
     return nb;
 }
 
+Bytes fdt_set_prop(std::span<const uint8_t> blob, const std::string& id,
+                   const std::string& pname, std::span<const uint8_t> value,
+                   bool& modified, std::string& out_path) {
+    modified = false;
+    Bytes out(blob.begin(), blob.end());
+    Fdt fdt;
+    try { fdt = Fdt::parse(blob); } catch (...) { return out; }
+    const FdtNode* node = (!id.empty() && id[0] == '/') ? fdt.find(id) : fdt.find_compatible(id);
+    if (!node) return out;
+    const FdtProp* prop = node->prop(pname);
+    if (!prop) return fdt_add_prop(blob, id, pname, value, modified, out_path);  // absent -> add
+    out_path = fdt_node_path(node);
+
+    // Replace the existing property token in place, resizing the struct block.
+    // Token layout: [FDT_PROP][len][nameoff][value(pad4)]; blob_offset -> value.
+    const size_t tok_start = prop->blob_offset - 12;
+    const uint32_t nameoff = be32(blob.data() + tok_start + 8);   // keep the same name
+    const uint32_t old_tok = 12 + align4((uint32_t)prop->data.size());
+    const uint32_t vlen    = (uint32_t)value.size();
+    const uint32_t new_tok = 12 + align4(vlen);
+
+    Bytes tok(new_tok, 0);
+    auto p32 = [&](int o, uint32_t v){ tok[o]=(uint8_t)(v>>24); tok[o+1]=(uint8_t)(v>>16);
+                                       tok[o+2]=(uint8_t)(v>>8); tok[o+3]=(uint8_t)v; };
+    p32(0, FDT_PROP); p32(4, vlen); p32(8, nameoff);
+    if (vlen) std::memcpy(tok.data() + 12, value.data(), vlen);
+
+    Bytes nb;
+    nb.reserve(blob.size() + new_tok - old_tok);
+    nb.insert(nb.end(), blob.begin(), blob.begin() + tok_start);           // before token
+    nb.insert(nb.end(), tok.begin(), tok.end());                          // new token
+    nb.insert(nb.end(), blob.begin() + tok_start + old_tok, blob.end());   // after token
+
+    const int32_t delta = (int32_t)new_tok - (int32_t)old_tok;
+    auto wr32 = [&](size_t o, uint32_t v){ nb[o]=(uint8_t)(v>>24); nb[o+1]=(uint8_t)(v>>16);
+                                           nb[o+2]=(uint8_t)(v>>8); nb[o+3]=(uint8_t)v; };
+    wr32(4,  be32(blob.data() + 4)  + delta);   // totalsize
+    wr32(12, be32(blob.data() + 12) + delta);   // off_dt_strings (strings follow struct)
+    wr32(36, be32(blob.data() + 36) + delta);   // size_dt_struct
+    modified = true;
+    return nb;
+}
+
 Bytes fdt_disable(std::span<const uint8_t> blob, const std::string& id,
                   bool& modified, std::string& out_path) {
     static const uint8_t kDisabled[] = { 'd','i','s','a','b','l','e','d',0 };

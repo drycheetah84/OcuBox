@@ -50,6 +50,7 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
 {
     bool handled = false;
     bool ret = false;
+    bool hook_mapped = false;
     struct uc_struct *uc = cs->uc;
     uc_tlb_entry e;
     struct hook *hook;
@@ -70,6 +71,12 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
             break;
         }
     }
+
+    /* The hook provided a valid translation (ret==true) but its permissions may
+     * still deny this access; remember that so a denied access is reported to the
+     * guest as a PERMISSION fault (page present) rather than a translation fault
+     * (page absent) -- the former is what makes the kernel do copy-on-write. */
+    hook_mapped = ret;
 
     if (handled && !ret) {
         goto tlb_miss;
@@ -123,8 +130,9 @@ tlb_miss:
      * emulation. NORETURN. */
     {
         void arm_uc_deliver_tlb_miss(CPUState *cs, vaddr addr,
-                                     MMUAccessType access_type, int mmu_idx);
-        arm_uc_deliver_tlb_miss(cs, address, rw, mmu_idx);
+                                     MMUAccessType access_type, int mmu_idx,
+                                     bool is_perm);
+        arm_uc_deliver_tlb_miss(cs, address, rw, mmu_idx, hook_mapped);
     }
 #endif
     raise_mmu_exception(cs, address, rw, retaddr);

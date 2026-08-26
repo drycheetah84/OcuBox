@@ -370,6 +370,18 @@ typedef enum uc_arm64_reg {
  * line. Call periodically from a UC_HOOK_CODE hook to drive timer interrupts. */
 struct uc_struct;
 void uc_arm64_timer_poll(struct uc_struct *uc);
+void uc_arm64_timer_debug(struct uc_struct *uc, uint64_t *out);
+/* Deterministic virtual time: reset at run start, tick with retired instructions
+ * from the block hook, and warp to the next timer deadline on WFI idle. */
+void uc_arm64_time_reset(struct uc_struct *uc);
+void uc_arm64_time_tick(struct uc_struct *uc, uint64_t insns);
+int  uc_arm64_time_warp(struct uc_struct *uc);
+
+/* hollywood_emu: device SPI interrupt delivery. uc_arm64_set_irq drives a device
+ * interrupt line (level); uc_arm64_set_irq_enabled mirrors GICD_ISENABLER so the
+ * guest's enable gates delivery. Both update the CPU IRQ line immediately. */
+void uc_arm64_set_irq(struct uc_struct *uc, uint32_t intid, int level);
+void uc_arm64_set_irq_enabled(struct uc_struct *uc, uint32_t intid, int enabled);
 
 // Callback function for tracing MRS/MSR/SYS/SYSL. If this callback returns
 // true, the read/write to system registers would be skipped (even though it may

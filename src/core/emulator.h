@@ -33,6 +33,9 @@ struct EmuConfig {
     // extra node ids (compatible substrings or '/'-paths) to disable on top.
     std::string profile = "stock";
     std::vector<std::string> dtb_disable;
+    // A/B slot the (emulated) bootloader selects; appended as androidboot.slot_suffix
+    // so Android first-stage init can resolve `slotselect` fstab entries.
+    std::string slot_suffix = "_a";
 };
 
 class Emulator {

@@ -247,7 +247,11 @@ static void aarch64_max_initfn(struct uc_struct *uc, CPUState *obj)
     cpu->isar.id_aa64isar1 = t;
 
     t = cpu->isar.id_aa64pfr0;
-    FIELD_DP64(t, ID_AA64PFR0, SVE, 1, t);
+    /* hollywood_emu: the real Snapdragon XR2 / SM8250 (Cortex-A77/A55) does NOT
+     * implement SVE. Advertising it (SVE=1) makes the guest kernel set HWCAP_SVE,
+     * so bionic emits SVE instructions in /init; the lazy SVE-enable path then
+     * fails and PID1 dies with SIGILL. Match real hardware: SVE=0. */
+    FIELD_DP64(t, ID_AA64PFR0, SVE, 0, t);
     FIELD_DP64(t, ID_AA64PFR0, FP, 1, t);
     FIELD_DP64(t, ID_AA64PFR0, ADVSIMD, 1, t);
     cpu->isar.id_aa64pfr0 = t;

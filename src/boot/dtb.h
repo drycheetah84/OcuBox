@@ -73,4 +73,12 @@ Bytes fdt_add_prop(std::span<const uint8_t> blob, const std::string& id,
                    const std::string& pname, std::span<const uint8_t> value,
                    bool& modified, std::string& out_path);
 
+// Set property `pname`=`value` on the first node matching `id`, REPLACING the
+// existing value (resizing the blob) if the property is already present, or
+// adding it if not. Used to overwrite /chosen/bootargs with the full kernel
+// command line the bootloader would supply (the stock DTB ships only a stub).
+Bytes fdt_set_prop(std::span<const uint8_t> blob, const std::string& id,
+                   const std::string& pname, std::span<const uint8_t> value,
+                   bool& modified, std::string& out_path);
+
 } // namespace hw::boot

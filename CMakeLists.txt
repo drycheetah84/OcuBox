@@ -37,6 +37,12 @@ add_library(hwemu_core STATIC
   src/devices/device_bus.cpp
   src/devices/geni_uart.cpp
   src/devices/gic.cpp
+  src/devices/qcom_rsc.cpp
+  src/devices/qcom_gcc.cpp
+  src/devices/qcom_ufs.cpp
+  src/devices/ufs_disk.cpp
+  src/devices/irq.cpp
+  src/platform/qcom_cmddb.cpp
   src/cpu/cpu_state.cpp
   src/cpu/unicorn_cpu.cpp
   src/platform/kona.cpp
@@ -50,6 +56,9 @@ target_link_libraries(hwemu_core PUBLIC
 # --- Main executable ---
 add_executable(hollywood_emu src/main.cpp)
 target_link_libraries(hollywood_emu PRIVATE hwemu_core)
+if (MSVC)
+  target_link_options(hollywood_emu PRIVATE /MAP)
+endif()
 
 # Copy configs next to the binary for runtime discovery.
 add_custom_command(TARGET hollywood_emu POST_BUILD

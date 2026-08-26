@@ -2,6 +2,7 @@
 #include "common/log.h"
 #include "devices/device.h"
 #include "devices/device_bus.h"
+#include "devices/irq.h"
 #include "memory/guest_memory.h"
 
 #include <chrono>
@@ -49,12 +50,24 @@ UnicornCpu::~UnicornCpu() {
     if (uc_) uc_close(uc_);
 }
 
+// Device SPI interrupt delivery: bridge the device/GIC models to the patched
+// Unicorn ICC path. Set once attach() creates the engine (single instance).
+static uc_engine* g_irq_uc = nullptr;
+static void hw_raise_irq(uint32_t intid, bool level) {
+    static uint64_t n = 0;
+    if (level && (++n % 200000 == 0)) HW_WARN("irq", "SPI {} raised {} times (storm?)", intid, n);
+    if (g_irq_uc) uc_arm64_set_irq(g_irq_uc, intid, level ? 1 : 0);
+}
+static void hw_set_irq_enabled(uint32_t intid, bool en) { if (g_irq_uc) uc_arm64_set_irq_enabled(g_irq_uc, intid, en ? 1 : 0); }
+
 bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string& err) {
     ram_ = &ram;
     bus_ = &bus;
 
     uc_err e = uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &uc_);
     if (e != UC_ERR_OK) { err = std::string("uc_open: ") + uc_strerror(e); return false; }
+    g_irq_uc = uc_;
+    dev::install_irq_backend(hw_raise_irq, hw_set_irq_enabled);
 
     // Select the most capable ARM64 core. The Quest kernel programs TCR_EL1 with
     // IPS=0b100 (44-bit PA / larger-address features); the default A57 model can
@@ -144,9 +157,12 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
 // ("<hexaddr> <type> <name>" per line) so code_cb can trace their calls.
 void UnicornCpu::load_fn_trace() {
     static const char* kWatch[] = {
-        "irq_of_parse_and_map", "irq_create_fwspec_mapping",
-        "gic_irq_domain_translate", "gic_irq_domain_alloc", "gic_irq_domain_map",
-        "irq_domain_alloc_descs", "__irq_alloc_descs", "irq_set_percpu_devid",
+        // exec -> ELF load -> initial-stack build -> start_thread (userspace ABI)
+        "do_execveat_common", "__do_execve_file", "bprm_execve", "search_binary_handler",
+        "load_elf_binary", "load_elf_interp", "elf_map", "set_brk",
+        "create_elf_tables", "setup_arg_pages", "__bprm_mm_init", "copy_strings",
+        "copy_strings_kernel", "begin_new_exec", "flush_old_exec", "setup_new_exec",
+        "start_thread", "finalize_exec", "padzero",
     };
     std::FILE* f = std::fopen(opts_.fn_trace_ksyms.c_str(), "rb");
     if (!f) { HW_WARN("trace", "fn-trace: cannot open {}", opts_.fn_trace_ksyms); return; }
@@ -174,6 +190,7 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
     exc_last_pc_ = 0; exc_last_no_ = 0; exc_repeat_ = 0; exc_storm_ = false;
     exc_vectored_ = 0; last_tlb_miss_ = 0; warns_skipped_ = 0;
     std::memset(hot_.data(), 0, hot_.size() * sizeof(uint32_t));
+    uc_arm64_time_reset(uc_);                 // deterministic virtual clock from 0
     uint64_t pc = 0; uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
 
     if (opts_.trace) HW_INFO("cpu.uc", "tracing first {} instructions", opts_.trace_limit);
@@ -193,11 +210,14 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
             if (opts_.timeout_us && elapsed_us >= opts_.timeout_us) break;
         }
     } else {
-        // Run with WFI/idle handling: when the guest executes WFI it has finished
-        // work and is waiting for an interrupt, so uc_emu_start returns cleanly.
-        // Poll the (host-time-based) generic timer and resume, so timer ticks keep
-        // flowing and the scheduler/idle loop makes progress. A genuine dead stall
-        // (waiting on an IRQ we never deliver) is bounded by the wall-clock timeout.
+        // Run with WFI/idle handling on a deterministic virtual clock. When the
+        // guest executes WFI it has finished work and waits for an interrupt, so
+        // uc_emu_start returns cleanly. We then warp virtual time to the next
+        // armed timer deadline so its tick fires immediately (no real-time wait)
+        // and resume -- sleep-heavy probing skips through instantly. If NO timer
+        // is armed the guest is blocked on a device IRQ that cannot arrive while
+        // idle: that is a genuine dead stall, surfaced as a spin.
+        int dead_warps = 0;
         for (;;) {
             uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
             uint64_t el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
@@ -212,12 +232,17 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
             el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() - t0).count();
             if (opts_.timeout_us && el >= opts_.timeout_us) break;   // timed out
-            // Clean return with budget left => WFI idle halt. Advance the timer so a
-            // due tick raises the CPU IRQ line, then resume (WFI falls through once
-            // the interrupt is pending). Brief sleep so we don't spin at 100% while
-            // the host-time counter climbs to the programmed compare value.
-            uc_arm64_timer_poll(uc_);
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            // WFI idle halt: fast-forward to the next timer deadline.
+            if (uc_arm64_time_warp(uc_)) {
+                dead_warps = 0;                              // a timer fired: progress
+            } else if (++dead_warps >= 64) {
+                // No timer armed across many idle returns -> deadlocked on a device
+                // interrupt. Record it as a spin so diagnostics dump the state.
+                spin_ = true; spin_pc_ = pc;
+                HW_WARN("cpu.idle", "WFI dead stall at pc={:#x} (no timer armed; "
+                        "guest waiting on a device IRQ that never arrives)", pc);
+                break;
+            }
         }
     }
     elapsed_us = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
@@ -329,6 +354,58 @@ std::vector<uint64_t> UnicornCpu::recent_pcs() const {
     return out;
 }
 
+// Decode and print the initial userspace (EL0) state at the exec->EL0 handoff:
+// registers, TLS, and the initial stack (argc/argv/envp/auxv) the kernel built.
+// This is the reference we compare against Linux create_elf_tables()/start_thread.
+void UnicornCpu::dump_el0_entry() {
+    using ull = unsigned long long;
+    auto rd = [&](int reg){ uint64_t v = 0; uc_reg_read(uc_, reg, &v); return v; };
+    auto r8 = [&](uint64_t va, uint64_t& out){ return read_mem(va, &out, 8); };
+    auto cstr = [&](uint64_t va) -> std::string {
+        std::string s; for (int i = 0; i < 128; ++i) { uint8_t c = 0;
+            if (!read_mem(va + i, &c, 1) || c == 0) break; s += (char)c; } return s; };
+    auto at_name = [](uint64_t t) -> const char* { switch (t) {
+        case 3: return "AT_PHDR"; case 4: return "AT_PHENT"; case 5: return "AT_PHNUM";
+        case 6: return "AT_PAGESZ"; case 7: return "AT_BASE"; case 8: return "AT_FLAGS";
+        case 9: return "AT_ENTRY"; case 11: return "AT_UID"; case 12: return "AT_EUID";
+        case 13: return "AT_GID"; case 14: return "AT_EGID"; case 15: return "AT_PLATFORM";
+        case 16: return "AT_HWCAP"; case 17: return "AT_CLKTCK"; case 23: return "AT_SECURE";
+        case 25: return "AT_RANDOM"; case 26: return "AT_HWCAP2"; case 31: return "AT_EXECFN";
+        case 33: return "AT_SYSINFO_EHDR"; case 51: return "AT_MINSIGSTKSZ"; default: return "AT_?"; } };
+
+    uint64_t pc = rd(UC_ARM64_REG_PC), sp = rd(UC_ARM64_REG_SP), ps = rd(UC_ARM64_REG_PSTATE);
+    std::printf("\n\x1b[1m=== EL0 ENTRY (exec -> userspace /init) ===\x1b[0m\n");
+    std::printf("PC=%#llx  SP=%#llx  PSTATE=%#llx (EL%d %s)\n", (ull)pc, (ull)sp, (ull)ps,
+                (int)((ps >> 2) & 3), (ps & 0x10) ? "AArch32" : "AArch64");
+    std::printf("SP_EL0=%#llx  TPIDR_EL0=%#llx  TPIDRRO_EL0=%#llx\n",
+                (ull)rd(UC_ARM64_REG_SP_EL0), (ull)rd(UC_ARM64_REG_TPIDR_EL0), (ull)rd(UC_ARM64_REG_TPIDRRO_EL0));
+    std::printf("TTBR0_EL1=%#llx  TTBR1_EL1=%#llx  VBAR_EL1=%#llx\n",
+                (ull)rd(UC_ARM64_REG_TTBR0_EL1), (ull)rd(UC_ARM64_REG_TTBR1_EL1), (ull)rd(UC_ARM64_REG_VBAR_EL1));
+    for (int i = 0; i < 31; i += 3) {
+        std::printf("  ");
+        for (int j = i; j < i + 3 && j < 31; ++j) std::printf("X%-2d=%#018llx  ", j, (ull)rd(xreg(j)));
+        std::printf("\n");
+    }
+    uint64_t argc = 0;
+    if (!r8(sp, argc)) { std::printf("  (cannot read initial stack @ SP)\n"); return; }
+    std::printf("Initial stack @ SP=%#llx  (16-byte aligned: %s)\n",
+                (ull)sp, (sp & 15) ? "NO -- MISALIGNED" : "yes");
+    std::printf("  argc = %llu\n", (ull)argc);
+    uint64_t p = sp + 8;
+    for (uint64_t i = 0; i < argc && i < 16; ++i) { uint64_t av = 0; r8(p + 8*i, av);
+        std::printf("  argv[%llu] = %#llx \"%s\"\n", (ull)i, (ull)av, cstr(av).c_str()); }
+    uint64_t e = p + 8 * (argc + 1);           // past argv + its NULL terminator
+    std::printf("  envp:\n");
+    for (int n = 0; n < 40; ++n) { uint64_t ev = 0; if (!r8(e, ev) || ev == 0) break;
+        std::printf("    %#llx \"%s\"\n", (ull)ev, cstr(ev).c_str()); e += 8; }
+    e += 8;                                     // past envp NULL
+    std::printf("  auxv:\n");
+    for (int n = 0; n < 40; ++n) { uint64_t t = 0, v = 0; if (!r8(e, t) || !r8(e + 8, v)) break;
+        if (t == 0) { std::printf("    AT_NULL\n"); break; }
+        std::printf("    %-16s = %#llx\n", at_name(t), (ull)v); e += 16; }
+    std::fflush(stdout);
+}
+
 // Fast path: fires once per translated basic block (not per instruction), so
 // TCG can run blocks natively. Carries instruction counting, the arch-timer
 // poll (interrupts are checked at block boundaries anyway), spin detection and
@@ -336,11 +413,65 @@ std::vector<uint64_t> UnicornCpu::recent_pcs() const {
 void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
     self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
+
+    // --trace-user: watch the exec->EL0 handoff and the userspace ABI. A low
+    // (user-half) VA executing once the MMU is up and PSTATE.EL==0 is userspace.
+    if (self->opts_.trace_user) {
+        // EL0 = PSTATE.EL (bits[3:2]) == 0. (Low VAs also execute at EL1 via the
+        // idmap during TTBR/TLB switches, so the VA alone is not enough.)
+        uint64_t ps = 0; uc_reg_read(uc, UC_ARM64_REG_PSTATE, &ps);
+        const bool el0 = self->mmu_on_ && ((ps >> 2) & 3) == 0;
+        if (el0) {
+            if (!self->user_entered_) { self->user_entered_ = true; self->dump_el0_entry(); }
+            if (self->user_traced_ < self->opts_.trace_user_insns) {
+                self->user_traced_++;
+                std::printf("  \x1b[36m[EL0]\x1b[0m %#010llx: %s\n",
+                            (unsigned long long)address, self->disasm_str(address).c_str());
+            }
+        }
+        // Syscall trace: an EL0 synchronous exception vectors to VBAR_EL1+0x400.
+        if (self->user_entered_) {
+            uint64_t vbar = 0; uc_reg_read(uc, UC_ARM64_REG_VBAR_EL1, &vbar);
+            if (vbar && address == vbar + 0x400) {
+                uint64_t esr = 0; uc_reg_read(uc, UC_ARM64_REG_ESR_EL1, &esr);
+                uint32_t ec = (uint32_t)(esr >> 26);
+                if (ec == 0x15) {   // SVC (AArch64 syscall)
+                    uint64_t x8 = 0, elr = 0; uc_reg_read(uc, UC_ARM64_REG_X8, &x8);
+                    uc_reg_read(uc, UC_ARM64_REG_ELR_EL1, &elr);
+                    uint64_t a[6]; for (int i = 0; i < 6; ++i) uc_reg_read(uc, xreg(i), &a[i]);
+                    self->user_svc_count_++;
+                    std::printf("  \x1b[33m[SYSCALL #%llu]\x1b[0m x8=%llu  x0=%#llx x1=%#llx x2=%#llx x3=%#llx x4=%#llx x5=%#llx  (from %#llx)\n",
+                                (unsigned long long)x8, (unsigned long long)x8,
+                                (unsigned long long)a[0], (unsigned long long)a[1], (unsigned long long)a[2],
+                                (unsigned long long)a[3], (unsigned long long)a[4], (unsigned long long)a[5],
+                                (unsigned long long)elr);
+                } else {  // fault from EL0 (abort/undef) -> the crash
+                    uint64_t far_addr = 0, elr = 0; uc_reg_read(uc, UC_ARM64_REG_FAR_EL1, &far_addr);
+                    uc_reg_read(uc, UC_ARM64_REG_ELR_EL1, &elr);
+                    uint32_t raw = 0; self->read_mem(elr, &raw, 4);
+                    std::printf("  \x1b[31m[EL0 EXCEPTION]\x1b[0m EC=%#x FAR=%#llx ELR(userPC)=%#llx ESR=%#llx  insn=%08x  %s\n",
+                                ec, (unsigned long long)far_addr, (unsigned long long)elr, (unsigned long long)esr,
+                                raw, (ec == 0 ? self->disasm_str(elr).c_str() : ""));
+                    if (ec == 0) {  // fatal undef at EL0 -> show how control flow got here
+                        std::printf("    recent EL0/kernel blocks (oldest->newest):\n");
+                        auto ring = self->recent_pcs();
+                        for (size_t i = (ring.size() > 20 ? ring.size() - 20 : 0); i < ring.size(); ++i)
+                            std::printf("      %#llx  %s\n", (unsigned long long)ring[i],
+                                        self->disasm_str(ring[i]).c_str());
+                        std::fflush(stdout);
+                    }
+                }
+                std::fflush(stdout);
+            }
+        }
+    }
+
     self->pc_ring_[self->pc_ring_pos_] = address;
     self->pc_ring_pos_ = (self->pc_ring_pos_ + 1) % kPcRing;
 
-    // Drive the ARM generic timer: recompute its output and the CPU IRQ line.
-    uc_arm64_timer_poll(uc);
+    // Advance deterministic virtual time by the block's instructions and refresh
+    // the arch-timer output + CPU IRQ line (interrupts are taken at block edges).
+    uc_arm64_time_tick(uc, self->insns_);
 
     // Spin-wait detection (windowed): a real spin dominates a short window of
     // execution; legitimate long loops complete and move on. Reset the histogram
@@ -487,6 +618,14 @@ MmuRegs UnicornCpu::read_mmu_regs() {
 
 bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
     if (!ram_) { paddr = vaddr; return true; }
+    // Apply TBI (Top-Byte-Ignore): arm64 Linux enables TCR_EL1.TBI0/TBI1, so the
+    // MMU ignores VA bits[63:56] for translation. bionic tags heap pointers in the
+    // top byte (e.g. 0xb4..); without stripping it a tagged user pointer has bit 63
+    // set, looks like a kernel VA, mis-walks TTBR1 and faults forever (the kernel
+    // untags and sees the page present -> spurious-fault loop). Reconstruct the
+    // effective address by sign-extending bit 55.
+    if (vaddr & (1ull << 55)) vaddr |= 0xff00000000000000ull;
+    else                      vaddr &= 0x00ffffffffffffffull;
     uint64_t ttbr0 = 0, ttbr1 = 0;
     uc_reg_read(uc_, UC_ARM64_REG_TTBR0_EL1, &ttbr0);
     uc_reg_read(uc_, UC_ARM64_REG_TTBR1_EL1, &ttbr1);
@@ -504,11 +643,23 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
             uint64_t desc = ram_->read64(da);
             if ((desc & 1) == 0) break;                       // invalid -> miss
             uint64_t next = desc & 0x0000fffffffff000ull;
+            // Stage-1 permissions from the descriptor: AP[2] (bit 7) == 1 means
+            // read-only, so a store must fault (this is what makes copy-on-write
+            // work -- e.g. a write to a page still mapped to the shared zero page
+            // vectors to the kernel, which allocates a private copy). READ/EXEC are
+            // kept permissive; only WRITE is gated (the COW-critical bit).
+            auto perms_of = [](uint64_t d) -> uint32_t {
+                uint32_t p = UC_PROT_READ | UC_PROT_EXEC;
+                if (((d >> 7) & 1) == 0) p |= UC_PROT_WRITE;   // AP[2]==0 -> writable
+                return p;
+            };
             if ((desc & 3) == 1) {                            // block
                 uint64_t mask = (i == 0) ? 0x3fffffffull : 0x1fffffull;
-                paddr = (next & ~mask) | (vaddr & mask); return true;
+                paddr = (next & ~mask) | (vaddr & mask);
+                xlat_perms_ = perms_of(desc); return true;
             }
-            if (i == 2) { paddr = next | (vaddr & 0xfffull); return true; }  // L3 page
+            if (i == 2) { paddr = next | (vaddr & 0xfffull);  // L3 page
+                xlat_perms_ = perms_of(desc); return true; }
             t = next;
         }
     }
@@ -522,6 +673,7 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
     constexpr uint64_t kLinearBase = 0xffffffc000000000ull;   // VA39 PAGE_OFFSET
     if (vaddr >= kLinearBase && vaddr < kLinearBase + ram_->size()) {
         paddr = ram_->base() + (vaddr - kLinearBase);
+        xlat_perms_ = UC_PROT_ALL;   // kernel linear map (RW, self-patch)
         return true;
     }
     // Kernel-half miss => real translation fault. Low-half miss: once the MMU is
@@ -536,7 +688,7 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
             HW_WARN("cpu.uc", "EL0/low fault VA={:#x} at PC={:#x}", vaddr, pc); }
         return false;
     }
-    paddr = vaddr; return true;
+    paddr = vaddr; xlat_perms_ = UC_PROT_ALL; return true;   // pre-MMU identity
 }
 
 uint32_t UnicornCpu::sys_cb(uc_engine* uc, int /*reg*/, const void* cp_reg, void* /*user*/) {
@@ -584,9 +736,14 @@ bool UnicornCpu::tlb_cb(uc_engine*, uint64_t vaddr, int /*type*/, void* result, 
     auto* self = static_cast<UnicornCpu*>(user);
     auto* e = static_cast<uc_tlb_entry*>(result);
     uint64_t pa = 0;
+    self->xlat_perms_ = UC_PROT_ALL;
     if (!self->translate(vaddr, pa)) { self->last_tlb_miss_ = vaddr; return false; }  // fault
     e->paddr = pa;
-    e->perms = UC_PROT_ALL;
+    // Real stage-1 permissions (from the PTE): a write to a read-only page then
+    // fails the vtlb's perms check and vectors a permission fault to the guest,
+    // enabling copy-on-write. Without this every page was writable (UC_PROT_ALL),
+    // so writes to the shared zero page corrupted it for all mappings.
+    e->perms = (uc_prot)self->xlat_perms_;
     return true;
 }
 

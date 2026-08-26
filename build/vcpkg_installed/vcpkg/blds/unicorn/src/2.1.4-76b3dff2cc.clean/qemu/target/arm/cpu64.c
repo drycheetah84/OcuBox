@@ -247,7 +247,9 @@ static void aarch64_max_initfn(struct uc_struct *uc, CPUState *obj)
     cpu->isar.id_aa64isar1 = t;
 
     t = cpu->isar.id_aa64pfr0;
-    FIELD_DP64(t, ID_AA64PFR0, SVE, 1, t);
+    /* hollywood_emu: real SM8250 (Cortex-A77/A55) has no SVE; advertising it
+     * makes bionic /init emit SVE ops -> SIGILL. Match hardware: SVE=0. */
+    FIELD_DP64(t, ID_AA64PFR0, SVE, 0, t);
     FIELD_DP64(t, ID_AA64PFR0, FP, 1, t);
     FIELD_DP64(t, ID_AA64PFR0, ADVSIMD, 1, t);
     cpu->isar.id_aa64pfr0 = t;

@@ -31,6 +31,24 @@
     <ClCompile Include="D:\projects\eurka_emu\src\devices\gic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_rsc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_gcc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_ufs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\ufs_disk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\irq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\cpu_state.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

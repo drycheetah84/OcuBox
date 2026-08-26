@@ -29,6 +29,11 @@ private:
     void apply_dtb_profile(Bytes& dtb);  // minimal profile: status="disabled" the configured nodes
     void dump_dt();                      // print the timer + GIC device-tree nodes
     void patch_dtb_memory(Bytes& dtb);   // emulate the bootloader: fill /memory size
+    void dump_memory_map();              // print /memory + /reserved-memory vs our image placement, flag overlaps
+    // Find a 2MB-aligned physical base with `total_size` bytes of RAM that does NOT
+    // overlap any fixed (reg-based) /reserved-memory region -- so the kernel image,
+    // DTB and initramfs land in genuine usable RAM, not a no-map firmware hole.
+    uint64_t find_free_load_base(uint64_t total_size, uint64_t align);
 
     uint64_t normalize_addr(uint64_t addr) const;
 

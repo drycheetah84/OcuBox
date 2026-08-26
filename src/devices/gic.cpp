@@ -1,4 +1,5 @@
 #include "devices/gic.h"
+#include "devices/irq.h"
 #include "common/log.h"
 #include <algorithm>
 
@@ -61,12 +62,15 @@ uint64_t GicV3::dist_read(uint64_t off, unsigned) {
     }
 }
 void GicV3::dist_write(uint64_t off, uint64_t value, unsigned) {
-    // GICD_ISENABLER (0x100..0x17f): one bit per SPI enabled. Log which SPIs the
-    // kernel enables -- proof that an interrupt was successfully mapped+requested.
+    // GICD_ISENABLER (0x100..0x17f) / GICD_ICENABLER (0x180..0x1ff): one bit per
+    // INTID. Mirror the enable state into the CPU so an enabled device SPI (e.g.
+    // UFS INTID 297) is actually delivered via ICC_IAR.
     if (off >= 0x100 && off < 0x180 && value) {
-        unsigned base = (unsigned)((off - 0x100) / 4) * 32;
-        for (int b = 0; b < 32; ++b) if (value & (1u << b))
-            HW_WARN("gic", "GICD_ISENABLER: enable SPI intid {}", base + b);
+        unsigned first = (unsigned)((off - 0x100) / 4) * 32;
+        for (int b = 0; b < 32; ++b) if (value & (1u << b)) set_irq_enabled(first + b, true);
+    } else if (off >= 0x180 && off < 0x200 && value) {
+        unsigned first = (unsigned)((off - 0x180) / 4) * 32;
+        for (int b = 0; b < 32; ++b) if (value & (1u << b)) set_irq_enabled(first + b, false);
     }
     if (off == GICD_CTLR) gicd_ctlr_ = (uint32_t)value;
     // All other distributor writes (enables, priorities, configs) are accepted

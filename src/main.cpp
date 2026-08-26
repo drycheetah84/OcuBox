@@ -58,6 +58,8 @@ struct Args {
     bool step = false;
     bool cpu_tlb = false;   // use Unicorn's native CPU TLB (native MMU + native exceptions)
     bool no_spin = false;   // disable spin-wait detection (for slow but progressing loops)
+    bool trace_user = false; // dump exec->EL0 handoff + trace userspace ABI (syscalls/faults)
+    uint64_t trace_user_insns = 20000;
     bool stop_on_undef = false;
     bool trace_irq = false; // symbol-trace timer/irq functions (needs build/ksyms.txt)
     bool dump_dt = false;
@@ -219,6 +221,26 @@ int cmd_boot(const Args& a) {
             "/soc/qcom,mdss_dsi_phy1@ae96400",   // qcom,dsi-phy-v4.1
             "/soc/qcom,mdss_dsi_pll@ae94900",    // mdss_pll (Bad page state @642M)
             "/soc/qcom,mdss_dsi_pll@ae96900",    // mdss_pll
+            // Camera subsystem (CAM CPAS/CDM/SMMU/ISP/ICP/JPEG/CCI) -- non-essential
+            // for console boot. cam-cpas fails request_platform_resource (-517), then
+            // the cam-cdm probe calls cam_smmu_get_handle() which strcmp()s a NULL
+            // context-bank name -> kernel NULL deref in swapper/0 (initcall) -> panic
+            // "Attempted to kill init". Depends on unemulated camera clocks/CPAS HW.
+            "/soc/qcom,cam-cpas@ac40000",        // qcom,cam-cpas (resource-alloc failure root)
+            "/soc/qcom,cam-cdm-intf",            // qcom,cam-cdm-intf
+            "/soc/qcom,cpas-cdm0@ac4d000",       // qcom,cam170-cpas-cdm0 (probe NULL-derefs)
+            "/soc/qcom,cam_smmu",                // qcom,msm-cam-smmu (empty CB list -> NULL name)
+            "/soc/qcom,cam-isp",                 // qcom,cam-isp
+            "/soc/qcom,cam-icp",                 // qcom,cam-icp
+            "/soc/qcom,cam-a5@ac00000",          // qcom,cam-a5 (ICP firmware core)
+            "/soc/qcom,cam-jpeg",                // qcom,cam-jpeg
+            "/soc/qcom,jpegenc@ac53000",         // qcom,cam_jpeg_enc
+            "/soc/qcom,jpegdma@ac57000",         // qcom,cam_jpeg_dma
+            "/soc/qcom,cam-bps",                 // qcom,cam-bps
+            "/soc/qcom,ipe0",                    // qcom,cam-ipe
+            "/soc/qcom,cam-req-mgr",             // qcom,cam-req-mgr
+            "/soc/qcom,cci@ac4f000",             // qcom,cci
+            "/soc/qcom,cci@ac50000",             // qcom,cci
         };
     }
     for (const auto& d : a.disable_nodes) cfg.dtb_disable.push_back(d);
@@ -238,6 +260,8 @@ int cmd_boot(const Args& a) {
     uopts.stop_on_undef = a.stop_on_undef;
     if (a.trace_irq) uopts.fn_trace_ksyms = "build/ksyms.txt";
     if (a.no_spin) uopts.hot_threshold = 0;   // disable spin detection (rely on timeout)
+    uopts.trace_user = a.trace_user;
+    uopts.trace_user_insns = a.trace_user_insns;
     emu.backend = std::make_unique<cpu::UnicornCpu>(uopts);
 
     core::BootPipeline pipeline(emu);
@@ -278,6 +302,8 @@ int main(int argc, char** argv) {
         else if (s == "--step") a.step = true;
         else if (s == "--cpu-tlb") a.cpu_tlb = true;
         else if (s == "--no-spin") a.no_spin = true;
+        else if (s == "--trace-user") a.trace_user = true;
+        else if (s == "--trace-user-insns") a.trace_user_insns = std::strtoull(arg_val(argc, argv, i), nullptr, 10);
         else if (s == "--stop-on-undef") a.stop_on_undef = true;
         else if (s == "--trace-irq") a.trace_irq = true;
         else if (s == "--dump-dt") a.dump_dt = true;
