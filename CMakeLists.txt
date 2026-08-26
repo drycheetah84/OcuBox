@@ -29,6 +29,7 @@ message(STATUS "Unicorn (patched, static): ${UNICORN_LIBRARY}")
 add_library(hwemu_core STATIC
   src/common/log.cpp
   src/common/compress.cpp
+  src/common/sha256.cpp
   src/ota/zip_reader.cpp
   src/ota/payload.cpp
   src/boot/boot_image.cpp
@@ -41,6 +42,7 @@ add_library(hwemu_core STATIC
   src/devices/qcom_gcc.cpp
   src/devices/qcom_ufs.cpp
   src/devices/ufs_disk.cpp
+  src/devices/super.cpp
   src/devices/irq.cpp
   src/platform/qcom_cmddb.cpp
   src/cpu/cpu_state.cpp

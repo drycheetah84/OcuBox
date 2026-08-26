@@ -7,6 +7,9 @@
     <ClCompile Include="D:\projects\eurka_emu\src\common\compress.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\common\sha256.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\ota\zip_reader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -41,6 +44,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\devices\ufs_disk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\super.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\devices\irq.cpp">

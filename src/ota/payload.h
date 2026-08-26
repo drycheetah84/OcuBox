@@ -37,6 +37,20 @@ struct Partition {
     std::vector<InstallOp> ops;
 };
 
+// DeltaArchiveManifest.dynamic_partition_metadata (field 15): the update_engine
+// description of the logical partitions that live inside the physical `super`.
+// The OTA ships no super.img -- update_engine (and now we) build super from the
+// per-partition images plus this group/partition layout.
+struct DynamicPartitionGroup {
+    std::string name;                        // e.g. "hollywood_dynamic_partitions_a"
+    uint64_t maximum_size = 0;
+    std::vector<std::string> partition_names; // e.g. {system, system_ext, vendor, ...}
+};
+struct DynamicPartitionMetadata {
+    std::vector<DynamicPartitionGroup> groups;
+    bool present = false;
+};
+
 struct Payload {
     uint64_t version = 0;
     uint32_t block_size = 4096;
@@ -46,6 +60,7 @@ struct Payload {
     uint64_t data_blob_start = 0;   // offset within payload.bin
     uint64_t payload_offset_in_zip = 0; // absolute offset of payload.bin in the OTA zip
     std::vector<Partition> partitions;
+    DynamicPartitionMetadata dap;   // dynamic-partition (super) layout
 
     const Partition* find(const std::string& name) const;
 };

@@ -1,5 +1,6 @@
 D:\projects\eurka_emu\src\common\log.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\log.obj
 D:\projects\eurka_emu\src\common\compress.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\compress.obj
+D:\projects\eurka_emu\src\common\sha256.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\sha256.obj
 D:\projects\eurka_emu\src\ota\zip_reader.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\zip_reader.obj
 D:\projects\eurka_emu\src\ota\payload.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\payload.obj
 D:\projects\eurka_emu\src\boot\boot_image.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\boot_image.obj
@@ -12,6 +13,7 @@ D:\projects\eurka_emu\src\devices\qcom_rsc.cpp;D:\projects\eurka_emu\build\hwemu
 D:\projects\eurka_emu\src\devices\qcom_gcc.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_gcc.obj
 D:\projects\eurka_emu\src\devices\qcom_ufs.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_ufs.obj
 D:\projects\eurka_emu\src\devices\ufs_disk.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\ufs_disk.obj
+D:\projects\eurka_emu\src\devices\super.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\super.obj
 D:\projects\eurka_emu\src\devices\irq.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\irq.obj
 D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_cmddb.obj
 D:\projects\eurka_emu\src\cpu\cpu_state.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\cpu_state.obj

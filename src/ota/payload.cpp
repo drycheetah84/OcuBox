@@ -85,6 +85,26 @@ InstallOp parse_op(std::span<const uint8_t> b) {
     return op;
 }
 
+DynamicPartitionGroup parse_dpgroup(std::span<const uint8_t> b) {
+    PbReader r(b); DynamicPartitionGroup g;
+    while (!r.eof()) { auto t = r.tag();
+        if (t.field == 1 && t.wire == 2) { auto s = r.len_bytes(); g.name.assign((const char*)s.data(), s.size()); }
+        else if (t.field == 2 && t.wire == 0) g.maximum_size = r.varint();
+        else if (t.field == 3 && t.wire == 2) { auto s = r.len_bytes(); g.partition_names.emplace_back((const char*)s.data(), s.size()); }
+        else r.skip(t.wire);
+    }
+    return g;
+}
+
+DynamicPartitionMetadata parse_dap(std::span<const uint8_t> b) {
+    PbReader r(b); DynamicPartitionMetadata m; m.present = true;
+    while (!r.eof()) { auto t = r.tag();
+        if (t.field == 1 && t.wire == 2) m.groups.push_back(parse_dpgroup(r.len_bytes()));
+        else r.skip(t.wire);
+    }
+    return m;
+}
+
 Partition parse_partition(std::span<const uint8_t> b) {
     PbReader r(b); Partition p;
     while (!r.eof()) { auto t = r.tag();
@@ -136,6 +156,7 @@ Payload parse_payload(const ZipReader& zip) {
     while (!r.eof()) { auto t = r.tag();
         if (t.field == 3 && t.wire == 0) pl.block_size = (uint32_t)r.varint();
         else if (t.field == 13 && t.wire == 2) pl.partitions.push_back(parse_partition(r.len_bytes()));
+        else if (t.field == 15 && t.wire == 2) pl.dap = parse_dap(r.len_bytes());  // dynamic_partition_metadata
         else r.skip(t.wire);
     }
     pl.data_blob_start = pl.header_size + pl.manifest_size + pl.metadata_sig_size;

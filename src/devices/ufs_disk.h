@@ -9,17 +9,24 @@
 #include "common/bytes.h"
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace hw::dev {
 
+class SuperImage;   // dynamic-partition (super) backing
+
 class UfsDisk {
 public:
     static constexpr uint32_t kBlock = 4096;   // logical block size
 
-    UfsDisk();
+    // If `super` is set, a physical "super" partition of super->size() bytes is
+    // added to the GPT and its blocks are served from the liblp image; the
+    // logical partitions (system/vendor/...) live inside it. If null, the disk
+    // exposes static partitions only.
+    explicit UfsDisk(std::shared_ptr<SuperImage> super = nullptr);
 
     uint64_t block_count() const { return total_blocks_; }
     uint32_t block_size() const { return kBlock; }
@@ -43,6 +50,7 @@ private:
 
     Extractor extractor_;
     std::unordered_map<std::string, Bytes> data_cache_;
+    std::shared_ptr<SuperImage> super_;
 
     std::vector<Part> parts_;
     Bytes gpt_primary_;      // LBA1 header + entries (LBA2..), and protective MBR (LBA0)

@@ -319,6 +319,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="D:\projects\eurka_emu\src\common\log.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\common\compress.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\common\sha256.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\ota\zip_reader.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\ota\payload.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\boot\boot_image.cpp" />
@@ -331,6 +332,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_gcc.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_ufs.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\ufs_disk.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\super.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\irq.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\cpu_state.cpp" />

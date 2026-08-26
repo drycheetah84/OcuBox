@@ -1,6 +1,8 @@
 #include "devices/ufs_disk.h"
+#include "devices/super.h"
 #include <algorithm>
 #include <cstring>
+#include <string>
 
 namespace hw::dev {
 
@@ -16,9 +18,11 @@ uint32_t crc32(const uint8_t* p, size_t n) {
 void put32(uint8_t* p, uint32_t v) { p[0]=(uint8_t)v; p[1]=(uint8_t)(v>>8); p[2]=(uint8_t)(v>>16); p[3]=(uint8_t)(v>>24); }
 void put64(uint8_t* p, uint64_t v) { for (int i=0;i<8;++i) p[i]=(uint8_t)(v>>(8*i)); }
 
-// Partition table (name + size in bytes). A/B partitions per the Quest OTA; sizes
-// are >= the OTA image sizes so full images fit. First-stage init only needs
-// boot_a/dtbo_a/system_a/vbmeta_a/vendor_a to appear, but we lay out the full set.
+// Physical partition table (name + size in bytes). The Quest uses DYNAMIC
+// partitions: system/system_ext/vendor/product/odm are logical, living inside
+// the physical `super` partition (see SuperImage); they are NOT listed here.
+// `super` is sized from the SuperImage at build time. vbmeta*/boot/dtbo are real
+// static A/B partitions; metadata/misc/userdata are static scratch.
 struct Def { const char* name; uint64_t size; };
 const Def kDefs[] = {
     { "vbmeta_a", 0x10000 }, { "vbmeta_b", 0x10000 },
@@ -26,11 +30,7 @@ const Def kDefs[] = {
     { "vbmeta_vendor_a", 0x10000 }, { "vbmeta_vendor_b", 0x10000 },
     { "boot_a", 0x6400000 }, { "boot_b", 0x6400000 },           // 100M
     { "dtbo_a", 0x1000000 }, { "dtbo_b", 0x1000000 },           // 16M
-    { "vendor_a", 0x14000000 }, { "vendor_b", 0x14000000 },     // 320M
-    { "system_a", 0x40000000 }, { "system_b", 0x40000000 },     // 1G
-    { "system_ext_a", 0x58000000 }, { "system_ext_b", 0x58000000 }, // 1.4G
-    { "product_a", 0x10000000 }, { "product_b", 0x10000000 },   // 256M
-    { "odm_a", 0xC000000 }, { "odm_b", 0xC000000 },             // 192M
+    { "super", 0 },                                            // size from SuperImage
     { "metadata", 0x1000000 }, { "misc", 0x100000 },
     { "userdata", 0x100000000ull },                            // 4G
 };
@@ -42,7 +42,7 @@ const uint8_t kTypeGuid[16] = {
 };
 } // namespace
 
-UfsDisk::UfsDisk() { build_gpt(); }
+UfsDisk::UfsDisk(std::shared_ptr<SuperImage> super) : super_(std::move(super)) { build_gpt(); }
 
 void UfsDisk::build_gpt() {
     const uint64_t entries_bytes = 128 * 128;                 // 128 entries * 128B = 16KB
@@ -52,7 +52,12 @@ void UfsDisk::build_gpt() {
     uint64_t lba = ((entries_lba_ + entry_blocks + align - 1) / align) * align;  // first usable, aligned
 
     for (const auto& d : kDefs) {
-        uint64_t nblk = (d.size + kBlock - 1) / kBlock;
+        uint64_t sz = d.size;
+        if (std::string(d.name) == "super") {
+            if (!super_) continue;                            // no dynamic partitions
+            sz = super_->size();
+        }
+        uint64_t nblk = (sz + kBlock - 1) / kBlock;
         parts_.push_back({ d.name, lba, lba + nblk - 1 });
         lba += ((nblk + align - 1) / align) * align;          // keep partitions 1MB-aligned
     }
@@ -143,15 +148,20 @@ void UfsDisk::read(uint64_t lba, uint32_t count, uint8_t* out) {
             size_t n = off < entries_.size() ? std::min((size_t)kBlock, entries_.size() - off) : 0;
             if (n) std::memcpy(dst, entries_.data() + off, n);
         } else {
-            // Partition data region: serve the OTA image for whichever partition
-            // owns this block (unmapped/inactive slots stay zero).
+            // Partition data region.
             for (const auto& p : parts_) {
                 if (b < p.first_lba || b > p.last_lba) continue;
-                const Bytes* img = partition_data(p);
-                if (img) {
-                    size_t off = (size_t)(b - p.first_lba) * kBlock;
-                    size_t n = off < img->size() ? std::min((size_t)kBlock, img->size() - off) : 0;
-                    if (n) std::memcpy(dst, img->data() + off, n);
+                if (p.name == "super" && super_) {
+                    // Dynamic-partition container: liblp metadata + logical extents.
+                    super_->read((b - p.first_lba) * (uint64_t)kBlock, kBlock, dst);
+                } else {
+                    // Static partition: serve its OTA image (inactive slots stay zero).
+                    const Bytes* img = partition_data(p);
+                    if (img) {
+                        size_t off = (size_t)(b - p.first_lba) * kBlock;
+                        size_t n = off < img->size() ? std::min((size_t)kBlock, img->size() - off) : 0;
+                        if (n) std::memcpy(dst, img->data() + off, n);
+                    }
                 }
                 break;
             }

@@ -8,6 +8,7 @@
 #include "devices/qcom_ufs.h"
 #include "devices/qcom_rng.h"
 #include "devices/ufs_disk.h"
+#include "devices/super.h"
 #include "devices/stub_device.h"
 #include "platform/qcom_cmddb.h"
 #include "ota/payload.h"
@@ -237,21 +238,58 @@ int BootPipeline::run() {
         // Created here (not in the device stage) because it DMAs guest RAM, which
         // exists only now. Backed by a synthesized GPT disk served from the OTA.
         {
-            auto disk = std::make_shared<dev::UfsDisk>();
-            // Back the GPT partitions with real OTA contents. The active slot is
-            // `slot_suffix` (default _a): a GPT name "<part>_a" is served from the
-            // OTA partition "<part>"; the inactive _b slot and non-OTA partitions
-            // (metadata/misc/userdata) stay zero. Reconstructed lazily + cached.
             const std::string suffix = emu_.config.slot_suffix.empty() ? "_a" : emu_.config.slot_suffix;
-            disk->set_partition_source([this, zip, &payload, suffix](const std::string& gpt_name) -> Bytes {
-                if (!zip) return {};
+            // Reconstruct any OTA payload partition (by base name) into its full
+            // image, lazily + cached. Shared by the static-partition source and the
+            // super/liblp extent server.
+            auto ota_extract = [this, zip, &payload](const std::string& base) -> Bytes {
+                const ota::Partition* pp = zip ? payload.find(base) : nullptr;
+                if (!pp) return {};
+                // Persistent decompression cache: XZ-inflating ~2.8GB of logical
+                // partitions every run is the wall-clock bottleneck, so cache the
+                // reconstructed images and reuse them when the size matches.
+                namespace fs = std::filesystem;
+                std::error_code ec;
+                fs::path cache = fs::path("build") / "ota_cache" / (base + ".img");
+                if (fs::exists(cache, ec) && fs::file_size(cache, ec) == pp->size) {
+                    Bytes b(pp->size);
+                    std::ifstream in(cache, std::ios::binary);
+                    if (in.read(reinterpret_cast<char*>(b.data()), (std::streamsize)b.size())) {
+                        HW_WARN("boot.ufs", "[LP] loaded '{}' from cache ({} MB)", base, b.size()/(1024*1024));
+                        return b;
+                    }
+                }
+                Bytes img = ota::extract_partition(*zip, payload, base);
+                fs::create_directories(cache.parent_path(), ec);
+                std::ofstream out(cache, std::ios::binary);
+                out.write(reinterpret_cast<const char*>(img.data()), (std::streamsize)img.size());
+                return img;
+            };
+
+            // Build the physical `super` (dynamic partitions) from the OTA's
+            // dynamic_partition_metadata: the logical partitions (system/vendor/...)
+            // become LINEAR extents inside super with synthesized liblp metadata.
+            std::shared_ptr<dev::SuperImage> super;
+            if (payload.dap.present && !payload.dap.groups.empty()) {
+                const auto& g = payload.dap.groups[0];
+                std::vector<dev::SuperImage::Logical> logicals;
+                for (const auto& base : g.partition_names) {
+                    const ota::Partition* pp = payload.find(base);
+                    if (pp) logicals.push_back({ base + suffix, base, pp->size });
+                }
+                super = std::make_shared<dev::SuperImage>(
+                    std::move(logicals), g.name + suffix, g.maximum_size, ota_extract);
+            }
+
+            auto disk = std::make_shared<dev::UfsDisk>(super);
+            // Static A/B partitions (vbmeta*/boot/dtbo): active-slot "<part>_a" is
+            // served from OTA "<part>"; inactive _b + scratch (metadata/misc/
+            // userdata) stay zero.
+            disk->set_partition_source([suffix, ota_extract](const std::string& gpt_name) -> Bytes {
                 if (gpt_name.size() <= suffix.size() ||
                     gpt_name.compare(gpt_name.size() - suffix.size(), suffix.size(), suffix) != 0)
-                    return {};                                   // inactive slot / no OTA image
-                std::string base = gpt_name.substr(0, gpt_name.size() - suffix.size());
-                if (!payload.find(base)) return {};
-                HW_INFO("boot.ufs", "extracting OTA partition '{}' for {}", base, gpt_name);
-                return ota::extract_partition(*zip, payload, base);
+                    return {};
+                return ota_extract(gpt_name.substr(0, gpt_name.size() - suffix.size()));
             });
             emu_.bus.add(std::make_unique<dev::QcomUfs>(0x1d84000ull, 0x3000ull, 297,
                                                         emu_.ram.get(), disk));
@@ -401,6 +439,14 @@ int BootPipeline::run() {
                 // the OTA).
                 set_str("/firmware/android/vbmeta", "parts",
                         "vbmeta,boot,system,vendor,dtbo,vbmeta_system,vbmeta_vendor");
+
+                // Dynamic partitions: the stock DT fstab lists only a static
+                // /vendor, but this build uses dynamic partitions (system/vendor/
+                // etc. are logical inside `super`, per /first_stage_ramdisk/
+                // fstab.hollywood). Neutralize the DT fstab's compatible so
+                // first-stage init falls back to that ramdisk fstab and reads the
+                // liblp metadata from super.
+                set_str("/firmware/android/fstab", "compatible", "disabled");
             }
             // Verify the initrd properties survived in the final blob.
             try {

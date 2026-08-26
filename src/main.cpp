@@ -110,6 +110,13 @@ int cmd_inspect(const Args& a) {
         std::printf("%-16s %12.2f %6zu\n", p.name.c_str(),
                     p.size / 1048576.0, p.ops.size());
     }
+    std::printf("\ndynamic_partition_metadata: %s, %zu group(s)\n",
+                pl.dap.present ? "present" : "ABSENT", pl.dap.groups.size());
+    for (const auto& g : pl.dap.groups) {
+        std::printf("  group '%s' max=%.2f MB  partitions: ", g.name.c_str(), g.maximum_size / 1048576.0);
+        for (const auto& n : g.partition_names) std::printf("%s ", n.c_str());
+        std::printf("\n");
+    }
     return 0;
 }
 

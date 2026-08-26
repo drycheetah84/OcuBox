@@ -27,9 +27,11 @@ enum {
 // HCS bits.
 enum { HCS_DP = 0x01, HCS_UTRLRDY = 0x02, HCS_UTMRLRDY = 0x04, HCS_UCRDY = 0x08 };
 // IS bits.
-enum { IS_UTRCS = 0x1, IS_UIC_PWR = 0x10, IS_UIC_LINKUP = 0x100, IS_UTMRCS = 0x200, IS_UCCS = 0x400 };
+enum { IS_UTRCS = 0x1, IS_UIC_PWR = 0x10, IS_UHXS = 0x20, IS_UHES = 0x40,
+       IS_UIC_LINKUP = 0x100, IS_UTMRCS = 0x200, IS_UCCS = 0x400 };
 // UIC opcodes.
-enum { DME_GET = 0x01, DME_SET = 0x02, DME_LINKSTARTUP = 0x16 };
+enum { DME_GET = 0x01, DME_SET = 0x02, DME_LINKSTARTUP = 0x16,
+       DME_HIBERNATE_ENTER = 0x17, DME_HIBERNATE_EXIT = 0x18 };
 // UPIU transaction types.
 enum { UPIU_NOP_OUT = 0x00, UPIU_CMD = 0x01, UPIU_QUERY_REQ = 0x16,
        UPIU_NOP_IN = 0x20, UPIU_RESPONSE = 0x21, UPIU_QUERY_RESP = 0x36 };
@@ -138,6 +140,8 @@ void QcomUfs::uic_command(uint32_t cmd) {
     }
     if (opcode == DME_SET && (uicarg1_ >> 16) == PA_PWRMODE)
         is_ |= IS_UIC_PWR;                           // power-mode change completed
+    if (opcode == DME_HIBERNATE_ENTER) is_ |= IS_UHES;   // hibern8 enter status
+    if (opcode == DME_HIBERNATE_EXIT)  is_ |= IS_UHXS;   // hibern8 exit status
     is_ |= IS_UCCS;                                  // UIC command completion
     UFS_TRACE("uic opcode={:#x} arg1={:#x} -> is={:#x}", opcode, uicarg1_, is_);
     update_irq();
