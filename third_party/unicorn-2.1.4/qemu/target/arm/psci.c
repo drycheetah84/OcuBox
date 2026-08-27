@@ -22,6 +22,15 @@
 #include "internals.h"
 #include "kvm-consts.h"   /* hollywood_emu: QEMU_PSCI_* function IDs / return codes */
 
+/* hollywood_emu: NON-FAITHFUL keymaster/QSEE SCM shim hook (user-enabled). The real
+ * Qualcomm TrustZone/QSEE cannot complete cold boot without device fuses + the
+ * undocumented xbl-populated secure-world data, so with the shim active, non-PSCI
+ * SMC calls (Qualcomm SiP / qseecom / keymaster) are dispatched to a C++ handler
+ * that emulates the responses. The handler receives the uc engine, reads x0.. and
+ * any shared buffers, writes x0..x3 (+ buffers), and returns true if it handled the
+ * call. Set from the emulator only when --kmshim is passed. */
+bool (*hollywood_scm_handler_fn)(void *uc) = 0;
+
 bool arm_is_psci_call(ARMCPU *cpu, int excp_type)
 {
     /* Return true if the r0/x0 value indicates a PSCI call and
@@ -89,6 +98,11 @@ void arm_handle_psci_call(ARMCPU *cpu)
               ? 0 : QEMU_PSCI_RET_NOT_SUPPORTED;
         break;
     default:
+        /* hollywood_emu: route non-PSCI SMCs (Qualcomm SCM/qseecom/keymaster) to the
+         * shim handler if installed; it sets x0..x3 itself and we return early. */
+        if (hollywood_scm_handler_fn && hollywood_scm_handler_fn(env->uc)) {
+            return;
+        }
         ret = QEMU_PSCI_RET_NOT_SUPPORTED;
         break;
     }

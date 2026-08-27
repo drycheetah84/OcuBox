@@ -244,6 +244,25 @@ static inline void tb_add_jump(TranslationBlock *tb, int n,
     return;
 }
 
+#if defined(TARGET_ARM) || defined(TARGET_AARCH64)
+/*
+ * True if this TB's *entry* architectural state is inside an AArch32 Thumb IT
+ * block (flags bit 31 == 0 => AArch32; TBFLAG_AM32.CONDEXEC == flags[7:0] != 0
+ * => nonzero ITSTATE at the first instruction). Such a TB only arises when a
+ * fault/interrupt restarts execution part-way through an IT block; its goto_tb
+ * successor's condexec is runtime-dependent, so a direct chain can resume at
+ * the wrong successor after the restart (observed: a COW store-fault on the
+ * last IT insn made a loop back-edge misland, dropping one guest iteration).
+ * Excluding such TBs from direct chaining forces them through the dispatcher,
+ * which re-validates pc+flags on every lookup. Ordinary TBs (condexec == 0,
+ * and all AArch64 TBs) keep normal chaining.
+ */
+static inline bool tb_entry_mid_it_block(const TranslationBlock *tb)
+{
+    return ((tb->flags >> 31) & 1u) == 0u && (tb->flags & 0xffu) != 0u;
+}
+#endif
+
 static inline TranslationBlock *tb_find(CPUState *cpu,
                                         TranslationBlock *last_tb,
                                         int tb_exit, uint32_t cf_mask)
@@ -287,7 +306,14 @@ static inline TranslationBlock *tb_find(CPUState *cpu,
         last_tb = NULL;
     }
     /* See if we can patch the calling TB. */
-    if (last_tb) {
+    if (last_tb
+#if defined(TARGET_ARM) || defined(TARGET_AARCH64)
+        /* Do not form a direct goto_tb chain into or out of a TB whose entry
+         * state is mid-IT-block; route it through the dispatcher instead. */
+        && !tb_entry_mid_it_block(last_tb)
+        && !tb_entry_mid_it_block(tb)
+#endif
+        ) {
         tb_exec_unlock(cpu->uc);
         tb_add_jump(last_tb, tb_exit, tb);
         tb_exec_lock(cpu->uc);

@@ -56,6 +56,14 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
     struct hook *hook;
     HOOK_FOREACH_VAR_DECLARE;
 
+#if defined(TARGET_ARM) || defined(TARGET_AARCH64)
+    /* Preserve AArch32 IT/condexec across the (unconditional) cpu_restore_state below;
+     * restored on the successful-fill path so a non-faulting fill leaves IT state intact. */
+    uint32_t arm_uc_get_condexec(CPUState *);
+    void arm_uc_set_condexec(CPUState *, uint32_t);
+    uint32_t uc_saved_condexec = arm_uc_get_condexec(cs);
+#endif
+
     cpu_restore_state(cs, retaddr, false);
 
     HOOK_FOREACH(uc, hook, UC_HOOK_TLB_FILL) {
@@ -117,6 +125,10 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
 
     if (ret) {
         tlb_set_page(cs, address & TARGET_PAGE_MASK, e.paddr & TARGET_PAGE_MASK, perms_to_prot(e.perms), mmu_idx, TARGET_PAGE_SIZE);
+#if defined(TARGET_ARM) || defined(TARGET_AARCH64)
+        /* Successful fill (no guest fault): undo cpu_restore_state's IT-state rewind. */
+        arm_uc_set_condexec(cs, uc_saved_condexec);
+#endif
         return true;
     }
 

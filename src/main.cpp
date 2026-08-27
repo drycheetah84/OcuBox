@@ -64,6 +64,8 @@ struct Args {
     bool trace_irq = false; // symbol-trace timer/irq functions (needs build/ksyms.txt)
     bool dump_dt = false;
     bool list_dt = false;   // print every DT node path + compatible and exit
+    bool tz = false;        // cold-boot the real Qualcomm secure monitor (tz) at EL3
+    bool kmshim = false;    // NON-FAITHFUL keymaster/QSEE SCM shim (boot past real QSEE)
     std::string profile = "stock";          // "stock" or "minimal"
     std::vector<std::string> disable_nodes; // extra DT nodes to disable (compatible/path)
 };
@@ -208,6 +210,7 @@ int cmd_boot(const Args& a) {
     cfg.log_mmio = a.log_mmio;
     cfg.dump_dt = a.dump_dt;
     cfg.list_dt = a.list_dt;
+    cfg.tz_boot = a.tz;
     cfg.profile = a.profile;
     // The "minimal" profile disables non-essential vendor devices (display, camera,
     // GPU, sensors) so the kernel reaches userspace/initramfs. Nodes are named by a
@@ -269,6 +272,8 @@ int cmd_boot(const Args& a) {
     if (a.no_spin) uopts.hot_threshold = 0;   // disable spin detection (rely on timeout)
     uopts.trace_user = a.trace_user;
     uopts.trace_user_insns = a.trace_user_insns;
+    uopts.el3 = a.tz;   // enable EL3 secure monitor when cold-booting tz
+    uopts.kmshim = a.kmshim;   // NON-FAITHFUL keymaster/QSEE SCM shim
     emu.backend = std::make_unique<cpu::UnicornCpu>(uopts);
 
     core::BootPipeline pipeline(emu);
@@ -315,6 +320,8 @@ int main(int argc, char** argv) {
         else if (s == "--trace-irq") a.trace_irq = true;
         else if (s == "--dump-dt") a.dump_dt = true;
         else if (s == "--list-dt") a.list_dt = true;
+        else if (s == "--tz") a.tz = true;
+        else if (s == "--kmshim") a.kmshim = true;
         else if (s == "--profile") a.profile = arg_val(argc, argv, i);
         else if (s == "--disable-node") a.disable_nodes.push_back(arg_val(argc, argv, i));
         else if (s == "--debug") { a.verbose = true; a.log_mmio = true; }

@@ -371,6 +371,7 @@ typedef enum uc_arm64_reg {
 struct uc_struct;
 void uc_arm64_timer_poll(struct uc_struct *uc);
 void uc_arm64_timer_debug(struct uc_struct *uc, uint64_t *out);
+void uc_arm64_exec_state(struct uc_struct *uc, uint64_t *out);
 /* Deterministic virtual time: reset at run start, tick with retired instructions
  * from the block hook, and warp to the next timer deadline on WFI idle. */
 void uc_arm64_time_reset(struct uc_struct *uc);

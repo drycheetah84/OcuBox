@@ -45,6 +45,11 @@ struct UnicornOptions {
                                     // argc/argv/envp/auxv/TLS), then trace EL0 instructions
                                     // and syscalls (SVC) -- userspace ABI diagnostics
     uint64_t trace_user_insns = 20000; // cap on traced EL0 instructions
+    bool el3 = false;               // enable EL3 (secure monitor) -- sets HOLLYWOOD_EL3
+                                    // before uc_open so the real tz can run at EL3
+    bool kmshim = false;            // NON-FAITHFUL keymaster/QSEE shim: emulate the
+                                    // Qualcomm SCM/qseecom/keymaster SMC responses so
+                                    // the OS boots past the (unbootable) real QSEE
 };
 
 class UnicornCpu : public CpuBackend {
@@ -58,6 +63,12 @@ public:
     RunResult run(uint64_t max_instructions) override;
     Aarch64Regs read_regs() override;
     bool read_mem(uint64_t addr, void* buf, size_t len) override;
+    // Map an extra RAM region (beyond main DRAM) and optionally write initial
+    // bytes -- used to place the secure firmware (tz) in its physical carveouts.
+    bool map_ram_region(uint64_t base, uint64_t size, std::string& err) override;
+    bool write_phys(uint64_t addr, const uint8_t* data, size_t len) override;
+    bool tz_dropped() const override { return tz_dropped_; }
+    uint64_t tz_drop_pc() const override { return tz_drop_pc_; }
     std::string disasm_at(uint64_t pc) override;
     MmuRegs read_mmu_regs() override;
     // The most recently executed guest PCs, oldest first (for crash forensics).
@@ -78,6 +89,9 @@ private:
     static void block_cb(uc_engine*, uint64_t address, uint32_t size, void* user);
     static bool unmapped_cb(uc_engine*, int type, uint64_t address, int size, int64_t value, void* user);
     static void intr_cb(uc_engine*, uint32_t intno, void* user);
+    // Phase-9 diagnostic (env HOLLYWOOD_WATCH08C): log writes to the linker
+    // .data.rel.ro slot that ends up unrelocated (addr&0xfff==0x08c, high user VA).
+    static void watch_cb(uc_engine*, int type, uint64_t addr, int size, int64_t value, void* user);
     // TLB-fill hook: we perform ARMv8 stage-1 translation ourselves.
     static bool tlb_cb(uc_engine*, uint64_t vaddr, int type, void* result, void* user);
     // SYS-instruction hook: flush our virtual TLB on TLBI so the guest never
@@ -144,12 +158,25 @@ private:
     // Emulated GICv3 CPU-interface (ICC_*) register file, keyed by encoding.
     std::unordered_map<uint32_t, uint64_t> icc_;
 
+    // Phase 11 tz handoff detection (tz mode / opts_.el3): tz cold-boots at EL3
+    // then ERETs to a lower EL; we catch that transition so the kernel can be
+    // injected while tz stays resident at EL3.
+    bool tz_seen_el3_ = false;
+    bool tz_dropped_ = false;
+    uint64_t tz_drop_pc_ = 0;
+    unsigned tz_last_low_el_ = 3;   // track EL transitions (log each drop once)
+    int tz_drop_log_ = 0;           // capped diagnostic log of EL drops
+    bool tz_wild_ = false;          // dumped a park/wild-jump trace once
+    uint64_t tz_last_block_ = 0;    // previous block address (detect self-loop parks)
+    uint64_t tz_trap_pc_ = 0;       // HOLLYWOOD_TZ_TRAP: dump regs+trace on first hit
+    bool tz_trapped_ = false;
+
     // Spin detector histogram window: reset counts every this many instructions
     // so a real spin (dominates a window) is caught but long finite loops aren't.
     static constexpr uint64_t kSpinWindow = 0x4000000; // 64M instructions
 
     // Ring of recently executed PCs (crash forensics).
-    static constexpr size_t kPcRing = 48;
+    static constexpr size_t kPcRing = 512;
     uint64_t pc_ring_[kPcRing] = {};
     size_t pc_ring_pos_ = 0;
 

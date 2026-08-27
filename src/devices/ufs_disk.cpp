@@ -77,8 +77,18 @@ void UfsDisk::build_gpt() {
         std::memcpy(e + 16, kTypeGuid, 16); e[16] = (uint8_t)(i + 1);
         put64(e + 32, parts_[i].first_lba);
         put64(e + 40, parts_[i].last_lba);
-        put64(e + 48, 0);                                     // attributes
         const std::string& nm = parts_[i].name;              // UTF-16LE name
+        // A/B slot attributes (Qualcomm GPT layout in attr bits 48-63: 48-49 priority,
+        // 50 active, 51-53 retry count, 54 successful, 55 unbootable). Present slot A
+        // as the active+successful slot and slot B as a valid lower-priority fallback,
+        // so bootctrl.<soc> (the IBootControl HAL) can resolve the current slot from
+        // the GPT -- matching androidboot.slot_suffix=_a. Non-slotted partitions: 0.
+        uint64_t attr = 0;
+        if (nm.size() >= 2 && nm.compare(nm.size() - 2, 2, "_a") == 0)
+            attr = (3ull << 48) | (1ull << 50) | (7ull << 51) | (1ull << 54);
+        else if (nm.size() >= 2 && nm.compare(nm.size() - 2, 2, "_b") == 0)
+            attr = (2ull << 48) | (7ull << 51);
+        put64(e + 48, attr);                                  // attributes
         for (size_t k = 0; k < nm.size() && k < 35; ++k) e[56 + k * 2] = (uint8_t)nm[k];
     }
     uint32_t entries_crc = crc32(entries_.data(), entries_.size());

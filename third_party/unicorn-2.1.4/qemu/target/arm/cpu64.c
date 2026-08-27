@@ -209,9 +209,16 @@ static void aarch64_max_initfn(struct uc_struct *uc, CPUState *obj)
      * code needs to distinguish this QEMU CPU from other software
      * implementations, though this shouldn't be needed.
      */
-    FIELD_DP64(0, MIDR_EL1, IMPLEMENTER, 0, t);
+    /* Phase 11: when running the REAL Qualcomm secure world (tz), the CPU must
+     * identify as Qualcomm. tz's cold boot reads MIDR_EL1[31:24] and parks (b .)
+     * unless the implementer is 0x51 (Qualcomm) or 0x41 (ARM). Report 0x51 under
+     * HOLLYWOOD_EL3; the validated kernel-only boot keeps QEMU's synthetic MIDR. */
+    FIELD_DP64(0, MIDR_EL1, IMPLEMENTER, getenv("HOLLYWOOD_EL3") ? 0x51 : 0, t);
     FIELD_DP64(t, MIDR_EL1, ARCHITECTURE, 0xf ,t);
-    FIELD_DP64(t, MIDR_EL1, PARTNUM, 'Q', t);
+    /* Phase 11: tz also validates MIDR PARTNUM is a Qualcomm Kryo part (it does
+     * `sub w,part,#0x800; cmp w,#8; b.hs PARK`, i.e. PARTNUM in [0x800,0x807]).
+     * Report the real SM8250 Kryo-585 Gold part (0x804) under HOLLYWOOD_EL3. */
+    FIELD_DP64(t, MIDR_EL1, PARTNUM, getenv("HOLLYWOOD_EL3") ? 0x804 : 'Q', t);
     FIELD_DP64(t, MIDR_EL1, VARIANT, 0, t);
     FIELD_DP64(t, MIDR_EL1, REVISION, 0, t);
     cpu->midr = t;

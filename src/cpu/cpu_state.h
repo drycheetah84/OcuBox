@@ -27,6 +27,10 @@ public:
     Aarch64Regs regs;
     // Configure the register file for the ARM64 Linux boot handoff.
     void setup_linux_boot(uint64_t kernel_entry, uint64_t dtb_addr);
+    // Configure the register file to cold-boot the real Qualcomm secure monitor
+    // (tz) at EL3: PC = tz entry, PSTATE = EL3h (DAIF masked), x0/x1 = the xbl
+    // boot-handoff parameters (tz parks unless both are nonzero).
+    void setup_tz_boot(uint64_t tz_entry, uint64_t x0, uint64_t x1);
 };
 
 // Reason a run stopped -- the raw material for actionable boot diagnostics.
@@ -67,6 +71,15 @@ public:
     // Read guest memory honoring the current MMU translation (for diagnostics,
     // e.g. dumping the instructions around a faulting PC). Returns false on miss.
     virtual bool read_mem(uint64_t addr, void* buf, size_t len) = 0;
+    // Map an extra RAM region (beyond main DRAM) / write physical bytes -- used to
+    // place secure firmware (tz) in its carveouts. Default: unsupported.
+    virtual bool map_ram_region(uint64_t /*base*/, uint64_t /*size*/, std::string& /*err*/) { return false; }
+    virtual bool write_phys(uint64_t /*addr*/, const uint8_t* /*data*/, size_t /*len*/) { return false; }
+    // Phase 11 tz handoff: after tz's EL3 cold boot ERETs down to a lower EL,
+    // tz_dropped() reports it so the caller can inject the kernel boot state (tz
+    // stays resident at EL3 as the SMC handler). Default: never drops.
+    virtual bool tz_dropped() const { return false; }
+    virtual uint64_t tz_drop_pc() const { return 0; }
     // Disassemble the instruction at `pc` ("mnemonic operands"), or "" if the
     // backend has no disassembler. Default: none.
     virtual std::string disasm_at(uint64_t /*pc*/) { return {}; }

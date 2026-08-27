@@ -7,6 +7,8 @@
 #include "devices/qcom_gcc.h"
 #include "devices/qcom_ufs.h"
 #include "devices/qcom_rng.h"
+#include "devices/qcom_sec_engine.h"
+#include "devices/qcom_tcsr.h"
 #include "devices/ufs_disk.h"
 #include "devices/super.h"
 #include "devices/stub_device.h"
@@ -190,6 +192,16 @@ int BootPipeline::run() {
         // kthread stops hot-looping ("no data available") and crng init proceeds.
         emu_.bus.add(std::make_unique<dev::QcomRng>(0x793000ull, 0x1000ull));
 
+        // Phase 11 (tz only): the secure crypto/PRNG engine at 0x791000. tz's cold
+        // boot initializes it (write enable bits + poll readback, read a ready bit,
+        // read entropy). Modeled as a register block with readback + forced status.
+        // Added only in tz mode so the kernel boot is unchanged.
+        if (emu_.config.tz_boot) {
+            emu_.bus.add(std::make_unique<dev::QcomSecEngine>(0x791000ull, 0x1000ull));
+            // TCSR SoC-info block QSEE parses during cold boot (0x1fc8000).
+            emu_.bus.add(std::make_unique<dev::QcomTcsr>(0x1fc8000ull, 0x1000ull));
+        }
+
         return std::format("dram_base={:#x}, {} MMIO devices", emu_.dram_base, emu_.bus.devices().size());
     });
 
@@ -372,6 +384,9 @@ int BootPipeline::run() {
                 if (!emu_.boot_img.cmdline.empty()) { if (!full.empty()) full += " "; full += emu_.boot_img.cmdline; }
                 full += " androidboot.slot_suffix=" + emu_.config.slot_suffix;
                 full += " androidboot.boot_devices=soc/1d84000.ufshc";
+                // Large kernel log ring so the full boot's init/service messages
+                // survive (default ring wraps and evicts early service starts/exits).
+                full += " log_buf_len=16M";
                 // Verified Boot: present an unlocked bootloader (as a fastboot-
                 // unlocked Quest does) so first-stage AVB is non-fatal on the vbmeta
                 // digest, with a valid hash algorithm so the digest parse succeeds.
@@ -470,6 +485,21 @@ int BootPipeline::run() {
 
     if (!failed_) dump_memory_map();   // print the physical topology + overlap check
 
+    // Phase 11: cold-boot the REAL Qualcomm secure monitor (tz) at EL3 in the full
+    // machine, instead of handing off to the Linux kernel. The machine (RAM +
+    // device models: GCC/GIC/RNG/UFS/RSC/UART) is already built above; we attach
+    // the EL3-enabled backend, load tz into its secure carveouts, and run it.
+    if (emu_.config.tz_boot && !failed_) {
+        stage("Attaching ARM64 execution backend (tz / EL3)", [&] {
+            std::string err;
+            if (!emu_.backend->attach(*emu_.ram, emu_.bus, err))
+                throw std::runtime_error(err);
+            return std::string(emu_.backend->name());
+        });
+        if (failed_) { print_diagnostics("Attaching ARM64 execution backend (tz / EL3)"); return 1; }
+        return run_tz(*zip, payload);
+    }
+
     // 7) Starting kernel ------------------------------------------------------
     stage("Starting kernel", [&] {
         emu_.cpu.setup_linux_boot(emu_.kernel_load, emu_.dtb_load);
@@ -532,6 +562,104 @@ int BootPipeline::run() {
     return failed_ ? 1 : 0;
 }
 
+int BootPipeline::run_tz(ota::ZipReader& zip, ota::Payload& payload) {
+    cpu::CpuBackend* be = emu_.backend.get();
+    uint64_t tz_entry = 0;
+
+    // Load the real `tz` ELF into its secure physical carveouts. tz is a Qualcomm
+    // MI multi-segment ELF: load every PT_LOAD with memsz>0 (the NULL header/hash
+    // segments are skipped), coalescing page ranges into mappable regions.
+    stage("Loading secure monitor (tz)", [&] {
+        Bytes tz = ota::extract_partition(zip, payload, "tz");
+        if (tz.size() < 64 || std::memcmp(tz.data(), "\x7f""ELF", 4) != 0)
+            throw std::runtime_error("tz partition is not an ELF");
+        auto rd64 = [&](size_t o){ uint64_t v; std::memcpy(&v, tz.data() + o, 8); return v; };
+        auto rd16 = [&](size_t o){ uint16_t v; std::memcpy(&v, tz.data() + o, 2); return v; };
+        tz_entry = rd64(24);
+        uint64_t phoff = rd64(32);
+        uint16_t phentsize = rd16(54), phnum = rd16(56);
+
+        struct Seg { uint64_t off, paddr, filesz, memsz; };
+        std::vector<Seg> segs;
+        for (int i = 0; i < phnum; i++) {
+            const uint8_t* p = tz.data() + phoff + (uint64_t)i * phentsize;
+            uint32_t type; std::memcpy(&type, p, 4);
+            Seg s;
+            std::memcpy(&s.off,    p + 8,  8);
+            std::memcpy(&s.paddr,  p + 24, 8);
+            std::memcpy(&s.filesz, p + 32, 8);
+            std::memcpy(&s.memsz,  p + 40, 8);
+            if (type == 1 /*PT_LOAD*/ && s.memsz > 0) segs.push_back(s);
+        }
+        if (segs.empty()) throw std::runtime_error("tz has no loadable segments");
+
+        struct Rgn { uint64_t lo, hi; };
+        std::vector<Rgn> raw;
+        for (auto& s : segs)
+            raw.push_back({ s.paddr & ~0xfffull, (s.paddr + s.memsz + 0xfff) & ~0xfffull });
+        std::sort(raw.begin(), raw.end(), [](const Rgn& a, const Rgn& b){ return a.lo < b.lo; });
+        std::vector<Rgn> merged;
+        for (auto& r : raw) {
+            if (!merged.empty() && r.lo <= merged.back().hi) {
+                if (r.hi > merged.back().hi) merged.back().hi = r.hi;
+            } else merged.push_back(r);
+        }
+        std::string err;
+        for (auto& r : merged)
+            if (!be->map_ram_region(r.lo, r.hi - r.lo, err))
+                throw std::runtime_error("map tz region: " + err);
+        for (auto& s : segs)
+            be->write_phys(s.paddr, tz.data() + s.off, (size_t)s.filesz);
+        // Scratch region backing the xbl->tz boot-handoff params (x0/x1 must be
+        // nonzero; tz stashes them and parks its cold boot if either is zero).
+        if (!be->map_ram_region(0x14700000ull, 0x20000ull, err))
+            throw std::runtime_error("map tz boot-param scratch: " + err);
+
+        return std::format("tz {} KB, entry {:#x}, {} PT_LOAD segs -> {} region(s)",
+                           tz.size() / 1024, tz_entry, segs.size(), merged.size());
+    });
+    if (failed_) { print_diagnostics("Loading secure monitor (tz)"); return 1; }
+
+    // Phase 1: cold-boot tz at EL3 until it hands off (ERETs to a lower EL). x0/x1
+    // are the nonzero boot-handoff params (tz parks if either is zero).
+    emu_.cpu.setup_tz_boot(tz_entry, 0x14700000ull, 0x14710000ull);
+    be->set_state(emu_.cpu);
+    std::printf("[%s....%s] Cold-booting real secure monitor (tz) at EL3\n", YELL, RST);
+    std::fflush(stdout);
+    cpu::RunResult rr = be->run(emu_.config.max_instructions);
+
+    if (!be->tz_dropped()) {
+        // tz never reached its non-secure handoff -- report where it stalled.
+        std::printf("\n[%stz%s] did NOT reach handoff: %s%s%s  (%llu insns, PC=%#llx)\n",
+                    BOLD, RST, RED, rr.detail.c_str(), RST,
+                    (unsigned long long)rr.instructions_executed, (unsigned long long)rr.pc);
+        failed_ = true;
+        print_arm64_exception(rr);
+        return 1;
+    }
+    std::printf("[ %sOK%s ] tz cold boot complete -- ERET to lower EL (would-be target %#llx, %llu insns at EL3)\n",
+                GREEN, RST, (unsigned long long)be->tz_drop_pc(),
+                (unsigned long long)rr.instructions_executed);
+
+    // Phase 2: inject the kernel boot handoff. tz stays resident at EL3 (its
+    // VBAR_EL3 SMC handler + secure-world setup are preserved -- set_state only
+    // rewrites x0..x30/SP/PC/PSTATE). The kernel runs at EL1 and its qcom_scm /
+    // PSCI SMCs now trap to the REAL tz instead of QEMU's PSCI stub.
+    emu_.cpu.setup_linux_boot(emu_.kernel_load, emu_.dtb_load);
+    be->set_state(emu_.cpu);
+    std::printf("[%s....%s] Kernel handoff (EL1) with tz resident at EL3  PC=%#llx x0(dtb)=%#llx\n",
+                YELL, RST, (unsigned long long)emu_.kernel_load, (unsigned long long)emu_.dtb_load);
+    std::fflush(stdout);
+    cpu::RunResult rr2 = be->run(emu_.config.max_instructions);
+    std::printf("\n[%skernel+tz%s] stopped: %s%s%s  (%llu insns, PC=%#llx)\n",
+                BOLD, RST, DIM, rr2.detail.c_str(), RST,
+                (unsigned long long)rr2.instructions_executed, (unsigned long long)rr2.pc);
+    if (!rr2.ok()) { failed_ = true; print_arm64_exception(rr2); }
+    dump_kmsg();
+    print_diagnostics("");
+    return failed_ ? 1 : 0;
+}
+
 void BootPipeline::print_arm64_exception(const cpu::RunResult& rr) {
     if (!emu_.backend) return;
     cpu::Aarch64Regs r = emu_.backend->read_regs();
@@ -580,11 +708,19 @@ void BootPipeline::print_arm64_exception(const cpu::RunResult& rr) {
     // The last instructions executed before the stop (how we got here).
     auto pcs = emu_.backend->recent_pcs();
     if (!pcs.empty()) {
-        std::printf("\nRecent instruction trace (last %zu, oldest first):\n", pcs.size());
-        size_t start = pcs.size() > 20 ? pcs.size() - 20 : 0;
-        for (size_t i = start; i < pcs.size(); ++i)
+        // Collapse runs of the same PC (e.g. an undeliverable-exception storm) so
+        // the real trajectory leading to the stop stays visible.
+        std::printf("\nRecent instruction trace (oldest first, consecutive repeats collapsed):\n");
+        uint64_t prev = ~0ull; uint64_t reps = 0; size_t shown = 0;
+        auto flush = [&](){ if (reps > 1) std::printf("      ... x%llu\n", (unsigned long long)reps); };
+        for (size_t i = 0; i < pcs.size() && shown < 80; ++i) {
+            if (pcs[i] == prev) { reps++; continue; }
+            flush();
             std::printf("  %#018llx: %s\n", (unsigned long long)pcs[i],
                         emu_.backend->disasm_at(pcs[i]).c_str());
+            prev = pcs[i]; reps = 1; shown++;
+        }
+        flush();
     }
 
     // If the MMU was on when we stopped, walk the guest page tables to prove

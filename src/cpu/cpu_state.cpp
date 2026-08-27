@@ -14,4 +14,13 @@ void CpuState::setup_linux_boot(uint64_t kernel_entry, uint64_t dtb_addr) {
     regs.pstate = 0x3c5;
 }
 
+void CpuState::setup_tz_boot(uint64_t tz_entry, uint64_t x0, uint64_t x1) {
+    regs = Aarch64Regs{};
+    regs.x[0] = x0;   // xbl->tz boot-handoff params (stashed to TPIDR_EL0/EL1 at entry)
+    regs.x[1] = x1;
+    regs.pc = tz_entry;
+    // EL3h, DAIF masked -- the secure monitor's cold-boot state.
+    regs.pstate = 0x3cd;
+}
+
 } // namespace hw::cpu

@@ -699,16 +699,22 @@ void arm_cpu_post_init(CPUState *obj)
     }
 
     if (arm_feature(&cpu->env, ARM_FEATURE_EL3)) {
-        /* hollywood_emu: run EL1-only. The Quest kernel is entered at EL1 and there
-         * is no firmware at EL2/EL3 here, so leaving EL3/EL2 enabled routes SMC and
-         * other exceptions to VBAR_EL3/EL2 (== 0) and crashes. With EL3 disabled,
-         * QEMU treats PSCI-via-SMC as an "ersatz EL3", and all exceptions target
-         * the kernel's own VBAR_EL1. */
-        cpu->has_el3 = false;
+        /* hollywood_emu: by default run EL1-only. The Quest kernel is entered at EL1
+         * and (historically) there was no firmware at EL2/EL3 here, so leaving EL3/EL2
+         * enabled routes SMC and other exceptions to VBAR_EL3/EL2 (== 0) and crashes.
+         * With EL3 disabled, QEMU treats PSCI-via-SMC as an "ersatz EL3", and all
+         * exceptions target the kernel's own VBAR_EL1.
+         *
+         * Phase 11: the real Qualcomm secure world (tz/QTEE) DOES ship in the OTA and
+         * can be loaded and executed at EL3. When HOLLYWOOD_EL3 is set we keep EL3 so
+         * the guest's SMC calls trap to the real tz monitor instead of the PSCI stub. */
+        cpu->has_el3 = getenv("HOLLYWOOD_EL3") ? true : false;
     }
 
     if (arm_feature(&cpu->env, ARM_FEATURE_EL2)) {
-        cpu->has_el2 = false;
+        /* Phase 11: EL2 (hyp/Gunyah) is enabled independently via HOLLYWOOD_EL2 so the
+         * tz->hyp->kernel chain can be brought up in stages. */
+        cpu->has_el2 = getenv("HOLLYWOOD_EL2") ? true : false;
     }
 
     if (arm_feature(&cpu->env, ARM_FEATURE_PMU)) {

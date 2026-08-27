@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+namespace hw::ota { class ZipReader; struct Payload; }
+
 namespace hw::core {
 
 class BootPipeline {
@@ -36,6 +38,11 @@ private:
     uint64_t find_free_load_base(uint64_t total_size, uint64_t align);
 
     uint64_t normalize_addr(uint64_t addr) const;
+
+    // Phase 11: cold-boot the real Qualcomm secure monitor (tz) at EL3 in the full
+    // machine. Loads the `tz` ELF into its secure carveouts, starts at its entry
+    // with EL3h + boot params, and reports where it stops.
+    int run_tz(ota::ZipReader& zip, ota::Payload& payload);
 
     Emulator& emu_;
     std::string last_ok_;

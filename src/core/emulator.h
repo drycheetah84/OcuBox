@@ -36,6 +36,10 @@ struct EmuConfig {
     // A/B slot the (emulated) bootloader selects; appended as androidboot.slot_suffix
     // so Android first-stage init can resolve `slotselect` fstab entries.
     std::string slot_suffix = "_a";
+    // Phase 11: cold-boot the real Qualcomm secure monitor (tz) at EL3 within the
+    // full machine, instead of booting the Linux kernel directly. Loads the `tz`
+    // partition into its secure carveouts and starts execution at its entry point.
+    bool tz_boot = false;
 };
 
 class Emulator {

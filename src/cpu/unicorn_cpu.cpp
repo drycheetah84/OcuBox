@@ -9,8 +9,66 @@
 #include <thread>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <string>
 #include <unicorn/unicorn.h>
 #include <capstone/capstone.h>
+
+// ---- NON-FAITHFUL keymaster/QSEE SCM shim (user-enabled via --kmshim) ----
+// The real Qualcomm TrustZone/QSEE cannot complete cold boot in the emulator
+// (needs device fuses + undocumented xbl secure-world data), so with --kmshim the
+// kernel's non-PSCI SMC calls (Qualcomm SiP / qseecom / keymaster) are dispatched
+// here (from psci.c's arm_handle_psci_call). This EMULATES the secure world -- the
+// boot is explicitly non-faithful past this point.
+extern "C" { extern bool (*hollywood_scm_handler_fn)(void*); }
+namespace {
+int g_scm_log = 0;
+bool scm_handler_impl(void* ucv) {
+    uc_engine* uc = static_cast<uc_engine*>(ucv);
+    uint64_t x[8] = {0};
+    for (int i = 0; i < 8; i++) uc_reg_read(uc, UC_ARM64_REG_X0 + i, &x[i]);
+    uint64_t fn = x[0];
+    uint32_t owner = (uint32_t)((fn >> 24) & 0x3f);
+    uint32_t svc   = (uint32_t)((fn >> 8) & 0xff);
+    uint32_t cmd   = (uint32_t)(fn & 0xff);
+    uint64_t r0 = 0, r1 = 0, r2 = 0, r3 = 0;   // r0 = SMCCC status (0 = success)
+
+    // SCM_SVC_INFO (svc 6)
+    if (svc == 6 && cmd == 1) {          // IS_CALL_AVAIL: report the queried call present
+        r1 = 1;
+    } else if (svc == 6 && cmd == 3) {   // GET_FEATURE_VERSION: report a non-zero QSEE version
+        r1 = 0x00800000;                 // ~QSEE 4.0 baseline (refine if a path needs higher)
+    }
+    // All other SIP/qseecom/keymaster calls: report success (0) for now; the specific
+    // qseecom dispatcher + keymaster command protocol are handled as the log reveals them.
+
+    if (g_scm_log < 4000) { g_scm_log++;
+        std::printf("[scm-shim] fn=%#llx (own=%u svc=%u cmd=%u) a1=%#llx a2=%#llx a3=%#llx a4=%#llx -> r1=%#llx\n",
+                    (unsigned long long)fn, owner, svc, cmd,
+                    (unsigned long long)x[1], (unsigned long long)x[2],
+                    (unsigned long long)x[3], (unsigned long long)x[4], (unsigned long long)r1);
+        // Dump any args that point into guest DRAM (qseecom/keymaster command buffers).
+        for (int a = 1; a <= 5; a++) {
+            uint64_t p = x[a];
+            if (p >= 0x80000000ull && p < 0x100000000ull) {
+                uint8_t b[32] = {0};
+                if (uc_mem_read(uc, p, b, sizeof b) == UC_ERR_OK) {
+                    std::printf("           [x%d=%#llx]:", a, (unsigned long long)p);
+                    for (int j = 0; j < 32; j++) std::printf(" %02x", b[j]);
+                    std::printf("\n");
+                }
+            }
+        }
+        std::fflush(stdout);
+    }
+    uc_reg_write(uc, UC_ARM64_REG_X0, &r0);
+    uc_reg_write(uc, UC_ARM64_REG_X1, &r1);
+    uc_reg_write(uc, UC_ARM64_REG_X2, &r2);
+    uc_reg_write(uc, UC_ARM64_REG_X3, &r3);
+    return true;
+}
+} // namespace
+void hollywood_install_scm_shim() { hollywood_scm_handler_fn = scm_handler_impl; }
 
 namespace hw::cpu {
 
@@ -63,6 +121,21 @@ static void hw_set_irq_enabled(uint32_t intid, bool en) { if (g_irq_uc) uc_arm64
 bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string& err) {
     ram_ = &ram;
     bus_ = &bus;
+
+    // Phase 11: enable EL3 so the real Qualcomm secure monitor (tz) can run. The
+    // backend's ARM core reads HOLLYWOOD_EL3 at realize time (cpu.c) to keep EL3 +
+    // ARM_FEATURE_EL3 and to report a Qualcomm MIDR; must be set before uc_open.
+    if (opts_.el3) {
+        _putenv("HOLLYWOOD_EL3=1");
+        HW_INFO("cpu.uc", "EL3 enabled (secure monitor / tz)");
+        if (const char* t = std::getenv("HOLLYWOOD_TZ_TRAP"))
+            tz_trap_pc_ = std::strtoull(t, nullptr, 0);
+    }
+    if (opts_.kmshim) {
+        void hollywood_install_scm_shim();
+        hollywood_install_scm_shim();
+        HW_WARN("cpu.uc", "keymaster/QSEE SCM shim INSTALLED -- boot is NON-FAITHFUL past the secure world");
+    }
 
     uc_err e = uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &uc_);
     if (e != UC_ERR_OK) { err = std::string("uc_open: ") + uc_strerror(e); return false; }
@@ -139,6 +212,10 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
             uc_hook_add(uc_, &h, UC_HOOK_CODE, (void*)code_cb, this, 1, 0);
         uc_hook_add(uc_, &h, UC_HOOK_MEM_UNMAPPED, (void*)unmapped_cb, this, 1, 0);
         uc_hook_add(uc_, &h, UC_HOOK_MEM_PROT, (void*)unmapped_cb, this, 1, 0);
+        if (std::getenv("HOLLYWOOD_WATCH08C")) {   // Phase-9 table[10] write watchpoint
+            uc_hook wh;
+            uc_hook_add(uc_, &wh, UC_HOOK_MEM_WRITE, (void*)watch_cb, this, 1, 0);  // all addrs
+        }
         uc_hook_add(uc_, &h, UC_HOOK_INTR, (void*)intr_cb, this, 1, 0);
     }
 
@@ -312,12 +389,32 @@ bool UnicornCpu::read_mem(uint64_t addr, void* buf, size_t len) {
     // guest PC may be a kernel virtual address once the MMU is on).
     if (ram_) {
         uint64_t pa = 0;
-        if (translate(addr, pa) && ram_->contains(pa, len)) {
-            std::memcpy(buf, ram_->host_ptr(pa), len);
-            return true;
+        if (translate(addr, pa)) {
+            if (ram_->contains(pa, len)) {
+                std::memcpy(buf, ram_->host_ptr(pa), len);
+                return true;
+            }
+            // Translated PA in a non-DRAM region (e.g. the tz secure carveout).
+            if (uc_ && uc_mem_read(uc_, pa, buf, len) == UC_ERR_OK) return true;
         }
     }
     return false;
+}
+
+bool UnicornCpu::map_ram_region(uint64_t base, uint64_t size, std::string& err) {
+    if (!uc_) { err = "map_ram_region: engine not attached"; return false; }
+    uc_err e = uc_mem_map(uc_, base, (size_t)size, UC_PROT_ALL);
+    if (e != UC_ERR_OK) {
+        err = std::string("uc_mem_map(") + std::to_string(base) + "): " + uc_strerror(e);
+        return false;
+    }
+    HW_INFO("cpu.uc", "mapped extra RAM {:#x}+{:#x}", base, size);
+    return true;
+}
+
+bool UnicornCpu::write_phys(uint64_t addr, const uint8_t* data, size_t len) {
+    if (!uc_ || len == 0) return uc_ != nullptr;
+    return uc_mem_write(uc_, addr, data, len) == UC_ERR_OK;
 }
 
 // ---- Unicorn C callbacks ----
@@ -413,6 +510,91 @@ void UnicornCpu::dump_el0_entry() {
 void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
     self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
+
+    // Phase 11 (tz mode): tz cold-boots at EL3 and eventually ERETs to the NON-secure
+    // world (Linux). Catch that transition and stop so run_tz can inject the kernel
+    // boot state; tz's EL3 setup (VBAR_EL3 SMC handler) + the launched secure OS stay
+    // resident. IMPORTANT: tz also drops to SECURE EL1 (S-EL1) during its boot to run
+    // the QSEE trusted OS -- SCR_EL3.NS distinguishes them (NS==1 => non-secure), so
+    // we only inject on the real non-secure handoff and let secure-OS excursions run.
+    if (self->opts_.el3 && self->tz_trap_pc_ && address == self->tz_trap_pc_ && !self->tz_trapped_) {
+        self->tz_trapped_ = true;
+        uint64_t x[31], sp = 0;
+        for (int i = 0; i < 31; i++) uc_reg_read(uc, UC_ARM64_REG_X0 + i, &x[i]);
+        uc_reg_read(uc, UC_ARM64_REG_SP, &sp);
+        HW_WARN("cpu.tz", "TRAP at {:#x} insns={} SP={:#x}", address,
+                (unsigned long long)self->insns_, (unsigned long long)sp);
+        for (int i = 0; i < 30; i += 2)
+            HW_WARN("cpu.tz", "   x{}={:#x}  x{}={:#x}", i, (unsigned long long)x[i],
+                    i + 1, (unsigned long long)x[i + 1]);
+        for (int k = 40; k >= 1; --k) {
+            size_t idx = (self->pc_ring_pos_ + kPcRing - (size_t)k) % kPcRing;
+            uint64_t p = self->pc_ring_[idx];
+            HW_WARN("cpu.tz", "   [{}] {:#x}: {}", 40 - k, (unsigned long long)p, self->disasm_str(p));
+        }
+        uc_emu_stop(uc);
+        return;
+    }
+    if (self->opts_.el3 && !self->tz_dropped_) {
+        uint64_t ps = 0; uc_reg_read(uc, UC_ARM64_REG_PSTATE, &ps);
+        unsigned el = (unsigned)((ps >> 2) & 3);
+        if (el == 3) self->tz_seen_el3_ = true;
+        else if (self->tz_seen_el3_ && el != self->tz_last_low_el_) {
+            uc_arm64_cp_reg cp; std::memset(&cp, 0, sizeof cp);
+            cp.op0 = 3; cp.op1 = 6; cp.crn = 1; cp.crm = 1; cp.op2 = 0;   // SCR_EL3
+            uc_reg_read(uc, UC_ARM64_REG_CP_REG, &cp);
+            self->tz_last_low_el_ = el;
+            if (self->tz_drop_log_ < 40) {
+                self->tz_drop_log_++;
+                HW_WARN("cpu.tz", "EL3->EL{} drop #{}: NS={} target={:#x} SCR_EL3={:#x} insns={}",
+                        el, self->tz_drop_log_, (unsigned)(cp.val & 1u), address,
+                        (unsigned long long)cp.val, (unsigned long long)self->insns_);
+            }
+            if (cp.val & 1u) {                        // NS==1 -> non-secure handoff
+                self->tz_dropped_ = true;
+                self->tz_drop_pc_ = address;
+                uc_emu_stop(uc);
+                return;
+            }
+            // else: SECURE EL1 (QSEE trusted OS) -- let tz's secure world run.
+        }
+        if (el == 3) self->tz_last_low_el_ = 3;
+
+        // Secure-world "settled" detector: tz/QSEE reach a `b .` self-loop once the
+        // monitor + trusted OS have finished their linear cold boot (on real HW xbl
+        // then drives the NON-secure boot and QSEE services SMCs). Treat that park as
+        // the point to hand off: force SCR_EL3.NS=1 (so the injected kernel runs
+        // non-secure and its SMCs trap EL1->EL3 monitor->QSEE) and signal run_tz.
+        if (!self->tz_dropped_ && address == self->tz_last_block_) {
+            uint32_t insn = 0;
+            if (self->read_mem(address, &insn, 4) && insn == 0x14000000u) {
+                HW_WARN("cpu.tz", "secure world parked (b .) at {:#x} insns={} -- preceding trace:",
+                        address, (unsigned long long)self->insns_);
+                for (int k = 24; k >= 1; --k) {
+                    size_t idx = (self->pc_ring_pos_ + kPcRing - (size_t)k) % kPcRing;
+                    uint64_t p = self->pc_ring_[idx];
+                    HW_WARN("cpu.tz", "   {:#x}: {}", p, self->disasm_str(p));
+                }
+                // Disasm the functions the park calls -- to judge error vs done-idle.
+                for (uint64_t f : { (uint64_t)0x7acfe41f8ull, (uint64_t)0x7acfe4958ull }) {
+                    HW_WARN("cpu.tz", " -- callee {:#x}:", f);
+                    for (uint64_t p = f; p < f + 0x34; p += 4)
+                        HW_WARN("cpu.tz", "     {:#x}: {}", p, self->disasm_str(p));
+                }
+                // Force SCR_EL3.NS=1 so the kernel is injected into the non-secure world.
+                uc_arm64_cp_reg cp; std::memset(&cp, 0, sizeof cp);
+                cp.op0 = 3; cp.op1 = 6; cp.crn = 1; cp.crm = 1; cp.op2 = 0;   // SCR_EL3
+                uc_reg_read(uc, UC_ARM64_REG_CP_REG, &cp);
+                cp.val |= 1u;
+                uc_reg_write(uc, UC_ARM64_REG_CP_REG, &cp);
+                self->tz_dropped_ = true;
+                self->tz_drop_pc_ = address;
+                uc_emu_stop(uc);
+                return;
+            }
+        }
+        self->tz_last_block_ = address;
+    }
 
     // --trace-user: watch the exec->EL0 handoff and the userspace ABI. A low
     // (user-half) VA executing once the MMU is up and PSTATE.EL==0 is userspace.
@@ -548,12 +730,43 @@ bool UnicornCpu::unmapped_cb(uc_engine* uc, int type, uint64_t address, int size
     HW_WARN("mmio", "PC={:#x} {} {} {:#x} size={}{}", pc, kind, is_write ? "WRITE" : "READ",
             address, size, is_write ? "" : "");
 
+    // Phase 11 diagnostic: when the secure world reads an unmodeled chip-id/fuse
+    // register, disasm the check code that follows so we learn the expected value.
+    // Covers TCSR SoC-HW-version (0x1fc8000), QFPROM (0x780000-0x790000), and the
+    // early monitor/QSEE config reads. One-shot per site (capped).
+    if (self->opts_.el3 && !is_write &&
+        (address == 0x1fc8000ull || (address >= 0x780000ull && address < 0x790000ull) ||
+         address == 0xc2f0000ull || (address >= 0x4fc000ull && address < 0x4fe000ull))) {
+        static int dis_n = 0;
+        if (dis_n < 8) { dis_n++;
+            HW_WARN("cpu.tz", "secure-HW read {:#x} at PC={:#x} -- following check:", address, pc);
+            for (uint64_t p = pc; p < pc + 0x2c; p += 4)
+                HW_WARN("cpu.tz", "   {:#x}: {}", p, self->disasm_str(p));
+        }
+    }
+
     if (self->opts_.stop_on_unmapped) return false;   // stop -> surface the blocker
 
     // Permissive mode: back the page with zero RAM and continue.
     uint64_t page = address & ~0xfffull;
     uc_mem_map(uc, page, 0x1000, UC_PROT_ALL);
     return true;
+}
+
+void UnicornCpu::watch_cb(uc_engine* uc, int, uint64_t addr, int, int64_t value, void* user) {
+    auto* self = static_cast<UnicornCpu*>(user);
+    if (self->insns_ < 9000000000ull) return;          // only near the boringssl process
+    uint32_t v = (uint32_t)value;
+    // Sample raw write addresses (to see if the hook reports VA or PA).
+    static int raw = 0; if (raw < 12) { raw++;
+        HW_WARN("watch08c", "raw write addr={:#x} val={:#x}", addr, v); }
+    // The unrelocated value or the table page (VA) or its likely PA target.
+    if (v == 0x881ed || v == 0x881ec || (addr & ~0xfffull) == 0xf7a58000ull) {
+        static int n = 0; if (n >= 200) return; n++;
+        uint64_t es[21] = {0}; uc_arm64_exec_state(uc, es);
+        HW_WARN("watch08c", "HIT [{:#x} off{:#x}] = {:#x} aa32={} pc={:#x}",
+                addr, addr & 0xfffull, v, es[0], es[2]);
+    }
 }
 
 void UnicornCpu::intr_cb(uc_engine* uc, uint32_t intno, void* user) {
@@ -618,6 +831,16 @@ MmuRegs UnicornCpu::read_mmu_regs() {
 
 bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
     if (!ram_) { paddr = vaddr; return true; }
+    // Phase 11: when the secure world is present, the EL3 monitor runs with its own
+    // (MMU-off / identity) regime, NOT the EL1 page tables our walker reads below.
+    // Once the kernel enables its MMU (mmu_on_), a kernel SMC that traps to the EL3
+    // monitor would otherwise mis-walk TTBR*_EL1 for the monitor's physical code and
+    // fault. At EL3, identity-map (the Qualcomm monitor runs physical). (S-EL1 QSEE
+    // keeps its own tables and is handled by the normal TTBR0 walk below.)
+    if (opts_.el3) {
+        uint64_t ps = 0; uc_reg_read(uc_, UC_ARM64_REG_PSTATE, &ps);
+        if (((ps >> 2) & 3) == 3) { paddr = vaddr; xlat_perms_ = UC_PROT_ALL; return true; }
+    }
     // Apply TBI (Top-Byte-Ignore): arm64 Linux enables TCR_EL1.TBI0/TBI1, so the
     // MMU ignores VA bits[63:56] for translation. bionic tags heap pointers in the
     // top byte (e.g. 0xb4..); without stripping it a tagged user pointer has bit 63
@@ -639,8 +862,13 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
         for (int i = 0; i < 3; ++i) {
             uint64_t idx = (vaddr >> shift[i]) & 0x1ff;
             uint64_t da = t + idx * 8;
-            if (!ram_->contains(da, 8)) break;
-            uint64_t desc = ram_->read64(da);
+            // Read the descriptor from any mapped physical region. Page tables live
+            // in main DRAM for the kernel, but the secure world (tz/QSEE) keeps its
+            // tables in the tz carveout (outside GuestMemory), so fall back to the
+            // unicorn physical space for those.
+            uint64_t desc;
+            if (ram_->contains(da, 8)) desc = ram_->read64(da);
+            else if (!uc_ || uc_mem_read(uc_, da, &desc, 8) != UC_ERR_OK) break;
             if ((desc & 1) == 0) break;                       // invalid -> miss
             uint64_t next = desc & 0x0000fffffffff000ull;
             // Stage-1 permissions from the descriptor: AP[2] (bit 7) == 1 means
@@ -682,10 +910,89 @@ bool UnicornCpu::translate(uint64_t vaddr, uint64_t& paddr) {
     // identity-map low addresses (pre-MMU / idmap physical accesses).
     if (high) return false;
     if (mmu_on_) {
-        static int lo_miss_log = 0;
-        if (lo_miss_log < 200) { lo_miss_log++;
-            uint64_t pc = 0; uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
-            HW_WARN("cpu.uc", "EL0/low fault VA={:#x} at PC={:#x}", vaddr, pc); }
+        // AArch32 EL0 (32-bit userspace) faults are rare and the focus of Phase 9,
+        // so log them separately (with the real AArch32 PC) and uncapped-ish.
+        uint64_t es[21] = {0}; uc_arm64_exec_state(uc_, es);   // [5..20]=r0..r15
+        if (es[0] /*is_aa32*/ && es[1] == 0 /*EL0*/) {
+            static int aa32_log = 0;
+            if (aa32_log < 120) { aa32_log++;
+                HW_WARN("cpu.uc", "AA32-EL0 fault VA={:#x} PC={:#x} LR={:#x} SP={:#x}",
+                        vaddr, es[2], es[3], es[4]); }
+            // A code-fetch fault at a suspiciously low VA (< 1MB) is the fatal bad
+            // jump; dump the caller's Thumb code + stack to see how the bad target
+            // was formed (once).
+            static bool dumped = false;
+            if (!dumped && (vaddr >> 12) == (es[2] >> 12) && vaddr < 0x100000) {
+                dumped = true;
+                // Read the PROCESS's virtual memory via our own TTBR0 walk (uc_mem_read
+                // hits physical + permissive zero pages, so it can't see userspace).
+                uint32_t saved_perms = xlat_perms_;
+                auto read_va = [&](uint64_t va, void* b, size_t n) -> bool {
+                    uint64_t pa = 0;
+                    if (translate(va, pa) && ram_ && ram_->contains(pa, n)) {
+                        std::memcpy(b, ram_->host_ptr(pa), n); return true; }
+                    return false;
+                };
+                uint64_t lr = es[3] & ~1ull;                 // strip Thumb bit
+                uint64_t start = (lr > 96) ? ((lr - 96) & ~1ull) : 0;
+                uint8_t code[100] = {};
+                csh th; bool arm_ok = (cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &th) == CS_ERR_OK);
+                HW_WARN("cpu.uc", "AA32 FATAL blx->{:#x} LR={:#x} (capstone-ARM={})", es[2], lr, arm_ok?"ok":"UNAVAILABLE");
+                if (read_va(start, code, sizeof code)) {
+                    if (arm_ok) {
+                        cs_insn* insn = nullptr;
+                        size_t n = cs_disasm(th, code, sizeof code, start, 0, &insn);
+                        for (size_t i = 0; i < n; ++i)
+                            HW_WARN("cpu.uc", "  AA32 [{:#x}] {} {}",
+                                    (uint64_t)insn[i].address, insn[i].mnemonic, insn[i].op_str);
+                        if (insn) cs_free(insn, n);
+                    }
+                    std::string h;                            // raw halfwords for hand-decode
+                    for (int i = 0; i < (int)sizeof(code); i += 2) { uint16_t w; std::memcpy(&w,code+i,2); char c[8]; std::snprintf(c,8,"%04x ",w); h += c; }
+                    HW_WARN("cpu.uc", "  AA32 caller halfwords @[{:#x}]: {}", start, h);
+                } else HW_WARN("cpu.uc", "  caller code @{:#x} unreadable", start);
+                if (arm_ok) cs_close(&th);
+                // r5 = ldr.w r5,[r4,r7,lsl#2] -> function-pointer table at r4, index
+                // r7 (from live registers, ASLR-independent). Read the table to see
+                // whether the bad entry is 0x881ed *in memory* (unrelocated =>
+                // reloc/write bug) or the load mis-executed (Unicorn AArch32 bug).
+                uint64_t r4 = es[5 + 4], r7 = es[5 + 7], r5 = es[5 + 5];
+                uint64_t entry_va = r4 + r7 * 4;
+                HW_WARN("cpu.uc", "  AA32 regs: r4={:#x} r5={:#x} r7={:#x} -> table[{}] @ {:#x}", r4, r5, r7, r7, entry_va);
+                uint8_t tab[80] = {};
+                uint64_t tbase = (r4 > 32) ? r4 - 32 : r4;
+                if (read_va(tbase, tab, 80)) {
+                    std::string h;
+                    for (int i = 0; i < 80; i += 4) { uint32_t w; std::memcpy(&w,tab+i,4); char c[12]; std::snprintf(c,12,"%08x ",w); h += c; }
+                    HW_WARN("cpu.uc", "  AA32 table @[{:#x}] (r4-32): {}", tbase, h);
+                }
+                uint8_t stk[48] = {};
+                if (read_va(es[4], stk, 48)) {
+                    std::string h;
+                    for (int i = 0; i < 48; i += 4) { uint32_t w; std::memcpy(&w,stk+i,4); char c[12]; std::snprintf(c,12,"%08x ",w); h += c; }
+                    HW_WARN("cpu.uc", "AA32 FATAL stack @SP [{:#x}]: {}", es[4], h);
+                    // The 3 args were loaded from *(sp+16/20/24): a per-test struct
+                    // in libcrypto .data. Dump that region to see whether the func
+                    // pointer stored there is relocated (0xf7xxxxxx) or still an
+                    // unrelocated file offset (~0x00xxxxxx) => distinguishes a bad
+                    // relocation from a runtime register corruption.
+                    uint32_t argptr; std::memcpy(&argptr, stk + 16, 4);   // *(sp+16)
+                    uint64_t tbl = (uint64_t)(argptr & ~0x3full);
+                    uint8_t td[128] = {};
+                    if (tbl && read_va(tbl, td, 128)) {
+                        std::string h2;
+                        for (int i = 0; i < 128; i += 4) { uint32_t w; std::memcpy(&w,td+i,4); char c[12]; std::snprintf(c,12,"%08x ",w); h2 += c; }
+                        HW_WARN("cpu.uc", "AA32 FATAL .data @[{:#x}]: {}", tbl, h2);
+                    }
+                }
+                xlat_perms_ = saved_perms;
+            }
+        } else {
+            static int lo_miss_log = 0;
+            if (lo_miss_log < 200) { lo_miss_log++;
+                uint64_t pc = 0; uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
+                HW_WARN("cpu.uc", "EL0/low fault VA={:#x} at PC={:#x}", vaddr, pc); }
+        }
         return false;
     }
     paddr = vaddr; xlat_perms_ = UC_PROT_ALL; return true;   // pre-MMU identity
@@ -732,7 +1039,7 @@ uint32_t UnicornCpu::msr_cb(uc_engine* uc, int reg, void* cp_reg, void* user) {
     return 1;                                         // handled: skip the real MSR
 }
 
-bool UnicornCpu::tlb_cb(uc_engine*, uint64_t vaddr, int /*type*/, void* result, void* user) {
+bool UnicornCpu::tlb_cb(uc_engine*, uint64_t vaddr, int type, void* result, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
     auto* e = static_cast<uc_tlb_entry*>(result);
     uint64_t pa = 0;
@@ -744,6 +1051,43 @@ bool UnicornCpu::tlb_cb(uc_engine*, uint64_t vaddr, int /*type*/, void* result, 
     // enabling copy-on-write. Without this every page was writable (UC_PROT_ALL),
     // so writes to the shared zero page corrupted it for all mappings.
     e->perms = (uc_prot)self->xlat_perms_;
+    // --- Phase 9 live probe (TEMPORARY; remove after): watch the linker's own
+    // .init_array page (vaddr 0xf7a58000 = bias 0xf7982000 + 0xd6000). Logs every
+    // fill of that page: access type, physical backing, PTE perms, and the physical
+    // values of table[9/10/11]. type==UC_MEM_WRITE with perms lacking WRITE is the
+    // copy-on-write fault we are trying to confirm. Non-perturbing (fill already runs). */
+    static const bool relr_probe = std::getenv("HOLLYWOOD_RELR_PROBE") != nullptr;
+    if (relr_probe) {
+        uint32_t t10 = 0;
+        uc_mem_read(self->uc_, pa + 0x8c, &t10, 4);   // candidate table[10] slot
+        // Identify the 32-bit linker's own .init_array page (ASLR-proof, content-based):
+        // table[10] is either 0x000881ed (unrelocated) or base+0x881ed (relocated: low
+        // 12 bits 0x1ed, sitting in the 0xf7xxxxxx linker range).
+        bool linker_pg = (t10 == 0x000881edu) ||
+                         (t10 >= 0xf7000000u && t10 < 0xf8000000u && (t10 & 0xfffu) == 0x1edu);
+        if (linker_pg) {
+            // Track EVERY physical frame this VA's linker page has used (COW copies to a
+            // new frame). Then read t10 from ALL of them: if t10's relocated value ever
+            // lands on a PRIOR (old) frame, the store executed but was misdirected there
+            // (Pattern D: stale TLB addend after COW), which the fill-only view can't show.
+            static uint64_t frames[16]; static int nframes = 0;
+            bool seen = false;
+            for (int i = 0; i < nframes; ++i) if (frames[i] == pa) { seen = true; break; }
+            if (!seen && nframes < 16) frames[nframes++] = pa;
+            std::string fr;
+            for (int i = 0; i < nframes; ++i) {
+                uint32_t v = 0; uc_mem_read(self->uc_, frames[i] + 0x8c, &v, 4);
+                char b[48]; std::snprintf(b, sizeof(b), " [%llx]=%08x", (unsigned long long)frames[i], (unsigned)v);
+                fr += b;
+            }
+            uint32_t t9=0,t11=0;
+            uc_mem_read(self->uc_, pa+0x88, &t9, 4);
+            uc_mem_read(self->uc_, pa+0x90, &t11, 4);
+            HW_WARN("cpu.uc", "RELRPROBE va={:#x} type={} pa={:#x} perms={:#x} t9={:#x} t11={:#x} t10-all-frames:{}",
+                    (unsigned long long)vaddr, type, (unsigned long long)pa, self->xlat_perms_,
+                    (unsigned)t9, (unsigned)t11, fr);
+        }
+    }
     return true;
 }
 

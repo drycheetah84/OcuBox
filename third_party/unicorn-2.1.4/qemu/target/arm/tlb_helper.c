@@ -165,6 +165,26 @@ void arm_uc_deliver_tlb_miss(CPUState *cs, vaddr addr,
     arm_deliver_fault(cpu, addr, access_type, mmu_idx, &fi);
 }
 
+/*
+ * Save/restore the AArch32 IT/condexec state around a virtual-TLB fill.
+ * unicorn_fill_tlb() calls cpu_restore_state() unconditionally (so a UC_HOOK_TLB_FILL
+ * callback sees the faulting PC), which rewinds env->condexec_bits to the mid-IT value
+ * of the accessing instruction. For a fill that SUCCEEDS (no guest fault) that rewind
+ * must not persist: execution resumes in the current TB, whose translated code already
+ * accounts for the IT state, and gen_set_condexec() does not re-write a zero mask, so a
+ * leaked non-zero condexec would corrupt the next TB lookup (loop-head translated under a
+ * bogus IT block, nullifying a subsequent conditional store). These let the vtlb fill
+ * path preserve the invariant "a successful TLB fill does not alter architectural IT state".
+ */
+uint32_t arm_uc_get_condexec(CPUState *cs)
+{
+    return ARM_CPU(cs)->env.condexec_bits;
+}
+void arm_uc_set_condexec(CPUState *cs, uint32_t v)
+{
+    ARM_CPU(cs)->env.condexec_bits = v;
+}
+
 bool arm_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
                       MMUAccessType access_type, int mmu_idx,
                       bool probe, uintptr_t retaddr)

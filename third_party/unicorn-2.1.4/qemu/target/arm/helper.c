@@ -6757,6 +6757,29 @@ int uc_arm64_time_warp(struct uc_struct *uc)
  * out[0]=cnt out[1]=virt_cval out[2]=virt_ctl out[3]=phys_cval out[4]=phys_ctl
  * out[5]=hw_virt_out out[6]=hw_phys_out out[7]=first_pending_spi(or -1)
  * out[8]=interrupt_request out[9]=cntvoff */
+/* Report the current execution state so the emulator can tell AArch32 EL0
+ * (32-bit userspace) apart from AArch64. out[0]=is_aa32, out[1]=current_el,
+ * out[2]=pc, out[3]=lr, out[4]=sp; out[5..20]=r0..r15 (AArch32) or x0..x15
+ * (AArch64). Caller must provide >=21 slots. */
+void uc_arm64_exec_state(struct uc_struct *uc, uint64_t *out)
+{
+    for (int i = 0; i < 24; ++i) out[i] = 0;
+    if (!uc || !uc->cpu) return;
+    CPUARMState *env = &ARM_CPU(uc->cpu)->env;
+    int aa32 = is_a64(env) ? 0 : 1;
+    out[0] = (uint64_t)aa32;
+    out[1] = (uint64_t)arm_current_el(env);
+    if (aa32) {
+        out[2] = env->regs[15]; out[3] = env->regs[14]; out[4] = env->regs[13];
+        for (int i = 0; i < 16; ++i) out[5 + i] = env->regs[i];
+        out[21] = (uint64_t)env->condexec_bits;   /* ITSTATE (Thumb IT block) */
+        out[22] = (uint64_t)cpsr_read(env);
+    } else {
+        out[2] = env->pc; out[3] = env->xregs[30]; out[4] = env->xregs[31];
+        for (int i = 0; i < 16; ++i) out[5 + i] = env->xregs[i];
+    }
+}
+
 void uc_arm64_timer_debug(struct uc_struct *uc, uint64_t *out)
 {
     if (!uc || !uc->cpu) return;
@@ -7691,6 +7714,21 @@ void register_cp_regs_for_features(ARMCPU *cpu)
             REGINFO_SENTINEL
         };
         define_arm_cp_regs(cpu, gicv3_dummy_cpuif_reginfo);
+
+        /* hollywood_emu Phase 11: EL3 GICv3 CPU-interface registers so the REAL
+         * Qualcomm tz (running at EL3) can enable the GIC system-register interface.
+         * Dummy CONST (no interrupt delivery modeled); ICC_SRE_EL3 reads SRE|DFB|DIB|
+         * Enable so tz's post-write "did SRE stick?" readback passes. Only defined
+         * when EL3 is implemented, so the kernel-only boot is unaffected. */
+        if (cpu->has_el3) {
+            static const ARMCPRegInfo gicv3_el3_cpuif_reginfo[] = {
+                { .name = "ICC_CTLR_EL3",    .state = ARM_CP_STATE_AA64, .opc0 = 3, .opc1 = 6, .crn = 12, .crm = 12, .opc2 = 4, .access = PL3_RW, .type = ARM_CP_CONST, .resetvalue = 0 },
+                { .name = "ICC_SRE_EL3",     .state = ARM_CP_STATE_AA64, .opc0 = 3, .opc1 = 6, .crn = 12, .crm = 12, .opc2 = 5, .access = PL3_RW, .type = ARM_CP_CONST, .resetvalue = 0xf },
+                { .name = "ICC_IGRPEN1_EL3", .state = ARM_CP_STATE_AA64, .opc0 = 3, .opc1 = 6, .crn = 12, .crm = 12, .opc2 = 7, .access = PL3_RW, .type = ARM_CP_CONST, .resetvalue = 0 },
+                REGINFO_SENTINEL
+            };
+            define_arm_cp_regs(cpu, gicv3_el3_cpuif_reginfo);
+        }
 
         /* hollywood_emu: enable QEMU's built-in PSCI over the SMC conduit (the
          * Quest DTB's psci method is "smc"). PSCI SMC calls (VERSION, CPU_ON,
