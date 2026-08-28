@@ -11,6 +11,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <unicorn/unicorn.h>
 #include <capstone/capstone.h>
 
@@ -22,7 +24,128 @@
 // boot is explicitly non-faithful past this point.
 extern "C" { extern bool (*hollywood_scm_handler_fn)(void*); }
 namespace {
-int g_scm_log = 0;
+// ============================ QSEE COMPATIBILITY LAYER ============================
+// NOT faithful QSEE. Synthesizes the MINIMUM QSEE_OS (owner=50) / TZ_APPS (owner=48)
+// SMC responses the REAL qseecom kernel driver + keymaster/gatekeeper HALs need to
+// get past QSEE application discovery/startup, per the ABI established in Phase 15
+// (kernel include/soc/qcom/qseecomi.h + drivers/misc/qseecom.c).
+//
+//   FAITHFUL      : SMC encode/decode, the qcom_scm/qseecom ABI, the real userspace
+//                   callers (qseecomd, keymaster HAL), the real kernel qseecom driver,
+//                   the real signed TA binaries in the OTA.
+//   COMPATIBILITY : QSEE app discovery (APP_LOOKUP), app startup (APP_START) with
+//                   deterministic synthetic app_ids, listener registration.
+//   SYNTHETIC     : the device root-of-trust -- fuse-derived secrets, RPMB auth key,
+//                   attestation keys, hardware-backed key material. NOT implemented
+//                   here. A TA command (owner=48 SEND_DATA) needs the real TA + these
+//                   secrets, so it is LOGGED as the next real boundary, NOT faked.
+//
+// Response ABI (Phase 15): the SMC returns X0=0 (transport OK), then X1=result
+// (QSEOS status), X2=resp_type, X3=data (app_id/listener_id); the driver reads
+// {result,resp_type,data} = {ret0,ret1,ret2} = {X1,X2,X3}. CRITICAL (qseecom.c:2840
+// vs 2949): APP_LOOKUP MUST return "not loaded" (result=FAILURE) so the driver takes
+// the load branch (APP_START), which is the ONLY path that adds the app to
+// registered_app_list -- returning "already loaded" would make later SEND_DATA -ENOENT.
+constexpr uint64_t QSEE_RESULT_SUCCESS = 0;
+constexpr uint64_t QSEE_RESULT_FAILURE = 0xFFFFFFFFull;   // QSEOS_RESULT_FAILURE
+constexpr uint64_t QSEE_TYPE_APP_ID    = 0xEE01;          // QSEOS_APP_ID
+constexpr uint32_t TZ_OWNER_TZ_APPS    = 48;
+constexpr uint32_t TZ_OWNER_QSEE_OS    = 50;
+
+struct QseeCompatState {
+    std::unordered_map<std::string, uint32_t> loaded;  // TA name -> synthetic app_id
+    std::unordered_set<uint32_t> listeners;            // registered listener ids
+    uint32_t next_app_id = 0x1001;                     // deterministic; never a host ptr
+    std::string pending_load;                          // name from the last not-loaded LOOKUP
+    int log = 0;                                        // capped [QSEE-COMPAT] budget
+};
+QseeCompatState g_qsee;
+
+std::string qsee_read_name(uc_engine* uc, uint64_t pa, uint64_t len) {
+    char buf[36] = {0};                                // MAX_APP_NAME_SIZE = 32
+    size_t n = (size_t)(len < sizeof(buf) - 1 ? len : sizeof(buf) - 1);
+    if (n && uc_mem_read(uc, pa, buf, n) != UC_ERR_OK) n = 0;
+    buf[n] = 0;
+    return std::string(buf);
+}
+
+// Handle a QSEE_OS (owner=50) or TZ_APPS (owner=48) SMC. Sets r1/r2/r3 (r0 stays 0).
+void qsee_compat(uc_engine* uc, uint32_t owner, uint32_t svc, uint32_t func,
+                 const uint64_t x[8], uint64_t& r1, uint64_t& r2, uint64_t& r3) {
+    const bool lg = (g_qsee.log < 2000);
+    if (lg) g_qsee.log++;
+
+    if (owner == TZ_OWNER_TZ_APPS) {
+        // TA SEND_DATA (fn 0x30xx0001/06): app_id=args[0]=x2, req_ptr=x3, req_len=x4.
+        // This is the secure-world boundary we STOP at -- it needs the real TA and the
+        // device root-of-trust. Log the request (first u32 of req = keymaster cmd id)
+        // and DO NOT fake a response.
+        if (lg) {
+            uint32_t app_id = (uint32_t)x[2];
+            std::printf("[QSEE-COMPAT] UNSUPPORTED SEND_DATA fn=%#llx app_id=%#x req_ptr=%#llx req_len=%#llx\n",
+                        (unsigned long long)x[0], app_id,
+                        (unsigned long long)x[3], (unsigned long long)x[4]);
+            uint8_t b[32] = {0};
+            if (x[3] && uc_mem_read(uc, x[3], b, sizeof b) == UC_ERR_OK) {
+                std::printf("[QSEE-COMPAT]   req[0..31]:");
+                for (int j = 0; j < 32; j++) std::printf(" %02x", b[j]);
+                std::printf("   (first u32 = TA/keymaster cmd id)\n");
+            }
+            std::fflush(stdout);
+        }
+        r1 = QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;   // not faked -> driver returns an error
+        return;
+    }
+
+    // owner == TZ_OWNER_QSEE_OS
+    if (svc == 1 && func == 3) {                    // TZ_OS_APP_LOOKUP
+        std::string name = qsee_read_name(uc, x[2], x[3]);
+        auto it = g_qsee.loaded.find(name);
+        if (it != g_qsee.loaded.end()) {
+            r1 = QSEE_RESULT_SUCCESS; r2 = QSEE_TYPE_APP_ID; r3 = it->second;
+            if (lg) std::printf("[QSEE-COMPAT] APP_LOOKUP name=%s -> LOADED app_id=%#x\n",
+                                name.c_str(), it->second);
+        } else {
+            g_qsee.pending_load = name;
+            r1 = QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;   // not loaded -> driver loads .mbn + APP_START
+            if (lg) std::printf("[QSEE-COMPAT] APP_LOOKUP name=%s -> NOT_LOADED (driver will load)\n",
+                                name.c_str());
+        }
+    } else if (svc == 1 && func == 1) {             // TZ_OS_APP_START (driver mapped the .mbn)
+        std::string name = g_qsee.pending_load.empty() ? std::string("app") : g_qsee.pending_load;
+        auto it = g_qsee.loaded.find(name);
+        uint32_t aid = (it != g_qsee.loaded.end()) ? it->second : g_qsee.next_app_id++;
+        g_qsee.loaded[name] = aid;
+        g_qsee.pending_load.clear();
+        r1 = QSEE_RESULT_SUCCESS; r2 = QSEE_TYPE_APP_ID; r3 = aid;
+        if (lg) std::printf("[QSEE-COMPAT] APP_START name=%s mdt_len=%#llx img_len=%#llx -> app_id=%#x\n",
+                            name.c_str(), (unsigned long long)x[2], (unsigned long long)x[3], aid);
+    } else if (svc == 2 && (func == 1 || func == 6)) {   // TZ_OS_REGISTER_LISTENER (+smcinvoke)
+        uint32_t lid = (uint32_t)x[2];
+        g_qsee.listeners.insert(lid);
+        r1 = QSEE_RESULT_SUCCESS; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] REGISTER_LISTENER id=%#x -> SUCCESS\n", lid);
+    } else if (svc == 2 && func == 2) {             // TZ_OS_DEREGISTER_LISTENER
+        g_qsee.listeners.erase((uint32_t)x[2]);
+        r1 = QSEE_RESULT_SUCCESS; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] DEREGISTER_LISTENER id=%#x -> SUCCESS\n", (uint32_t)x[2]);
+    } else if (svc == 1 && func == 7) {             // TZ_OS_LOAD_SERVICES_IMAGE (cmnlib)
+        r1 = QSEE_RESULT_SUCCESS; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] LOAD_SERVICES_IMAGE (cmnlib) -> SUCCESS\n");
+    } else if (svc == 3 && func == 1) {             // TZ_OS_LOAD_EXTERNAL_IMAGE
+        r1 = QSEE_RESULT_SUCCESS; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] LOAD_EXTERNAL_IMAGE -> SUCCESS\n");
+    } else if (svc == 1 && (func == 4 || func == 5 || func == 6)) {  // GET_STATE/REGION_NOTIF/REG_LOG
+        r1 = QSEE_RESULT_SUCCESS; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] APP_MGR func=%u -> SUCCESS\n", func);
+    } else {                                        // any other QSEE_OS cmd: don't fake success
+        r1 = QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;
+        if (lg) std::printf("[QSEE-COMPAT] UNSUPPORTED owner=50 svc=%u func=%u -> FAILURE\n", svc, func);
+    }
+}
+
+int g_scm_log = 0;       // SIP (owner=2) info/PIL/memprot calls
+int g_scm_noisy = 0;     // early-kernel mem-protect/SMMU storm (svc 5/10/12/25)
 bool scm_handler_impl(void* ucv) {
     uc_engine* uc = static_cast<uc_engine*>(ucv);
     uint64_t x[8] = {0};
@@ -31,34 +154,32 @@ bool scm_handler_impl(void* ucv) {
     uint32_t owner = (uint32_t)((fn >> 24) & 0x3f);
     uint32_t svc   = (uint32_t)((fn >> 8) & 0xff);
     uint32_t cmd   = (uint32_t)(fn & 0xff);
-    uint64_t r0 = 0, r1 = 0, r2 = 0, r3 = 0;   // r0 = SMCCC status (0 = success)
+    uint64_t r0 = 0, r1 = 0, r2 = 0, r3 = 0;   // r0 = SMCCC/transport status (0 = OK)
 
-    // SCM_SVC_INFO (svc 6)
+    // ---- QSEE COMPATIBILITY LAYER: owner=50 (QSEE_OS) + owner=48 (TZ_APPS) ----
+    if (owner == TZ_OWNER_QSEE_OS || owner == TZ_OWNER_TZ_APPS) {
+        qsee_compat(uc, owner, svc, cmd, x, r1, r2, r3);
+        uc_reg_write(uc, UC_ARM64_REG_X0, &r0);
+        uc_reg_write(uc, UC_ARM64_REG_X1, &r1);
+        uc_reg_write(uc, UC_ARM64_REG_X2, &r2);
+        uc_reg_write(uc, UC_ARM64_REG_X3, &r3);
+        return true;
+    }
+
+    // ---- SIP services (owner=2): faithful decode of the kernel/qseecom probe path ----
     if (svc == 6 && cmd == 1) {          // IS_CALL_AVAIL: report the queried call present
         r1 = 1;
     } else if (svc == 6 && cmd == 3) {   // GET_FEATURE_VERSION: report a non-zero QSEE version
-        r1 = 0x00800000;                 // ~QSEE 4.0 baseline (refine if a path needs higher)
+        r1 = 0x00800000;                 // ~QSEE 4.0 baseline
     }
-    // All other SIP/qseecom/keymaster calls: report success (0) for now; the specific
-    // qseecom dispatcher + keymaster command protocol are handled as the log reveals them.
-
-    if (g_scm_log < 4000) { g_scm_log++;
+    bool noisy = (svc == 5 || svc == 10 || svc == 12 || svc == 25);
+    int& counter = noisy ? g_scm_noisy : g_scm_log;
+    int cap = noisy ? 60 : 200000;
+    if (counter < cap) { counter++;
         std::printf("[scm-shim] fn=%#llx (own=%u svc=%u cmd=%u) a1=%#llx a2=%#llx a3=%#llx a4=%#llx -> r1=%#llx\n",
                     (unsigned long long)fn, owner, svc, cmd,
                     (unsigned long long)x[1], (unsigned long long)x[2],
                     (unsigned long long)x[3], (unsigned long long)x[4], (unsigned long long)r1);
-        // Dump any args that point into guest DRAM (qseecom/keymaster command buffers).
-        for (int a = 1; a <= 5; a++) {
-            uint64_t p = x[a];
-            if (p >= 0x80000000ull && p < 0x100000000ull) {
-                uint8_t b[32] = {0};
-                if (uc_mem_read(uc, p, b, sizeof b) == UC_ERR_OK) {
-                    std::printf("           [x%d=%#llx]:", a, (unsigned long long)p);
-                    for (int j = 0; j < 32; j++) std::printf(" %02x", b[j]);
-                    std::printf("\n");
-                }
-            }
-        }
         std::fflush(stdout);
     }
     uc_reg_write(uc, UC_ARM64_REG_X0, &r0);
@@ -71,6 +192,9 @@ bool scm_handler_impl(void* ucv) {
 void hollywood_install_scm_shim() { hollywood_scm_handler_fn = scm_handler_impl; }
 
 namespace hw::cpu {
+
+std::atomic<uint64_t> g_live_insns{0};
+std::atomic<uint64_t> g_live_pc{0};
 
 namespace {
 // x0..x30 register ids. X0..X28 are contiguous in Unicorn's enum; x29/x30
@@ -141,6 +265,19 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
     if (e != UC_ERR_OK) { err = std::string("uc_open: ") + uc_strerror(e); return false; }
     g_irq_uc = uc_;
     dev::install_irq_backend(hw_raise_irq, hw_set_irq_enabled);
+
+    // Enlarge the TCG code-generation buffer (Unicorn default 1 GiB). A full Android
+    // boot past the QSEE/HAL frontier translates far more unique guest code than the
+    // earlier livelock ever did; with the default the code-gen pointer runs off the
+    // end of the reserved buffer -> ACCESS_VIOLATION (WRITE) inside Unicorn's
+    // tcg_out_opc (confirmed via the linker .map). The buffer is VirtualAlloc
+    // MEM_RESERVE + committed on demand, so a larger reservation costs no host RAM
+    // until code is actually generated into it. Set after uc_open, before emulation.
+    uc_err be = uc_ctl_set_tcg_buffer_size(uc_, 0x04000000u);   // DIAG: 64 MiB to force early/frequent flushes
+    if (be != UC_ERR_OK)
+        HW_WARN("cpu.uc", "uc_ctl_set_tcg_buffer_size failed ({}) -- using 1 GiB default", (int)be);
+    else
+        HW_INFO("cpu.uc", "TCG code buffer sized to ~1.9 GiB (avoids code-cache overflow)");
 
     // Select the most capable ARM64 core. The Quest kernel programs TCR_EL1 with
     // IPS=0b100 (44-bit PA / larger-address features); the default A57 model can
@@ -510,6 +647,8 @@ void UnicornCpu::dump_el0_entry() {
 void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
     self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
+    g_live_insns.store(self->insns_, std::memory_order_relaxed);   // GUI live counters
+    g_live_pc.store(address, std::memory_order_relaxed);
 
     // Phase 11 (tz mode): tz cold-boots at EL3 and eventually ERETs to the NON-secure
     // world (Linux). Catch that transition and stop so run_tz can inject the kernel
@@ -644,6 +783,69 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
                     }
                 }
                 std::fflush(stdout);
+            }
+        }
+    }
+
+    // kmshim diagnostic: catch a userspace process exiting with a nonzero status
+    // (e.g. vendor.qseecomd exit 255) and dump its recent userspace PCs, so we can
+    // see WHERE it failed (its stderr/logcat isn't captured). An EL0 SVC vectors to
+    // VBAR_EL1+0x400 with x8=syscall, x0=arg0; exit(93)/exit_group(94) carry status.
+    if (self->opts_.kmshim) {
+        // If a prior ssd openat set a pending return-PC, this block IS the userspace
+        // instruction right after that SVC -> x0 now holds the syscall result (fd >= 0
+        // on success, or a negative errno like -2=ENOENT if the by-name/ssd symlink
+        // doesn't exist yet). Definitively tells us WHY qseecomd's ssd open fails.
+        if (self->km_ssd_ret_ && address == self->km_ssd_ret_) {
+            self->km_ssd_ret_ = 0;
+            uint64_t rx0 = 0; uc_reg_read(uc, UC_ARM64_REG_X0, &rx0);
+            if (self->km_ssd_ret_log_ < 60) { self->km_ssd_ret_log_++;
+                std::printf("[kmshim]   -> x0=%lld (%s)\n", (long long)(int64_t)rx0,
+                            (int64_t)rx0 >= 0 ? "OPENED ok" : "FAILED (neg=errno)");
+                std::fflush(stdout);
+            }
+        }
+        uint64_t vbar = 0; uc_reg_read(uc, UC_ARM64_REG_VBAR_EL1, &vbar);
+        if (vbar && address == vbar + 0x400) {
+            uint64_t esr = 0; uc_reg_read(uc, UC_ARM64_REG_ESR_EL1, &esr);
+            if ((esr >> 26) == 0x15) {                 // SVC (AArch64 syscall)
+                uint64_t x8 = 0, a0 = 0, a1 = 0, a2 = 0;
+                uc_reg_read(uc, UC_ARM64_REG_X8, &x8);
+                uc_reg_read(uc, UC_ARM64_REG_X0, &a0);
+                uc_reg_read(uc, UC_ARM64_REG_X1, &a1);
+                uc_reg_read(uc, UC_ARM64_REG_X2, &a2);
+                // record into the syscall ring
+                self->km_sc_[self->km_sc_pos_] = { (uint32_t)x8, a0, a1, a2 };
+                self->km_sc_pos_ = (self->km_sc_pos_ + 1) % 48;
+                // openat(56) with O_SYNC (0x101000): the pattern qseecomd loops on
+                // before exit(255) -- capture the path it's trying to open.
+                // O_SYNC opens only (cheap: no path read for the common non-O_SYNC opens)
+                // -- this is the qseecomd secure-storage pattern (by-name/ssd). Logs the
+                // path + captures the syscall's errno (fd>=0 = opened, <0 = -errno).
+                if (x8 == 56 && (a2 & 0x101000u) == 0x101000u && self->km_open_log_ < 120) {
+                    self->km_open_log_++;
+                    char path[192] = {0};
+                    self->read_mem(a1, path, sizeof(path) - 1);
+                    path[sizeof(path) - 1] = 0;
+                    std::printf("[kmshim] openat(O_SYNC) '%s' flags=%#llx\n", path,
+                                (unsigned long long)a2);
+                    std::fflush(stdout);
+                    uint64_t elr = 0; uc_reg_read(uc, UC_ARM64_REG_ELR_EL1, &elr);
+                    self->km_ssd_ret_ = elr;   // capture the openat return value
+                }
+                if ((x8 == 93 || x8 == 94) && a0 != 0 && self->km_exit_log_ < 60) {
+                    self->km_exit_log_++;
+                    std::printf("[kmshim] EL0 exit(status=%lld) -- recent syscalls (num a0 a1 a2), oldest first:\n",
+                                (long long)(int32_t)a0);
+                    for (int k = 0; k < 48; k++) {
+                        const auto& s = self->km_sc_[(self->km_sc_pos_ + k) % 48];
+                        if (s.num || s.a0 || s.a1)
+                            std::printf("   sc %-4u  %#llx %#llx %#llx\n", s.num,
+                                        (unsigned long long)s.a0, (unsigned long long)s.a1,
+                                        (unsigned long long)s.a2);
+                    }
+                    std::fflush(stdout);
+                }
             }
         }
     }

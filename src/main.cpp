@@ -282,9 +282,36 @@ int cmd_boot(const Args& a) {
 
 } // namespace
 
+#ifdef _WIN32
+// Crash forensics: an unhandled access violation otherwise kills the process with no
+// output, so we can't tell whether a boot-time crash is in the emulator's own code or
+// inside the Unicorn/TCG DLL. Print the fault code/address + the faulting module+offset.
+static LONG WINAPI hollywood_crash_filter(EXCEPTION_POINTERS* ep) {
+    const EXCEPTION_RECORD* r = ep->ExceptionRecord;
+    std::fflush(stdout);
+    std::fprintf(stderr, "\n[CRASH] code=0x%08lx addr=%p",
+                 (unsigned long)r->ExceptionCode, r->ExceptionAddress);
+    if (r->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && r->NumberParameters >= 2)
+        std::fprintf(stderr, " %s guest/host-VA=0x%llx",
+                     r->ExceptionInformation[0] ? "WRITE" : "READ",
+                     (unsigned long long)r->ExceptionInformation[1]);
+    HMODULE mod = nullptr;
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (LPCSTR)r->ExceptionAddress, &mod)) {
+        char name[MAX_PATH] = {0}; GetModuleFileNameA(mod, name, MAX_PATH);
+        std::fprintf(stderr, "\n[CRASH] module=%s base=%p off=0x%llx", name, (void*)mod,
+                     (unsigned long long)((uintptr_t)r->ExceptionAddress - (uintptr_t)mod));
+    }
+    std::fprintf(stderr, "\n"); std::fflush(stderr);
+    return EXCEPTION_EXECUTE_HANDLER;   // terminate cleanly (no crash dialog / loop)
+}
+#endif
+
 int main(int argc, char** argv) {
     std::setvbuf(stdout, nullptr, _IONBF, 0);   // unbuffered: capture output up to any crash
 #ifdef _WIN32
+    SetUnhandledExceptionFilter(hollywood_crash_filter);
     // Enable ANSI escape processing on the Windows console.
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode = 0;

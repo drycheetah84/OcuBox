@@ -6256,3 +6256,158 @@ events:
         - "/bin"
       CMAKE_FIND_ROOT_PATH: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug;D:/projects/eurka_emu/build/vcpkg_installed/x64-windows"
 ...
+
+---
+events:
+  -
+    kind: "find_package-v1"
+    backtrace:
+      - "C:/Program Files/Microsoft Visual Studio/18/Community/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:910 (_find_package)"
+      - "CMakeLists.txt:71 (find_package)"
+    name: "imgui"
+    configs:
+      -
+        filename: "imgui.cps"
+        kind: "cps"
+      -
+        filename: "imguiConfig.cmake"
+        kind: "cmake"
+      -
+        filename: "imgui-config.cmake"
+        kind: "cmake"
+    version_request:
+      exact: false
+    settings:
+      required: "required_explicit"
+      quiet: false
+      global: false
+      policy_scope: true
+      bypass_provider: false
+      names:
+        - "imgui"
+      path_suffixes:
+        - ""
+      paths:
+        CMAKE_FIND_USE_CMAKE_PATH: true
+        CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+        CMAKE_FIND_USE_INSTALL_PREFIX: true
+        CMAKE_FIND_USE_PACKAGE_ROOT_PATH: true
+        CMAKE_FIND_USE_CMAKE_PACKAGE_REGISTRY: true
+        CMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY: true
+        CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
+    candidates:
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/imguiConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/imgui-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/lib/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/share/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/imguiConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/imgui-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/lib/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug/share/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/imguiConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/imgui-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/lib/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/share/cps/imgui.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/share/imgui/imguiConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+    found:
+      path: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/share/imgui/imgui-config.cmake"
+      mode: "config"
+      version: ""
+    search_context:
+      CMAKE_PREFIX_PATH:
+        - "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug"
+        - "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows"
+      ENV{PATH}:
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\VC\\VCPackages"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\MSBuild\\Current\\bin\\Roslyn"
+        - "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.8 Tools\\x64\\"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\FSharp\\Tools"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Team Tools\\DiagnosticsHub\\Collector"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\Extensions\\Microsoft\\CodeCoverage.Console"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\\\x64"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\\\x64"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\\\MSBuild\\Current\\Bin\\amd64"
+        - "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\Tools\\"
+        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\java8path"
+        - "C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Program Files\\Meta Horizon\\Support\\oculus-runtime"
+        - "C:\\windows\\system32"
+        - "C:\\windows"
+        - "C:\\windows\\System32\\Wbem"
+        - "C:\\windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Users\\drych\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\drych\\.local\\bin"
+        - "C:\\Users\\drych\\.dotnet\\tools"
+        - "C:\\Users\\drych\\AppData\\Local\\Programs\\Fiddler"
+        - "C:\\Users\\drych\\AppData\\Roaming\\npm"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\VC\\Linux\\bin\\ConnectionManagerExe"
+        - "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\vcpkg"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/hollywood_emu"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "C:/Program Files"
+        - "C:/Program Files (x86)"
+        - "C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake"
+        - "C:/Program Files/hollywood_emu"
+      CMAKE_FIND_ROOT_PATH: "D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/debug;D:/projects/eurka_emu/build/vcpkg_installed/x64-windows"
+...

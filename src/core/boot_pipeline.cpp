@@ -384,6 +384,16 @@ int BootPipeline::run() {
                 if (!emu_.boot_img.cmdline.empty()) { if (!full.empty()) full += " "; full += emu_.boot_img.cmdline; }
                 full += " androidboot.slot_suffix=" + emu_.config.slot_suffix;
                 full += " androidboot.boot_devices=soc/1d84000.ufshc";
+                // androidboot.bootdevice (SINGULAR) -> ro.boot.bootdevice, which the
+                // target init.kona.rc substitutes into
+                //   symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
+                // Without it that symlink is never created, so /dev/block/bootdevice/by-name/*
+                // is absent and vendor.qseecomd's open of by-name/ssd (O_SYNC) returns ENOENT
+                // -> "SSD_INIT failed, shall not start listener services" -> qseecomd exit 255,
+                // which gates the whole QSEE listener/keymaster chain. boot_devices (plural,
+                // above) drives first-stage's /dev/block/by-name; bootdevice (singular) drives
+                // the /dev/block/bootdevice tree the secure daemons use. The real ABL sets both.
+                full += " androidboot.bootdevice=1d84000.ufshc";
                 // Large kernel log ring so the full boot's init/service messages
                 // survive (default ring wraps and evicts early service starts/exits).
                 full += " log_buf_len=16M";

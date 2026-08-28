@@ -14,6 +14,12 @@ public:
     static LogLevel level;
     static void set_level(LogLevel l) { level = l; }
 
+    // Optional sink: if set, every emitted line is also delivered here (used by the
+    // GUI to display live boot output). Must be thread-safe on the callee side.
+    using Sink = void(*)(LogLevel, std::string_view module, std::string_view msg);
+    static Sink sink;
+    static void set_sink(Sink s) { sink = s; }
+
     static void write(LogLevel l, std::string_view module, std::string_view msg);
 
     template <class... Args>

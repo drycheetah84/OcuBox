@@ -310,6 +310,9 @@ hollywood_emu_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 hollywood_emu_SOURCE_DIR:STATIC=D:/projects/eurka_emu
 
+//The directory containing a CMake configuration file for imgui.
+imgui_DIR:PATH=D:/projects/eurka_emu/build/vcpkg_installed/x64-windows/share/imgui
+
 //The directory containing a CMake configuration file for unicorn.
 unicorn_DIR:PATH=unicorn_DIR-NOTFOUND
 

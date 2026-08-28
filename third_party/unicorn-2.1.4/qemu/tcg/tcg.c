@@ -528,6 +528,10 @@ void tcg_region_init(TCGContext *tcg_ctx)
     /* account for that last guard page */
     tcg_ctx->region.end = (void *)((char *)tcg_ctx->region.end - page_size);
 
+    fprintf(stderr, "[TCG] region_init buf=%p buf_size=%zu n_regions=%zu region.size=%zu region.end=%p page=%zu\n",
+            buf, size, n_regions, tcg_ctx->region.size, tcg_ctx->region.end, page_size);
+    fflush(stderr);
+
     /* set guard pages */
     for (i = 0; i < tcg_ctx->region.n; i++) {
         void *start, *end;

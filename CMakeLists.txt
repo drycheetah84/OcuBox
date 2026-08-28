@@ -66,3 +66,9 @@ endif()
 add_custom_command(TARGET hollywood_emu POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_SOURCE_DIR}/configs $<TARGET_FILE_DIR:hollywood_emu>/configs)
+
+# --- GUI (Dear ImGui + Direct3D 11 + Win32): live boot view + guest display ---
+find_package(imgui CONFIG REQUIRED)
+add_executable(hollywood_gui src/gui/gui_main.cpp)
+target_link_libraries(hollywood_gui PRIVATE
+  hwemu_core imgui::imgui d3d11 dxgi d3dcompiler)

@@ -74,3 +74,27 @@ Multi-Arch: same
 Description: Capstone disassembly support for ARM64
 Status: install ok installed
 
+Package: imgui
+Version: 1.92.8
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 5dbd88a4b738b8dce302287dff9e5ead827c8392cd292f4a43fc3ac38c30271b
+Description: Bloat-free Immediate Mode Graphical User interface for C++ with minimal dependencies.
+Status: install ok installed
+
+Package: imgui
+Feature: dx11-binding
+Architecture: x64-windows
+Multi-Arch: same
+Description: Make available DirectX11 binding
+Status: install ok installed
+
+Package: imgui
+Feature: win32-binding
+Architecture: x64-windows
+Multi-Arch: same
+Description: Make available Win32 binding
+Status: install ok installed
+

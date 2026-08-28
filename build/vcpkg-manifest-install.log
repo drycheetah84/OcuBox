@@ -3,6 +3,7 @@ Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/M
 The following packages are already installed:
     bzip2[core,tool]:x64-windows@1.0.8#6
     capstone[core,arm64]:x64-windows@5.0.9
+    imgui[core,win32-binding,dx11-binding]:x64-windows@1.92.8#1
     liblzma:x64-windows@5.8.3
     unicorn:x64-windows@2.1.4
   * vcpkg-cmake:x64-windows@2025-08-07
@@ -23,6 +24,12 @@ capstone provides pkg-config modules:
 
   # Capstone disassembly engine
   capstone
+
+imgui provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(imgui CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE imgui::imgui)
 
 liblzma is compatible with built-in CMake targets:
 
@@ -49,4 +56,4 @@ zlib provides pkg-config modules:
   # zlib compression library
   zlib
 
-All requested installations completed successfully in: 255 us
+All requested installations completed successfully in: 322 us

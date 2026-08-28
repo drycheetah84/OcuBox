@@ -33,6 +33,10 @@ const Def kDefs[] = {
     { "super", 0 },                                            // size from SuperImage
     { "metadata", 0x1000000 }, { "misc", 0x100000 },
     { "userdata", 0x100000000ull },                            // 4G
+    // Device-provisioned (not in the OTA) partitions the secure daemons open
+    // directly. vendor.qseecomd opens by-name/ssd (O_SYNC) for its SSD/secure-
+    // storage init and exits 255 if absent; provide it (served as zeroed scratch).
+    { "ssd", 0x100000 },
 };
 
 // A fixed "Linux filesystem data" type GUID for every partition (the by-name

@@ -11,6 +11,7 @@
 //     and (by default) stop execution -- surfacing the next real blocker.
 #pragma once
 #include "cpu/cpu_state.h"
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -170,6 +171,13 @@ private:
     uint64_t tz_last_block_ = 0;    // previous block address (detect self-loop parks)
     uint64_t tz_trap_pc_ = 0;       // HOLLYWOOD_TZ_TRAP: dump regs+trace on first hit
     bool tz_trapped_ = false;
+    int km_exit_log_ = 0;           // kmshim: capped log of userspace nonzero exits
+    struct KmSc { uint32_t num; uint64_t a0, a1, a2; };
+    KmSc km_sc_[48] = {};           // kmshim: ring of recent EL0 syscalls
+    int km_sc_pos_ = 0;
+    int km_open_log_ = 0;           // kmshim: capped log of O_SYNC openat paths
+    uint64_t km_ssd_ret_ = 0;       // kmshim: return-PC of a pending ssd openat (0=none)
+    int km_ssd_ret_log_ = 0;        // kmshim: capped log of ssd openat return values
 
     // Spin detector histogram window: reset counts every this many instructions
     // so a real spin (dominates a window) is caught but long finite loops aren't.
@@ -190,5 +198,9 @@ private:
 };
 
 const char* arm_excp_name(uint32_t intno);
+
+// Live counters for the GUI (updated from the block hook). Lock-free, best-effort.
+extern std::atomic<uint64_t> g_live_insns;
+extern std::atomic<uint64_t> g_live_pc;
 
 } // namespace hw::cpu
