@@ -61,6 +61,9 @@
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\unicorn_cpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\cpu\keymaster_ta.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\platform\kona.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

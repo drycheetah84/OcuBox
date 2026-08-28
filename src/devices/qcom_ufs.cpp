@@ -197,6 +197,18 @@ void QcomUfs::run_transfer(int tag) {
             done += n;
         }
     };
+    // Gather `len` bytes from the PRDT-described buffers (data-out) into `data`.
+    auto read_data_out = [&](uint8_t* data, size_t len) {
+        size_t done = 0;
+        for (uint32_t i = 0; i < prdt_len && done < len; ++i) {
+            uint64_t e = prdt + (uint64_t)i * 16;
+            uint64_t addr = ((uint64_t)rd32(e + 4) << 32) | rd32(e + 0);
+            uint32_t sz = (rd32(e + 12) & 0x3FFFF) + 1;       // 0-based byte count
+            size_t n = std::min((size_t)sz, len - done);
+            dma_read(addr, data + done, n);
+            done += n;
+        }
+    };
 
     uint32_t ocs = 0;                                // OCS_SUCCESS
 
@@ -277,6 +289,22 @@ void QcomUfs::run_transfer(int tag) {
             std::vector<uint8_t> buf((size_t)cnt * bs);
             if (disk_ && cnt) disk_->read(lba, cnt, buf.data());
             write_data_in(buf.data(), buf.size());
+        } else if ((op == 0x2A || op == 0x8A) && !wlun) {         // WRITE(10)/WRITE(16)
+            uint64_t lba; uint32_t cnt;
+            if (op == 0x2A) { lba = ((uint32_t)cdb[2]<<24)|(cdb[3]<<16)|(cdb[4]<<8)|cdb[5];
+                              cnt = ((uint32_t)cdb[7]<<8)|cdb[8]; }
+            else { lba = 0; for (int i=0;i<8;++i) lba=(lba<<8)|cdb[2+i];
+                   cnt = ((uint32_t)cdb[10]<<24)|(cdb[11]<<16)|(cdb[12]<<8)|cdb[13]; }
+            uint32_t bs = disk_ ? disk_->block_size() : 4096;
+            uint64_t nblk = disk_ ? disk_->block_count() : 0;
+            if (nblk && lba >= nblk) cnt = 0;                 // out-of-range LBA
+            else if (nblk && lba + cnt > nblk) cnt = (uint32_t)(nblk - lba);
+            if (cnt > 8192) cnt = 8192;                       // cap one transfer (32 MB @ 4K)
+            if (disk_ && cnt) {
+                std::vector<uint8_t> buf((size_t)cnt * bs);
+                read_data_out(buf.data(), buf.size());
+                disk_->write(lba, cnt, buf.data());
+            }
         } else if (op == 0x1B || op == 0x03 || op == 0x35 || op == 0x1A) {
             // START STOP UNIT / REQUEST SENSE / SYNC CACHE / MODE SENSE(6): succeed.
         } else {

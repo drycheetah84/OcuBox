@@ -34,6 +34,14 @@ public:
     // Read `count` logical blocks starting at `lba` into out (count*kBlock bytes).
     void read(uint64_t lba, uint32_t count, uint8_t* out);
 
+    // Write `count` logical blocks starting at `lba` from `data` (count*kBlock bytes).
+    // Persisted in a copy-on-write overlay (per-LBA blocks) so the read-only OTA base
+    // images are never mutated; reads consult the overlay first. This makes scratch
+    // partitions (metadata/userdata/misc/ssd) genuinely writable, which the guest needs
+    // to format + mount /metadata and /data (vold's metadata-encryption key lives in
+    // /metadata/vold; without persistence /data reformats forever).
+    void write(uint64_t lba, uint32_t count, const uint8_t* data);
+
     struct Part { std::string name; uint64_t first_lba, last_lba; };
     const std::vector<Part>& parts() const { return parts_; }
 
@@ -50,6 +58,7 @@ private:
 
     Extractor extractor_;
     std::unordered_map<std::string, Bytes> data_cache_;
+    std::unordered_map<uint64_t, Bytes> overlay_;   // LBA -> written 4KB block (copy-on-write)
     std::shared_ptr<SuperImage> super_;
 
     std::vector<Part> parts_;

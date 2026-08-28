@@ -337,6 +337,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\cpu_state.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\unicorn_cpu.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\cpu\keymaster_ta.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\platform\kona.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\core\boot_pipeline.cpp" />
   </ItemGroup>

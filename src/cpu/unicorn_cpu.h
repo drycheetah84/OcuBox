@@ -178,6 +178,8 @@ private:
     int km_open_log_ = 0;           // kmshim: capped log of O_SYNC openat paths
     uint64_t km_ssd_ret_ = 0;       // kmshim: return-PC of a pending ssd openat (0=none)
     int km_ssd_ret_log_ = 0;        // kmshim: capped log of ssd openat return values
+    int km_exec_log_ = 0;           // kmshim: capped log of execve'd binary paths
+    uint64_t km_exec_ttbr_ = 0;     // TTBR0 of the last execve caller (process id proxy)
 
     // Spin detector histogram window: reset counts every this many instructions
     // so a real spin (dominates a window) is caught but long finite loops aren't.

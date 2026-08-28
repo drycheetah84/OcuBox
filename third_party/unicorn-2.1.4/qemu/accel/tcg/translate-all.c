@@ -887,8 +887,14 @@ static LONG __fastcall code_gen_buffer_handler(PEXCEPTION_POINTERS ptr, struct u
             uint8_t* base_end = base + COMMIT_COUNT * 4096;
             uint32_t size = COMMIT_COUNT * 4096;
             if (base_end >= right) {
-                size = base_end - base;
-                // whoops, we are almost run out of memory! Commit all instead
+                // Near the end of the reserved buffer: commit only up to the
+                // reservation end, NOT a full 4MB chunk. The original code set
+                // `size = base_end - base` which is a no-op (still 4MB) and made
+                // VirtualAlloc(MEM_COMMIT) run PAST the reservation -> it fails ->
+                // the last ~4MB is never committable -> code-gen faults there ~4MB
+                // before the high-water mark, so tb_flush is NEVER triggered and the
+                // TCG code cache never recycles (host crash on any progressing boot).
+                size = (uint32_t)(right - base);   // commit the remainder only
             }
             if (VirtualAlloc(base, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) {
                 return EXCEPTION_CONTINUE_EXECUTION;

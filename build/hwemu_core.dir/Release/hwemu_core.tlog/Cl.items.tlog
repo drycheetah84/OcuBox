@@ -18,5 +18,6 @@ D:\projects\eurka_emu\src\devices\irq.cpp;D:\projects\eurka_emu\build\hwemu_core
 D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_cmddb.obj
 D:\projects\eurka_emu\src\cpu\cpu_state.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\cpu_state.obj
 D:\projects\eurka_emu\src\cpu\unicorn_cpu.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\unicorn_cpu.obj
+D:\projects\eurka_emu\src\cpu\keymaster_ta.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\keymaster_ta.obj
 D:\projects\eurka_emu\src\platform\kona.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\kona.obj
 D:\projects\eurka_emu\src\core\boot_pipeline.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\boot_pipeline.obj

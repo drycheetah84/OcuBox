@@ -37,6 +37,18 @@ const Def kDefs[] = {
     // directly. vendor.qseecomd opens by-name/ssd (O_SYNC) for its SSD/secure-
     // storage init and exits 255 if absent; provide it (served as zeroed scratch).
     { "ssd", 0x100000 },
+    // Firmware + QSEE trusted-app partitions (OTA-backed). fs_mgr mounts
+    // /vendor/firmware_mnt from `modem` ("Skipping .../by-name/modem_a during
+    // mount_all" when absent); that mount holds the QSEE TA images that
+    // libQSEEComAPI loads as /vendor/firmware_mnt/image/keymaster64.mdt etc.
+    // keymaster/cmnlib/cmnlib64 are the trusted-app image partitions. The "_a"
+    // active slot maps to the OTA base image (extractor strips the suffix); "_b"
+    // inactive slots serve zero. Without these, keymaster's TA never loads ->
+    // IKeymasterDevice/keystore2 never register -> /data metadata-encryption blocked.
+    { "modem_a", 0x3000000 }, { "modem_b", 0x3000000 },        // 48M (>= OTA ~41M)
+    { "keymaster_a", 0x100000 }, { "keymaster_b", 0x100000 },
+    { "cmnlib_a", 0x100000 }, { "cmnlib_b", 0x100000 },
+    { "cmnlib64_a", 0x100000 }, { "cmnlib64_b", 0x100000 },
 };
 
 // A fixed "Linux filesystem data" type GUID for every partition (the by-name
@@ -147,6 +159,10 @@ void UfsDisk::read(uint64_t lba, uint32_t count, uint8_t* out) {
         uint64_t b = lba + i;
         uint8_t* dst = out + (size_t)i * kBlock;
         std::memset(dst, 0, kBlock);
+        // Copy-on-write overlay: a previously-written block overrides the base image
+        // (GPT/OTA/zeros). This is what makes formats + file writes persist.
+        auto ov = overlay_.find(b);
+        if (ov != overlay_.end()) { std::memcpy(dst, ov->second.data(), kBlock); continue; }
         if (b == 0) {                                        // protective MBR
             std::memcpy(dst, mbr_.data(), kBlock);
         } else if (b == 1) {                                 // primary GPT header
@@ -180,6 +196,14 @@ void UfsDisk::read(uint64_t lba, uint32_t count, uint8_t* out) {
                 break;
             }
         }
+    }
+}
+
+void UfsDisk::write(uint64_t lba, uint32_t count, const uint8_t* data) {
+    for (uint32_t i = 0; i < count; ++i) {
+        Bytes& blk = overlay_[lba + i];
+        if (blk.size() != kBlock) blk.assign(kBlock, 0);
+        std::memcpy(blk.data(), data + (size_t)i * kBlock, kBlock);
     }
 }
 

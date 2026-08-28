@@ -1,4 +1,6 @@
 #include "cpu/unicorn_cpu.h"
+#include "cpu/keymaster_ta.h"
+#include <vector>
 #include "common/log.h"
 #include "devices/device.h"
 #include "devices/device_bus.h"
@@ -42,10 +44,16 @@ namespace {
 //
 // Response ABI (Phase 15): the SMC returns X0=0 (transport OK), then X1=result
 // (QSEOS status), X2=resp_type, X3=data (app_id/listener_id); the driver reads
-// {result,resp_type,data} = {ret0,ret1,ret2} = {X1,X2,X3}. CRITICAL (qseecom.c:2840
-// vs 2949): APP_LOOKUP MUST return "not loaded" (result=FAILURE) so the driver takes
-// the load branch (APP_START), which is the ONLY path that adds the app to
-// registered_app_list -- returning "already loaded" would make later SEND_DATA -ENOENT.
+// {result,resp_type,data} = {ret0,ret1,ret2} = {X1,X2,X3}.
+//
+// STRATEGY (Phase 21): this is an ANDROID-COMPATIBILITY target, NOT a genuine Quest.
+// We do NOT load real TAs or reproduce XBL / the device root-of-trust. APP_LOOKUP returns
+// "already loaded" (as if XBL had preloaded the TA): the driver's QUERY handler then
+// REGISTERS the app (qseecom.c:6060, the "loaded by appsbl before" path -> registered_app_list),
+// so the HAL skips the (absent) TA image file AND later SEND_DATA can find the app. SEND_DATA
+// then carries the keymaster/gatekeeper TA command protocol, which we answer with the minimum
+// deterministic synthetic response Android needs to proceed (implemented per observed command,
+// not blind SUCCESS). Synthetic key material is emulator-backed + consistent, never genuine.
 constexpr uint64_t QSEE_RESULT_SUCCESS = 0;
 constexpr uint64_t QSEE_RESULT_FAILURE = 0xFFFFFFFFull;   // QSEOS_RESULT_FAILURE
 constexpr uint64_t QSEE_TYPE_APP_ID    = 0xEE01;          // QSEOS_APP_ID
@@ -53,11 +61,12 @@ constexpr uint32_t TZ_OWNER_TZ_APPS    = 48;
 constexpr uint32_t TZ_OWNER_QSEE_OS    = 50;
 
 struct QseeCompatState {
-    std::unordered_map<std::string, uint32_t> loaded;  // TA name -> synthetic app_id
-    std::unordered_set<uint32_t> listeners;            // registered listener ids
-    uint32_t next_app_id = 0x1001;                     // deterministic; never a host ptr
-    std::string pending_load;                          // name from the last not-loaded LOOKUP
-    int log = 0;                                        // capped [QSEE-COMPAT] budget
+    std::unordered_map<std::string, uint32_t> loaded;    // TA name -> synthetic app_id
+    std::unordered_map<uint32_t, std::string> app_names; // app_id -> TA name (for SEND_DATA)
+    std::unordered_set<uint32_t> listeners;              // registered listener ids
+    uint32_t next_app_id = 0x1001;                       // deterministic; never a host ptr
+    std::string pending_load;                            // name from the last APP_LOOKUP
+    int log = 0;                                          // capped [QSEE-COMPAT] budget
 };
 QseeCompatState g_qsee;
 
@@ -69,6 +78,103 @@ std::string qsee_read_name(uc_engine* uc, uint64_t pa, uint64_t len) {
     return std::string(buf);
 }
 
+// ---- QSEE trusted-app SEND_DATA command dispatch (COMPATIBILITY / SYNTHETIC) ----
+// This decodes the real TA command protocol (the wire structs match the OTA/ABL
+// KeymasterClient.c) and writes the minimum deterministic response Android needs to
+// proceed. We do NOT reproduce the secure world; key material is emulator-backed and
+// consistent, never genuine/attestable. Each command is implemented as it is observed
+// (not blind SUCCESS): an unrecognized command logs its bytes and returns false so the
+// driver reports a real error and the next blocker is visible.
+//
+// keymaster TA command ids (KeymasterClient.c): KEYMASTER_CMD_ID=0x100 base for the
+// HIDL/keymint ops (generate/import/begin/update/finish/...), KEYMASTER_UTILS_CMD_ID
+// =0x200 base for utils (GET_VERSION=0x200, SET_ROT=0x201, ...).
+constexpr uint32_t KM_CMD_BASE   = 0x100;
+constexpr uint32_t KM_UTILS_BASE = 0x200;
+constexpr uint32_t KM_GET_VERSION    = KM_UTILS_BASE + 0;    // 0x200
+constexpr uint32_t KM_SET_ROT        = KM_UTILS_BASE + 1;    // 0x201  KMSetRotRsp{Status}
+constexpr uint32_t KM_SET_VERSION    = KM_UTILS_BASE + 7;    // 0x207  ack {Status}
+constexpr uint32_t KM_SET_BOOT_STATE = KM_UTILS_BASE + 8;    // 0x208  KMSetBootStateRsp{Status}
+constexpr uint32_t KM_SET_VBH        = KM_UTILS_BASE + 17;   // 0x211  KMSetVbhRsp{Status}
+constexpr uint32_t KM_GET_DATE_SUPPORT = KM_UTILS_BASE + 21; // 0x215  KMGetDateSupportRsp{Status}
+constexpr uint32_t KM_CONFIGURE      = KM_CMD_BASE + 22;     // 0x116  keymaster configure()
+
+// Observation aid: with KM_PROBE set in the environment, an otherwise-unhandled TA
+// command returns a zeroed {status=0} response instead of FAILURE, so the HAL keeps
+// issuing its init sequence and the WHOLE command list is visible in one boot (the HAL
+// aborts on the first real FAILURE otherwise). This is a TRACING tool, not a solution:
+// the zeroed responses are not valid key material, so it never actually mounts /data --
+// each command it reveals must then be implemented properly. Off by default.
+bool g_km_probe = false;
+bool g_km_probe_init = false;
+
+// Write `n` bytes to guest phys rsp_ptr iff the buffer is present + large enough.
+bool qsee_put_rsp(uc_engine* uc, uint64_t rsp_ptr, uint64_t rsp_len,
+                  const void* p, size_t n) {
+    if (!rsp_ptr || rsp_len < n) return false;
+    return uc_mem_write(uc, rsp_ptr, p, n) == UC_ERR_OK;
+}
+
+// Returns true (SUCCESS) if a response was produced, false (FAILURE) to expose the
+// next real blocker. `lg` gates the capped compat log.
+bool qsee_ta_dispatch(uc_engine* uc, const std::string& name, uint32_t cmd,
+                      uint64_t req_ptr, uint64_t req_len,
+                      uint64_t rsp_ptr, uint64_t rsp_len, bool lg) {
+    (void)req_ptr; (void)req_len;
+    if (name == "keymaster64" || name == "keymaster") {
+        switch (cmd) {
+        case KM_GET_VERSION: {
+            // KMGetVersionRsp { INT32 Status; UINT32 Major, Minor, AppMajor, AppMinor; }
+            // Client requires Status==0 && Major>=2 (KeymasterClient.c:223/313). All
+            // fields are 4-byte, so the layout is a packed 20 bytes with no padding.
+            struct KMGetVersionRsp {
+                int32_t status; uint32_t major, minor, app_major, app_minor;
+            } r = { 0, 3, 4, 4, 1 };
+            bool ok = qsee_put_rsp(uc, rsp_ptr, rsp_len, &r, sizeof r);
+            if (lg) std::printf("[QSEE-COMPAT]   KM GET_VERSION -> {st=0,maj=3,min=4,app=4.1} put=%d\n", ok);
+            return ok;
+        }
+        case KM_SET_ROT:
+        case KM_SET_VERSION:
+        case KM_SET_BOOT_STATE:
+        case KM_SET_VBH: {
+            // These "utils set" commands acknowledge with { INT32 Status } (the wire
+            // structs KMSetRotRsp/KMSetBootStateRsp/KMSetVbhRsp are all just {Status}).
+            // Status=0 (KM_ERROR_OK). These configure the TA's view of ROT/version/boot
+            // state -- for a compatibility target we accept them; there is no genuine ROT.
+            int32_t status = 0;
+            bool ok = qsee_put_rsp(uc, rsp_ptr, rsp_len, &status, sizeof status);
+            if (lg) std::printf("[QSEE-COMPAT]   KM cmd %#x (ack) -> {status=0} put=%d\n", cmd, ok);
+            return ok;
+        }
+        case KM_GET_DATE_SUPPORT: {
+            // KMGetDateSupportRsp is {INT32 Status} in the ABL; the HAL may also read a
+            // "supported" flag right after, so zero 8 bytes -> {status=0, supported=0}.
+            // "not supported" is the safe compat answer (no date-based-validity feature).
+            uint32_t r[2] = { 0, 0 };
+            bool ok = qsee_put_rsp(uc, rsp_ptr, rsp_len, r, sizeof r);
+            if (lg) std::printf("[QSEE-COMPAT]   KM GET_DATE_SUPPORT -> {status=0,supported=0} put=%d\n", ok);
+            return ok;
+        }
+        default: break;
+        }
+    }
+    // Unhandled. In KM_PROBE tracing mode, return a zeroed success so the HAL keeps
+    // issuing commands (reveals the full sequence in one boot); otherwise FAILURE so the
+    // next real blocker is exposed. Probe responses are NOT valid -- for tracing only.
+    if (g_km_probe && rsp_ptr && rsp_len) {
+        uint8_t z[128] = {0};
+        size_t n = (size_t)(rsp_len < sizeof z ? rsp_len : sizeof z);
+        bool ok = uc_mem_write(uc, rsp_ptr, z, n) == UC_ERR_OK;
+        if (lg) std::printf("[QSEE-COMPAT]   PROVISIONAL(probe) app=%s cmd=%#x -> zeroed %zuB put=%d\n",
+                            name.c_str(), cmd, n, ok);
+        return ok;
+    }
+    if (lg) std::printf("[QSEE-COMPAT]   UNHANDLED TA cmd app=%s cmd=%#x -> FAILURE (observe)\n",
+                        name.c_str(), cmd);
+    return false;
+}
+
 // Handle a QSEE_OS (owner=50) or TZ_APPS (owner=48) SMC. Sets r1/r2/r3 (r0 stays 0).
 void qsee_compat(uc_engine* uc, uint32_t owner, uint32_t svc, uint32_t func,
                  const uint64_t x[8], uint64_t& r1, uint64_t& r2, uint64_t& r3) {
@@ -76,41 +182,75 @@ void qsee_compat(uc_engine* uc, uint32_t owner, uint32_t svc, uint32_t func,
     if (lg) g_qsee.log++;
 
     if (owner == TZ_OWNER_TZ_APPS) {
-        // TA SEND_DATA (fn 0x30xx0001/06): app_id=args[0]=x2, req_ptr=x3, req_len=x4.
-        // This is the secure-world boundary we STOP at -- it needs the real TA and the
-        // device root-of-trust. Log the request (first u32 of req = keymaster cmd id)
-        // and DO NOT fake a response.
+        // TA SEND_DATA: app_id=args[0]=x2, req_ptr=args[1]=x3, req_len=args[2]=x4.
+        // rsp_ptr=args[3], rsp_len=args[4] spill to the SCM overflow buffer at x5
+        // (scm.c: arglen>N_REGISTER_ARGS=4 -> x5=phys(extra_arg_buf), args64[0]=args[3]).
+        uint32_t app_id = (uint32_t)x[2];
+        uint64_t req_ptr = x[3], req_len = x[4];
+        auto ni = g_qsee.app_names.find(app_id);
+        std::string nm = (ni != g_qsee.app_names.end()) ? ni->second : std::string("?");
+
+        uint32_t cmd_id = 0;
+        if (req_ptr) uc_mem_read(uc, req_ptr, &cmd_id, 4);
+        uint64_t rsp_ptr = 0, rsp_len = 0;
+        if (x[5]) {
+            uc_mem_read(uc, x[5], &rsp_ptr, 8);
+            uc_mem_read(uc, x[5] + 8, &rsp_len, 8);
+        }
         if (lg) {
-            uint32_t app_id = (uint32_t)x[2];
-            std::printf("[QSEE-COMPAT] UNSUPPORTED SEND_DATA fn=%#llx app_id=%#x req_ptr=%#llx req_len=%#llx\n",
-                        (unsigned long long)x[0], app_id,
-                        (unsigned long long)x[3], (unsigned long long)x[4]);
-            uint8_t b[32] = {0};
-            if (x[3] && uc_mem_read(uc, x[3], b, sizeof b) == UC_ERR_OK) {
-                std::printf("[QSEE-COMPAT]   req[0..31]:");
-                for (int j = 0; j < 32; j++) std::printf(" %02x", b[j]);
-                std::printf("   (first u32 = TA/keymaster cmd id)\n");
+            std::printf("[QSEE-COMPAT] SEND_DATA app=%s(id=%#x) cmd=%#x req=%#llx/%llu rsp=%#llx/%llu\n",
+                        nm.c_str(), app_id, cmd_id, (unsigned long long)req_ptr,
+                        (unsigned long long)req_len, (unsigned long long)rsp_ptr,
+                        (unsigned long long)rsp_len);
+            uint8_t b[64] = {0};
+            if (req_ptr && uc_mem_read(uc, req_ptr, b, sizeof b) == UC_ERR_OK) {
+                std::printf("[QSEE-COMPAT]   req[0..63]:");
+                for (int j = 0; j < 64; j++) std::printf(" %02x", b[j]);
+                std::printf("\n");
             }
             std::fflush(stdout);
         }
-        r1 = QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;   // not faked -> driver returns an error
+        if (!g_km_probe_init) { g_km_probe = std::getenv("KM_PROBE") != nullptr; g_km_probe_init = true;
+            if (g_km_probe) std::printf("[QSEE-COMPAT] KM_PROBE mode ON (provisional zeroed responses for tracing)\n"); }
+
+        // keymaster HIDL/CBOR path: commands carry the 0x2000 flag and a CBOR payload
+        // after the 4-byte command id. Route to the synthetic keymaster TA. The raw
+        // ABL struct commands (GET_VERSION/SET_VERSION/... , no 0x2000) fall through.
+        if ((nm == "keymaster64" || nm == "keymaster") && (cmd_id & 0x2000)) {
+            std::vector<uint8_t> req, krsp;
+            if (req_ptr && req_len > 4) {
+                req.resize((size_t)req_len - 4);
+                uc_mem_read(uc, req_ptr + 4, req.data(), req.size());
+            }
+            bool kok = km::keymaster_ta_handle(cmd_id, req.data(), req.size(), krsp, lg);
+            if (kok && !krsp.empty() && rsp_ptr && krsp.size() <= rsp_len)
+                uc_mem_write(uc, rsp_ptr, krsp.data(), krsp.size());
+            r1 = kok ? QSEE_RESULT_SUCCESS : QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;
+            if (lg) std::fflush(stdout);
+            return;
+        }
+
+        bool ok = qsee_ta_dispatch(uc, nm, cmd_id, req_ptr, req_len, rsp_ptr, rsp_len, lg);
+        r1 = ok ? QSEE_RESULT_SUCCESS : QSEE_RESULT_FAILURE;   // 0 -> driver returns rsp to HAL
+        r2 = 0; r3 = 0;
+        if (lg) std::fflush(stdout);
         return;
     }
 
     // owner == TZ_OWNER_QSEE_OS
     if (svc == 1 && func == 3) {                    // TZ_OS_APP_LOOKUP
+        // Compat: always report the TA as ALREADY LOADED with a deterministic synthetic
+        // app_id (as if XBL preloaded it). The driver's QUERY handler registers it
+        // (qseecom.c:6060), so the HAL never needs the (absent) TA image file.
         std::string name = qsee_read_name(uc, x[2], x[3]);
         auto it = g_qsee.loaded.find(name);
-        if (it != g_qsee.loaded.end()) {
-            r1 = QSEE_RESULT_SUCCESS; r2 = QSEE_TYPE_APP_ID; r3 = it->second;
-            if (lg) std::printf("[QSEE-COMPAT] APP_LOOKUP name=%s -> LOADED app_id=%#x\n",
-                                name.c_str(), it->second);
-        } else {
-            g_qsee.pending_load = name;
-            r1 = QSEE_RESULT_FAILURE; r2 = 0; r3 = 0;   // not loaded -> driver loads .mbn + APP_START
-            if (lg) std::printf("[QSEE-COMPAT] APP_LOOKUP name=%s -> NOT_LOADED (driver will load)\n",
-                                name.c_str());
-        }
+        uint32_t aid;
+        if (it != g_qsee.loaded.end()) aid = it->second;
+        else { aid = g_qsee.next_app_id++; g_qsee.loaded[name] = aid; g_qsee.app_names[aid] = name; }
+        g_qsee.pending_load = name;
+        r1 = QSEE_RESULT_SUCCESS; r2 = QSEE_TYPE_APP_ID; r3 = aid;
+        if (lg) std::printf("[QSEE-COMPAT] APP_LOOKUP name=%s -> LOADED (compat/preloaded) app_id=%#x\n",
+                            name.c_str(), aid);
     } else if (svc == 1 && func == 1) {             // TZ_OS_APP_START (driver mapped the .mbn)
         std::string name = g_qsee.pending_load.empty() ? std::string("app") : g_qsee.pending_load;
         auto it = g_qsee.loaded.find(name);
@@ -266,18 +406,18 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
     g_irq_uc = uc_;
     dev::install_irq_backend(hw_raise_irq, hw_set_irq_enabled);
 
-    // Enlarge the TCG code-generation buffer (Unicorn default 1 GiB). A full Android
-    // boot past the QSEE/HAL frontier translates far more unique guest code than the
-    // earlier livelock ever did; with the default the code-gen pointer runs off the
-    // end of the reserved buffer -> ACCESS_VIOLATION (WRITE) inside Unicorn's
-    // tcg_out_opc (confirmed via the linker .map). The buffer is VirtualAlloc
-    // MEM_RESERVE + committed on demand, so a larger reservation costs no host RAM
-    // until code is actually generated into it. Set after uc_open, before emulation.
-    uc_err be = uc_ctl_set_tcg_buffer_size(uc_, 0x04000000u);   // DIAG: 64 MiB to force early/frequent flushes
+    // TCG code-generation buffer size. The REAL fix for the long-boot host crash is
+    // the code-cache RECYCLING fix in Unicorn (translate-all.c code_gen_buffer_handler:
+    // the near-end on-demand-commit committed a full 4MB chunk PAST the reservation ->
+    // VirtualAlloc failed -> the last ~4MB was never usable -> code-gen faulted there
+    // ~4MB before the high-water mark, so tb_flush NEVER triggered and the cache never
+    // recycled). With that fixed, tb_flush recycles correctly at ANY buffer size. We
+    // set a moderate 512 MiB (vs the 1 GiB default) purely to reduce flush frequency
+    // (fewer full re-translations); it is MEM_RESERVE + committed on demand, so it
+    // costs host RAM only up to the working set. Set after uc_open, before emulation.
+    uc_err be = uc_ctl_set_tcg_buffer_size(uc_, 0x20000000u);   // 512 MiB
     if (be != UC_ERR_OK)
         HW_WARN("cpu.uc", "uc_ctl_set_tcg_buffer_size failed ({}) -- using 1 GiB default", (int)be);
-    else
-        HW_INFO("cpu.uc", "TCG code buffer sized to ~1.9 GiB (avoids code-cache overflow)");
 
     // Select the most capable ARM64 core. The Quest kernel programs TCR_EL1 with
     // IPS=0b100 (44-bit PA / larger-address features); the default A57 model can
@@ -822,21 +962,49 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
                 // O_SYNC opens only (cheap: no path read for the common non-O_SYNC opens)
                 // -- this is the qseecomd secure-storage pattern (by-name/ssd). Logs the
                 // path + captures the syscall's errno (fd>=0 = opened, <0 = -errno).
-                if (x8 == 56 && (a2 & 0x101000u) == 0x101000u && self->km_open_log_ < 120) {
-                    self->km_open_log_++;
+                // Log opens on the QSEE/keymaster TA-load path (ssd + the TA image files
+                // + /dev/qseecom) and capture each one's return value (fd>=0 / -errno).
+                // This reveals WHERE libQSEEComAPI looks for the keymaster64 TA image and
+                // whether it's found -- the Phase 20 question (why APP_START never fires).
+                if (x8 == 56 && self->km_open_log_ < 300) {
                     char path[192] = {0};
                     self->read_mem(a1, path, sizeof(path) - 1);
                     path[sizeof(path) - 1] = 0;
-                    std::printf("[kmshim] openat(O_SYNC) '%s' flags=%#llx\n", path,
-                                (unsigned long long)a2);
+                    bool ta = !std::strstr(path, "/proc/") && (
+                              std::strstr(path, "keymaster") || std::strstr(path, "cmnlib") ||
+                              std::strstr(path, ".mdt") || std::strstr(path, ".mbn") ||
+                              std::strstr(path, "qseecom") || std::strstr(path, "/ssd") ||
+                              std::strstr(path, "keystore") || std::strstr(path, "firmware_mnt") ||
+                              std::strstr(path, "firmware/image") || std::strstr(path, "by-name/keymaster") ||
+                              std::strstr(path, "by-name/cmnlib") ||
+                              (a2 & 0x101000u) == 0x101000u /*O_SYNC (ssd)*/ );
+                    if (ta) {
+                        self->km_open_log_++;
+                        std::printf("[kmshim] openat '%s' flags=%#llx\n", path,
+                                    (unsigned long long)a2);
+                        std::fflush(stdout);
+                        uint64_t elr = 0; uc_reg_read(uc, UC_ARM64_REG_ELR_EL1, &elr);
+                        self->km_ssd_ret_ = elr;   // capture the openat return value
+                    }
+                }
+                // execve(221)/execveat(281): log the binary being launched. A crash-
+                // looping service execs the same path repeatedly, so the recurring path
+                // identifies the exit(25) process without guessing from the service name.
+                if ((x8 == 221 || x8 == 281) && self->km_exec_log_ < 250) {
+                    self->km_exec_log_++;
+                    uint64_t patp = (x8 == 221) ? a0 : a1;   // execveat: pathname is arg1
+                    char path[192] = {0};
+                    self->read_mem(patp, path, sizeof(path) - 1);
+                    path[sizeof(path) - 1] = 0;
+                    uint64_t ttbr = 0; uc_reg_read(uc, UC_ARM64_REG_TTBR0_EL1, &ttbr);
+                    std::printf("[kmshim] execve '%s' (ttbr0=%#llx)\n", path, (unsigned long long)ttbr);
                     std::fflush(stdout);
-                    uint64_t elr = 0; uc_reg_read(uc, UC_ARM64_REG_ELR_EL1, &elr);
-                    self->km_ssd_ret_ = elr;   // capture the openat return value
                 }
                 if ((x8 == 93 || x8 == 94) && a0 != 0 && self->km_exit_log_ < 60) {
                     self->km_exit_log_++;
-                    std::printf("[kmshim] EL0 exit(status=%lld) -- recent syscalls (num a0 a1 a2), oldest first:\n",
-                                (long long)(int32_t)a0);
+                    uint64_t ttbr = 0; uc_reg_read(uc, UC_ARM64_REG_TTBR0_EL1, &ttbr);
+                    std::printf("[kmshim] EL0 exit(status=%lld) ttbr0=%#llx -- recent syscalls (num a0 a1 a2), oldest first:\n",
+                                (long long)(int32_t)a0, (unsigned long long)ttbr);
                     for (int k = 0; k < 48; k++) {
                         const auto& s = self->km_sc_[(self->km_sc_pos_ + k) % 48];
                         if (s.num || s.a0 || s.a1)

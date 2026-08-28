@@ -47,6 +47,7 @@ add_library(hwemu_core STATIC
   src/platform/qcom_cmddb.cpp
   src/cpu/cpu_state.cpp
   src/cpu/unicorn_cpu.cpp
+  src/cpu/keymaster_ta.cpp
   src/platform/kona.cpp
   src/core/boot_pipeline.cpp
 )
