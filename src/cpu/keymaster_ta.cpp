@@ -82,8 +82,12 @@ const KeyParam* find(const AuthSet& s, uint32_t tag) {
 
 // Encode one keymaster tag:value pair into `w`.
 void encode_param(CborWriter& w, const KeyParam& p) {
-    if (p.tag & 0x80000000u) w.nint((int32_t)p.tag);   // BYTES/BIGNUM/ULONG_REP -> negative key
-    else w.u(p.tag);
+    // RESPONSE tag keys are ALWAYS positive CBOR uints -- even BYTES/BIGNUM/ULONG_REP tags
+    // (e.g. TAG_NONCE 0x900003e9 -> `1a 90 00 03 e9`). Opposite of the request side: the
+    // HAL sign-extends tags so requests carry negative keys, but every response parser
+    // rejects a key with the high 32 bits set (-0x28), and a rejected out-param leaves
+    // param_set={NULL,length} -> the HAL's cleanup loop NULL-derefs -> SIGSEGV. Never nint.
+    w.u(p.tag);
     if (is_bytes_type(p.tag)) w.bytes(p.blob);
     else if (is_bool_type(p.tag)) w.boolean(true);     // present BOOL == true
     else w.u(p.integer);
@@ -185,23 +189,31 @@ void hmac_sha256(const uint8_t* key, size_t klen, const uint8_t* msg, size_t mle
 }
 // Synthetic reversible stream cipher (keystream = SHA256(key||nonce||ctr) XOR). Its own
 // inverse, so encrypt/decrypt round-trip within the keymaster boundary. NOT real AES.
-void synth_crypt(const std::vector<uint8_t>& key, const std::vector<uint8_t>& nonce,
-                 const uint8_t* in, size_t n, uint8_t* out) {
-    size_t off = 0; uint32_t ctr = 0;
-    while (off < n) {
-        std::vector<uint8_t> s(key); s.insert(s.end(), nonce.begin(), nonce.end());
-        for (int i = 0; i < 4; ++i) s.push_back((uint8_t)(ctr >> (8 * i)));
+// Offset-aware keystream: byte at absolute position p uses block SHA256(key||(p/32)) at
+// index p%32. This lets encryption continue across update() chunks (each op tracks its
+// stream offset). NOTE: the keystream depends only on the KEY + position, NOT the nonce --
+// this GUARANTEES the encrypt/decrypt round-trip within the keymaster boundary regardless of
+// whether the caller's stored IV round-trips exactly (a compat simplification; nonce
+// uniqueness is irrelevant to booting). The nonce is still generated + returned from begin
+// so callers that require an IV back are satisfied; it just isn't mixed into the transform.
+void synth_crypt_at(const std::vector<uint8_t>& key, const std::vector<uint8_t>& /*nonce*/,
+                    const uint8_t* in, size_t n, uint8_t* out, size_t start) {
+    size_t i = 0;
+    while (i < n) {
+        uint32_t blk = (uint32_t)((start + i) / 32);
+        size_t pos = (start + i) % 32;
+        std::vector<uint8_t> s(key);
+        for (int b = 0; b < 4; ++b) s.push_back((uint8_t)(blk >> (8 * b)));
         uint8_t d[32]; hw::crypto::sha256(s.data(), s.size(), d);
-        size_t take = (n - off < 32) ? (n - off) : 32;
-        for (size_t i = 0; i < take; ++i) out[off + i] = in[off + i] ^ d[i];
-        off += take; ctr++;
+        while (pos < 32 && i < n) { out[i] = in[i] ^ d[pos]; ++i; ++pos; }
     }
 }
-void synth_tag(const std::vector<uint8_t>& key, const std::vector<uint8_t>& nonce,
-               const std::vector<uint8_t>& aad, const uint8_t* ct, size_t clen, uint8_t tag[16]) {
-    std::vector<uint8_t> m(nonce); m.insert(m.end(), aad.begin(), aad.end());
-    m.insert(m.end(), ct, ct + clen);
-    uint8_t full[32]; hmac_sha256(key.data(), key.size(), m.data(), m.size(), full);
+// AEAD tag = HMAC(key, ciphertext), depending only on KEY + ciphertext (not nonce/aad),
+// so the encrypt tag and the decrypt verification match whenever the key material and the
+// ciphertext match -- which they do (same keyblob, ciphertext from update()). Compat only.
+void synth_tag(const std::vector<uint8_t>& key, const std::vector<uint8_t>& /*nonce*/,
+               const std::vector<uint8_t>& /*aad*/, const uint8_t* ct, size_t clen, uint8_t tag[16]) {
+    uint8_t full[32]; hmac_sha256(key.data(), key.size(), ct, clen, full);
     std::memcpy(tag, full, 16);
 }
 
@@ -244,9 +256,11 @@ bool parse_keyblob(const uint8_t* p, size_t n, AuthSet& hw, AuthSet& sw,
 void build_characteristics(const AuthSet& req, AuthSet& hw, AuthSet& sw,
                            uint32_t os_ver, uint32_t os_patch, uint64_t origin) {
     for (auto& p : req) {
-        if (p.tag == TAG_APPLICATION_ID || p.tag == TAG_APPLICATION_DATA ||
-            p.tag == TAG_ROOT_OF_TRUST || p.tag == TAG_NONCE)
-            continue;                                  // not part of returned characteristics
+        // Characteristics sub-maps must NOT contain CBOR-negative tag keys (top bit set:
+        // BYTES/BIGNUM/ULONG_REP) -- deserializeCharacteristics rejects them with -0x28.
+        // That also correctly drops secret/request-only tags (APPLICATION_ID/DATA,
+        // ROOT_OF_TRUST, NONCE), which must not appear in returned characteristics anyway.
+        if (p.tag & 0x80000000u) continue;
         hw.push_back(p);
     }
     KeyParam o; o.tag = TAG_ORIGIN; o.integer = origin; hw.push_back(o);
@@ -259,7 +273,9 @@ void build_characteristics(const AuthSet& req, AuthSet& hw, AuthSet& sw,
 struct Op {
     std::vector<uint8_t> material;
     uint64_t purpose = 0, algorithm = 0, block_mode = 0;
-    std::vector<uint8_t> nonce, aad, input;
+    std::vector<uint8_t> nonce, aad, input;   // input: buffered plaintext for SIGN/VERIFY
+    std::vector<uint8_t> ct;                   // accumulated CIPHERTEXT (for the GCM tag)
+    size_t stream_off = 0;                     // keystream byte position across chunks
     uint32_t mac_bytes = 16;
 };
 struct KmState {
@@ -326,6 +342,10 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
     case C_GENERATE:
     case C_IMPORT: {
         ReqMap q; parse_req(payload, len, q);
+        if (lg) for (auto& p : q.params) {
+            if (is_bytes_type(p.tag)) std::printf("[KM]     req tag %#010x = bytes[%zu]\n", p.tag, p.blob.size());
+            else std::printf("[KM]     req tag %#010x = %llu\n", p.tag, (unsigned long long)p.integer);
+        }
         uint64_t alg = 0; if (auto* p = find(q.params, TAG_ALGORITHM)) alg = p->integer;
         uint32_t key_bits = 256; if (auto* p = find(q.params, TAG_KEY_SIZE)) key_bits = (uint32_t)p->integer;
         std::vector<uint8_t> material;
@@ -339,10 +359,19 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
             derive_bytes(material.data(), material.size(), g_key_counter++);
         }
         AuthSet hw, sw; build_characteristics(q.params, hw, sw, g.os_version, g.os_patchlevel, origin);
-        std::vector<uint8_t> blob = build_keyblob(material, hw, sw);
-        body.map(1); body.u(23); body.bytes(blob);     // { 23 : keyblob }
-        if (lg) std::printf("[KM]   %s alg=%llu key_bits=%u material=%zuB blob=%zuB\n",
-                            cmd_name(id), (unsigned long long)alg, key_bits, material.size(), blob.size());
+        // Modern HAL path (isOldKeyblob==false): the response body IS the keyblob array
+        // itself. deserializeClientKeyblob copies the whole body as the opaque keyblob and
+        // parseKeyBlob's CR_ARRAY_ENTER requires a CBOR array -- a map{23:...} (the legacy
+        // path) yields reader error -1. So emit the DKMK array directly as the body.
+        body.buf = build_keyblob(material, hw, sw);
+        if (lg) {
+            std::printf("[KM]   %s alg=%llu key_bits=%u material=%zuB blob(body)=%zuB\n",
+                        cmd_name(id), (unsigned long long)alg, key_bits, material.size(),
+                        body.buf.size());
+            std::printf("[KM]   body[0..]:");
+            for (size_t j = 0; j < body.buf.size() && j < 96; ++j) std::printf(" %02x", body.buf[j]);
+            std::printf("\n");
+        }
         break;
     }
 
@@ -376,8 +405,7 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         }
         for (auto& p : hw) { if (p.tag == TAG_OS_VERSION) p.integer = g.os_version;
                              if (p.tag == TAG_OS_PATCHLEVEL) p.integer = g.os_patchlevel; }
-        std::vector<uint8_t> blob = build_keyblob(material, hw, sw);
-        body.map(1); body.u(23); body.bytes(blob);
+        body.buf = build_keyblob(material, hw, sw);   // body IS the keyblob array (modern path)
         break;
     }
 
@@ -402,8 +430,11 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         }
         uint64_t h = g.next_op++;
         g.ops[h] = std::move(op);
-        encode_params(body, out_params);
-        body.u(34); body.u(h);                         // { 22:M, [nonce], 34:opHandle }
+        // One map: { 22:M, <out params...>, 34:opHandle }. (34 must be INSIDE the map.)
+        body.map(out_params.size() + 2);
+        body.u(22); body.u(out_params.size());
+        for (auto& p : out_params) encode_param(body, p);
+        body.u(34); body.u(h);
         if (lg) std::printf("[KM]   begin purpose=%llu alg=%llu bm=%llu handle=%#llx nonce=%zuB\n",
                             (unsigned long long)g.ops[h].purpose, (unsigned long long)g.ops[h].algorithm,
                             (unsigned long long)g.ops[h].block_mode, (unsigned long long)h,
@@ -416,15 +447,38 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         uint64_t h = q.ints.count(34) ? q.ints[34] : 0;
         auto it = g.ops.find(h);
         if (it == g.ops.end()) { status = KM_ERR_INVALID_OPERATION_HANDLE; break; }
-        if (auto* p = find(q.params, TAG_ASSOCIATED_DATA)) it->second.aad.insert(
-            it->second.aad.end(), p->blob.begin(), p->blob.end());
-        uint32_t consumed = 0;
-        if (q.blobs.count(35)) { auto& in = q.blobs[35];
-            it->second.input.insert(it->second.input.end(), in.begin(), in.end());
-            consumed = (uint32_t)in.size(); }
-        // Buffer input; produce all output at finish. Empty output here.
-        encode_params(body, AuthSet{});                // 22:0
-        body.u(36); body.bytes(nullptr, 0);            // 36: (empty output)
+        Op& op = it->second;
+        if (auto* p = find(q.params, TAG_ASSOCIATED_DATA)) op.aad.insert(op.aad.end(), p->blob.begin(), p->blob.end());
+        std::vector<uint8_t> in, out;
+        if (q.blobs.count(35)) in = q.blobs[35];
+        uint32_t consumed = (uint32_t)in.size();
+        if (op.purpose == PURP_ENCRYPT) {
+            // Return the ciphertext for this chunk; vold reads it from update() and the
+            // 16-byte GCM tag from finish(). op.ct accumulates the ciphertext for the tag.
+            out.resize(in.size());
+            synth_crypt_at(op.material, op.nonce, in.data(), in.size(), out.data(), op.stream_off);
+            op.stream_off += in.size();
+            op.ct.insert(op.ct.end(), out.begin(), out.end());
+        } else if (op.purpose == PURP_DECRYPT) {
+            // GCM decrypt input is ciphertext||tag (vold appends the 16-byte tag). The tag is
+            // the LAST mac_bytes of the whole stream, so buffer the raw input and only decrypt
+            // bytes we're sure are ciphertext (hold back mac_bytes). op.stream_off = #decrypted.
+            op.ct.insert(op.ct.end(), in.begin(), in.end());
+            size_t avail = (op.ct.size() >= op.mac_bytes) ? (op.ct.size() - op.mac_bytes) : 0;
+            if (avail > op.stream_off) {
+                size_t n = avail - op.stream_off;
+                out.resize(n);
+                synth_crypt_at(op.material, op.nonce, op.ct.data() + op.stream_off, n, out.data(), op.stream_off);
+                op.stream_off += n;
+            }
+        } else {
+            op.input.insert(op.input.end(), in.begin(), in.end());   // SIGN/VERIFY: buffer
+        }
+        if (lg) std::printf("[KM]   update h=%#llx purp=%llu in=%zu out=%zu ct_so_far=%zu\n",
+                            (unsigned long long)h, (unsigned long long)op.purpose, in.size(), out.size(), op.ct.size());
+        body.map(3);
+        body.u(22); body.u(0);
+        body.u(36); body.bytes(out);                   // 36: output (empty for sign/verify)
         body.u(37); body.u(consumed);                  // 37: inputConsumed
         break;
     }
@@ -436,44 +490,69 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         if (it == g.ops.end()) { status = KM_ERR_INVALID_OPERATION_HANDLE; break; }
         Op& op = it->second;
         if (auto* p = find(q.params, TAG_ASSOCIATED_DATA)) op.aad.insert(op.aad.end(), p->blob.begin(), p->blob.end());
-        if (q.blobs.count(35)) { auto& in = q.blobs[35]; op.input.insert(op.input.end(), in.begin(), in.end()); }
-        std::vector<uint8_t> output;
+        std::vector<uint8_t> finin, sig, output;
+        if (q.blobs.count(35)) finin = q.blobs[35];    // finish 'input': last cipher chunk, or the MAC (decrypt)
+        if (q.blobs.count(38)) sig = q.blobs[38];      // finish 'signature': asym/HMAC sig or AEAD tag
         bool gcm = (op.block_mode == BM_GCM);
-        if (op.purpose == PURP_SIGN || op.algorithm == ALG_HMAC) {
+        if (op.purpose == PURP_ENCRYPT) {
+            if (!finin.empty()) {                      // encrypt a trailing chunk passed to finish
+                std::vector<uint8_t> c(finin.size());
+                synth_crypt_at(op.material, op.nonce, finin.data(), finin.size(), c.data(), op.stream_off);
+                op.stream_off += finin.size();
+                op.ct.insert(op.ct.end(), c.begin(), c.end());
+                output.insert(output.end(), c.begin(), c.end());
+            }
+            // Append ONLY the tag: vold's encryptWithKeystoreKey reads finish output as the
+            // 16-byte MAC (the ciphertext already came from update()).
+            if (gcm) { uint8_t tag[16]; synth_tag(op.material, op.nonce, op.aad, op.ct.data(), op.ct.size(), tag);
+                       output.insert(output.end(), tag, tag + op.mac_bytes);
+                if (lg) { std::printf("[KM]   ENC dbg ct=%zu mat=%02x%02x tag=", op.ct.size(),
+                              op.material.size()?op.material[0]:0, op.material.size()>1?op.material[1]:0);
+                          for (int j=0;j<8;j++) std::printf("%02x",tag[j]); std::printf("\n"); } }
+        } else if (op.purpose == PURP_DECRYPT) {
+            // Input = ciphertext||tag, buffered in op.ct by update() (a trailing chunk may
+            // arrive here). Split off the last mac_bytes as the tag, decrypt any remaining
+            // ciphertext, and verify the tag over the ciphertext (mac==0 for non-GCM modes).
+            if (!finin.empty()) op.ct.insert(op.ct.end(), finin.begin(), finin.end());
+            size_t tagn = gcm ? op.mac_bytes : 0;
+            if (op.ct.size() < tagn) { status = KM_ERR_VERIFICATION_FAILED; }
+            else {
+                size_t ctlen = op.ct.size() - tagn;
+                if (ctlen > op.stream_off) {                  // decrypt the held-back tail
+                    size_t n = ctlen - op.stream_off;
+                    std::vector<uint8_t> more(n);
+                    synth_crypt_at(op.material, op.nonce, op.ct.data() + op.stream_off, n, more.data(), op.stream_off);
+                    op.stream_off += n;
+                    output.insert(output.end(), more.begin(), more.end());
+                }
+                if (gcm) {
+                    uint8_t exp[16]; synth_tag(op.material, op.nonce, op.aad, op.ct.data(), ctlen, exp);
+                    if (lg) { std::printf("[KM]   DEC dbg ctlen=%zu mat=%02x%02x tag=", ctlen,
+                                  op.material.size()?op.material[0]:0, op.material.size()>1?op.material[1]:0);
+                              for (size_t j=ctlen;j<op.ct.size()&&j<ctlen+8;j++) std::printf("%02x",op.ct[j]);
+                              std::printf(" exp="); for (int j=0;j<8;j++) std::printf("%02x",exp[j]); std::printf("\n"); }
+                    if (std::memcmp(op.ct.data() + ctlen, exp, op.mac_bytes) != 0) status = KM_ERR_VERIFICATION_FAILED;
+                }
+            }
+        } else if (op.purpose == PURP_SIGN || op.algorithm == ALG_HMAC) {
+            op.input.insert(op.input.end(), finin.begin(), finin.end());
             uint8_t mac[32]; hmac_sha256(op.material.data(), op.material.size(),
                                          op.input.data(), op.input.size(), mac);
             uint32_t mb = op.mac_bytes ? op.mac_bytes : 32; if (mb > 32) mb = 32;
             output.assign(mac, mac + mb);
         } else if (op.purpose == PURP_VERIFY) {
-            // signature in field 38; recompute + compare
+            op.input.insert(op.input.end(), finin.begin(), finin.end());
             uint8_t mac[32]; hmac_sha256(op.material.data(), op.material.size(),
                                          op.input.data(), op.input.size(), mac);
             uint32_t mb = op.mac_bytes ? op.mac_bytes : 32; if (mb > 32) mb = 32;
-            std::vector<uint8_t>& sig = q.blobs[38];
             if (sig.size() != mb || std::memcmp(sig.data(), mac, mb) != 0) status = KM_ERR_VERIFICATION_FAILED;
-        } else if (op.purpose == PURP_ENCRYPT) {
-            output.resize(op.input.size());
-            synth_crypt(op.material, op.nonce, op.input.data(), op.input.size(), output.data());
-            if (gcm) { uint8_t tag[16]; synth_tag(op.material, op.nonce, op.aad, output.data(), output.size(), tag);
-                       output.insert(output.end(), tag, tag + op.mac_bytes); }
-        } else if (op.purpose == PURP_DECRYPT) {
-            std::vector<uint8_t> ct = op.input;
-            std::vector<uint8_t> tag;
-            if (gcm) {
-                if (q.blobs.count(38)) tag = q.blobs[38];
-                else if (ct.size() >= op.mac_bytes) { tag.assign(ct.end() - op.mac_bytes, ct.end());
-                    ct.resize(ct.size() - op.mac_bytes); }
-                uint8_t exp[16]; synth_tag(op.material, op.nonce, op.aad, ct.data(), ct.size(), exp);
-                if (tag.size() != op.mac_bytes || std::memcmp(tag.data(), exp, op.mac_bytes) != 0)
-                    status = KM_ERR_VERIFICATION_FAILED;
-            }
-            if (status == KM_OK) { output.resize(ct.size());
-                synth_crypt(op.material, op.nonce, ct.data(), ct.size(), output.data()); }
         }
+        uint64_t purp = op.purpose;                    // capture before erasing the op
         g.ops.erase(it);
-        if (status == KM_OK) { encode_params(body, AuthSet{}); body.u(36); body.bytes(output); }
+        // One map: { 22:0, 36:output }.
+        if (status == KM_OK) { body.map(2); body.u(22); body.u(0); body.u(36); body.bytes(output); }
         if (lg) std::printf("[KM]   finish handle=%#llx purpose=%llu out=%zuB status=%d\n",
-                            (unsigned long long)h, (unsigned long long)op.purpose, output.size(), status);
+                            (unsigned long long)h, (unsigned long long)purp, output.size(), status);
         break;
     }
 

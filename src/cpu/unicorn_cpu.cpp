@@ -175,6 +175,38 @@ bool qsee_ta_dispatch(uc_engine* uc, const std::string& name, uint32_t cmd,
     return false;
 }
 
+// ---- SELinux permissive (compatibility) ----
+// The Quest is a `user` build, so init forces SELinux enforcing regardless of
+// androidboot.selinux=permissive. We neuter the kernel denial path directly:
+// avc_denied() (security/selinux/avc.c) returns -EACCES when enforcing and 0 when
+// permissive, so a single-address code hook that forces X0=0 + return makes every
+// would-be denial permissive. This removes SELinux (incl. silent dontaudit'd binder
+// denials) as a variable for the compat boot and lets crash_dump ptrace failing
+// daemons. Address from build/ksyms.txt for this Quest kernel; avc_denied is regular
+// .text so the hook matches on its kernel VA (no PA/struct-offset math needed).
+constexpr uint64_t kAvcDeniedVA = 0xffffff80084866e0ull;
+void selinux_permissive_cb(uc_engine* uc, uint64_t /*address*/, uint32_t /*size*/, void* /*user*/) {
+    uint64_t zero = 0, lr = 0;
+    uc_reg_read(uc, UC_ARM64_REG_X30, &lr);          // return address (LR)
+    uc_reg_write(uc, UC_ARM64_REG_X0, &zero);        // avc_denied() -> 0 (allow)
+    uc_reg_write(uc, UC_ARM64_REG_PC, &lr);          // skip the body, return to caller
+}
+
+// ---- guest reboot detection ----
+// machine_restart() issues a PSCI reset then spins forever (b .) waiting for a reset the
+// emulator never performs -- wasting billions of instructions. A hook on its entry flags a
+// reboot and stops the run loop cleanly, which triggers the halt-time kernel-log dump so the
+// reboot reason is visible immediately. Address from build/ksyms.txt for this Quest kernel.
+constexpr uint64_t kMachineRestartVA = 0xffffff80080894acull;
+volatile bool g_guest_reboot = false;
+void machine_restart_cb(uc_engine* uc, uint64_t /*address*/, uint32_t /*size*/, void* /*user*/) {
+    if (!g_guest_reboot)
+        std::printf("[emu] guest reached machine_restart -> REBOOT requested; halting to dump kernel log.\n");
+    std::fflush(stdout);
+    g_guest_reboot = true;
+    uc_emu_stop(uc);
+}
+
 // Handle a QSEE_OS (owner=50) or TZ_APPS (owner=48) SMC. Sets r1/r2/r3 (r0 stays 0).
 void qsee_compat(uc_engine* uc, uint32_t owner, uint32_t svc, uint32_t func,
                  const uint64_t x[8], uint64_t& r1, uint64_t& r2, uint64_t& r3) {
@@ -494,6 +526,19 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
             uc_hook_add(uc_, &wh, UC_HOOK_MEM_WRITE, (void*)watch_cb, this, 1, 0);  // all addrs
         }
         uc_hook_add(uc_, &h, UC_HOOK_INTR, (void*)intr_cb, this, 1, 0);
+
+        // SELinux permissive for the compat boot: a single-address code hook on
+        // avc_denied() forces it to return 0 (allow). See selinux_permissive_cb.
+        if (opts_.kmshim) {
+            uc_hook ah;
+            uc_hook_add(uc_, &ah, UC_HOOK_CODE, (void*)selinux_permissive_cb, this,
+                        kAvcDeniedVA, kAvcDeniedVA);
+            std::printf("[kmshim] SELinux permissive: avc_denied hook @ %#llx\n",
+                        (unsigned long long)kAvcDeniedVA);
+            uc_hook mrh;
+            uc_hook_add(uc_, &mrh, UC_HOOK_CODE, (void*)machine_restart_cb, this,
+                        kMachineRestartVA, kMachineRestartVA);
+        }
     }
 
     // Disassembler for trace mode (best-effort).
@@ -543,6 +588,7 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
     insns_ = 0; traced_ = 0; fault_.valid = false; spin_ = false; spin_pc_ = 0;
     exc_last_pc_ = 0; exc_last_no_ = 0; exc_repeat_ = 0; exc_storm_ = false;
     exc_vectored_ = 0; last_tlb_miss_ = 0; warns_skipped_ = 0;
+    g_guest_reboot = false;
     std::memset(hot_.data(), 0, hot_.size() * sizeof(uint32_t));
     uc_arm64_time_reset(uc_);                 // deterministic virtual clock from 0
     uint64_t pc = 0; uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
@@ -558,7 +604,7 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
             uc_reg_read(uc_, UC_ARM64_REG_PC, &pc);
             if (opts_.code_hook == false) insns_++;   // count here if no per-insn hook
             e = uc_emu_start(uc_, pc, 0, 0, 1);
-            if (e != UC_ERR_OK || spin_) break;
+            if (e != UC_ERR_OK || spin_ || g_guest_reboot) break;
             elapsed_us = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() - t0).count();
             if (opts_.timeout_us && elapsed_us >= opts_.timeout_us) break;
@@ -581,7 +627,7 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
             uint64_t rem_to = opts_.timeout_us ? (opts_.timeout_us - el) : 0;
             uint64_t rem_ins = max_instructions - insns_;
             e = uc_emu_start(uc_, pc, 0, rem_to, rem_ins);
-            if (e != UC_ERR_OK || spin_) break;              // real stop / error / spin
+            if (e != UC_ERR_OK || spin_ || g_guest_reboot) break;   // stop / error / spin / reboot
             if (insns_ >= max_instructions) break;           // hit the instruction cap
             el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() - t0).count();
