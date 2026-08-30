@@ -40,6 +40,10 @@ struct EmuConfig {
     // full machine, instead of booting the Linux kernel directly. Loads the `tz`
     // partition into its secure carveouts and starts execution at its entry point.
     bool tz_boot = false;
+    // Graphics bring-up (--gfx): inject the SwiftShader Vulkan ICD + vktri via a
+    // gfxsrc partition + /init.hollywood.rc, disable dm-verity, and attach the
+    // synthetic hollywood_fb capture device. Off by default (preserves the clean boot).
+    bool gfx_inject = false;
 };
 
 class Emulator {

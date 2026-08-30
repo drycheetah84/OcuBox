@@ -14,6 +14,9 @@ D:\projects\eurka_emu\src\devices\qcom_gcc.cpp;D:\projects\eurka_emu\build\hwemu
 D:\projects\eurka_emu\src\devices\qcom_ufs.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_ufs.obj
 D:\projects\eurka_emu\src\devices\ufs_disk.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\ufs_disk.obj
 D:\projects\eurka_emu\src\devices\super.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\super.obj
+D:\projects\eurka_emu\src\devices\hollywood_fb.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\hollywood_fb.obj
+D:\projects\eurka_emu\src\core\ext4_writer.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\ext4_writer.obj
+D:\projects\eurka_emu\src\core\gfx_inject.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\gfx_inject.obj
 D:\projects\eurka_emu\src\devices\irq.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\irq.obj
 D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\qcom_cmddb.obj
 D:\projects\eurka_emu\src\cpu\cpu_state.cpp;D:\projects\eurka_emu\build\hwemu_core.dir\Release\cpu_state.obj

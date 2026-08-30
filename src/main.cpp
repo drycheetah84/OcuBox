@@ -66,6 +66,7 @@ struct Args {
     bool list_dt = false;   // print every DT node path + compatible and exit
     bool tz = false;        // cold-boot the real Qualcomm secure monitor (tz) at EL3
     bool kmshim = false;    // NON-FAITHFUL keymaster/QSEE SCM shim (boot past real QSEE)
+    bool gfx = false;       // inject SwiftShader + vktri + hollywood_fb capture device
     std::string profile = "stock";          // "stock" or "minimal"
     std::vector<std::string> disable_nodes; // extra DT nodes to disable (compatible/path)
 };
@@ -211,6 +212,7 @@ int cmd_boot(const Args& a) {
     cfg.dump_dt = a.dump_dt;
     cfg.list_dt = a.list_dt;
     cfg.tz_boot = a.tz;
+    cfg.gfx_inject = a.gfx;
     cfg.profile = a.profile;
     // The "minimal" profile disables non-essential vendor devices (display, camera,
     // GPU, sensors) so the kernel reaches userspace/initramfs. Nodes are named by a
@@ -349,6 +351,7 @@ int main(int argc, char** argv) {
         else if (s == "--list-dt") a.list_dt = true;
         else if (s == "--tz") a.tz = true;
         else if (s == "--kmshim") a.kmshim = true;
+        else if (s == "--gfx") a.gfx = true;
         else if (s == "--profile") a.profile = arg_val(argc, argv, i);
         else if (s == "--disable-node") a.disable_nodes.push_back(arg_val(argc, argv, i));
         else if (s == "--debug") { a.verbose = true; a.log_mmio = true; }

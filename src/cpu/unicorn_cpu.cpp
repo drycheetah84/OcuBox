@@ -527,14 +527,13 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
         }
         uc_hook_add(uc_, &h, UC_HOOK_INTR, (void*)intr_cb, this, 1, 0);
 
-        // SELinux permissive for the compat boot: a single-address code hook on
-        // avc_denied() forces it to return 0 (allow). See selinux_permissive_cb.
+        // Compat boot: SELinux-permissive (avc_denied) and kernel sysfs-show NULL-deref stubs
+        // (bt_power_summary_show, ...) are applied as guest CODE PATCHES at kernel-load time
+        // (boot_pipeline.cpp) -- `mov x0,#0; ret`. The earlier X0=0+PC=LR code-hook approach
+        // was UNRELIABLE: Unicorn's code-hook PC-redirect intermittently missed, so the
+        // function ran with X0(=arg0)=NULL and crashed (e.g. avc_denied deref'd a NULL state).
+        // Only the reboot detector remains a hook (it uses a flag + uc_emu_stop, not PC-write).
         if (opts_.kmshim) {
-            uc_hook ah;
-            uc_hook_add(uc_, &ah, UC_HOOK_CODE, (void*)selinux_permissive_cb, this,
-                        kAvcDeniedVA, kAvcDeniedVA);
-            std::printf("[kmshim] SELinux permissive: avc_denied hook @ %#llx\n",
-                        (unsigned long long)kAvcDeniedVA);
             uc_hook mrh;
             uc_hook_add(uc_, &mrh, UC_HOOK_CODE, (void*)machine_restart_cb, this,
                         kMachineRestartVA, kMachineRestartVA);
@@ -830,11 +829,67 @@ void UnicornCpu::dump_el0_entry() {
 // TCG can run blocks natively. Carries instruction counting, the arch-timer
 // poll (interrupts are checked at block boundaries anyway), spin detection and
 // the heartbeat.
+// Read `n` bytes from a guest kernel VA into buf, translating per 4KB page (the printk
+// ring is vmalloc'd -- contiguous in VA, scattered in PA -- so a single read can't span pages).
+bool UnicornCpu::read_kva(uint64_t va, uint8_t* buf, size_t n) {
+    size_t done = 0;
+    while (done < n) {
+        uint64_t pa;
+        if (!translate(va + done, pa)) return false;
+        size_t page_left = 0x1000 - (size_t)((va + done) & 0xfff);
+        size_t chunk = (n - done < page_left) ? (n - done) : page_left;
+        if (uc_mem_read(uc_, pa, buf + done, chunk) != UC_ERR_OK) return false;
+        done += chunk;
+    }
+    return true;
+}
+
+// Stream new kernel printk (dmesg) entries to stdout as [kmsg] lines. Walks the classic
+// 4.19 printk ring (log_buf + log_first/next_seq/idx; struct printk_log = 16B hdr {u64 ts;
+// u16 len; u16 text_len; u16 dict_len; u8 fac; u8 flags} + text). Symbols from ksyms.txt.
+void UnicornCpu::stream_kmsg() {
+    constexpr uint64_t kLogBuf     = 0xffffff8009be4670ull;   // char* log_buf
+    constexpr uint64_t kLogNextIdx = 0xffffff8009da0398ull;   // u32
+    constexpr uint64_t kLogNextSeq = 0xffffff8009da03a8ull;   // u64
+    constexpr uint64_t kLogFirstSeq= 0xffffff8009da03b0ull;   // u64
+    constexpr uint64_t kLogFirstIdx= 0xffffff8009da03b8ull;   // u32
+    uint64_t ring_va = 0, next_seq = 0, first_seq = 0;
+    uint32_t next_idx = 0, first_idx = 0;
+    if (!read_kva(kLogBuf, (uint8_t*)&ring_va, 8) || !ring_va) return;
+    if (!read_kva(kLogNextSeq, (uint8_t*)&next_seq, 8)) return;
+    if (next_seq == km_log_seq_) return;                     // nothing new
+    read_kva(kLogNextIdx, (uint8_t*)&next_idx, 4);
+    read_kva(kLogFirstSeq, (uint8_t*)&first_seq, 8);
+    read_kva(kLogFirstIdx, (uint8_t*)&first_idx, 4);
+    if (km_log_seq_ < first_seq) { km_log_seq_ = first_seq; km_log_idx_ = first_idx; }  // fell behind
+    int budget = 500;
+    while (km_log_seq_ < next_seq && budget-- > 0) {
+        uint8_t hdr[16];
+        if (!read_kva(ring_va + km_log_idx_, hdr, 16)) break;
+        uint16_t len = (uint16_t)(hdr[8] | (hdr[9] << 8));
+        uint16_t text_len = (uint16_t)(hdr[10] | (hdr[11] << 8));
+        if (len == 0) { km_log_idx_ = 0; continue; }         // wrap marker -> restart at ring[0]
+        char text[800];
+        size_t tl = text_len < sizeof(text) - 1 ? text_len : sizeof(text) - 1;
+        if (tl && read_kva(ring_va + km_log_idx_ + 16, (uint8_t*)text, tl)) {
+            text[tl] = 0;
+            std::printf("[kmsg] %s\n", text);
+        }
+        km_log_idx_ += len;
+        km_log_seq_++;
+    }
+    std::fflush(stdout);
+}
+
 void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
     auto* self = static_cast<UnicornCpu*>(user);
     self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
     g_live_insns.store(self->insns_, std::memory_order_relaxed);   // GUI live counters
     g_live_pc.store(address, std::memory_order_relaxed);
+
+    // Live kernel-log streaming: poll the printk ring every ~8192 blocks once the MMU is up.
+    if (self->opts_.kmshim && self->mmu_on_ && (++self->km_log_poll_ & 0x1fff) == 0)
+        self->stream_kmsg();
 
     // Phase 11 (tz mode): tz cold-boots at EL3 and eventually ERETs to the NON-secure
     // world (Linux). Catch that transition and stop so run_tz can inject the kernel

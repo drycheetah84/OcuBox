@@ -1,8 +1,12 @@
 #include "devices/ufs_disk.h"
 #include "devices/super.h"
+#include "gui/gui_bridge.h"
+#include "common/log.h"
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 #include <string>
+#include <vector>
 
 namespace hw::dev {
 
@@ -49,6 +53,10 @@ const Def kDefs[] = {
     { "keymaster_a", 0x100000 }, { "keymaster_b", 0x100000 },
     { "cmnlib_a", 0x100000 }, { "cmnlib_b", 0x100000 },
     { "cmnlib64_a", 0x100000 }, { "cmnlib64_b", 0x100000 },
+    // Graphics bring-up payload (--gfx): a clean ext4 image carrying the
+    // SwiftShader Vulkan ICD + vktri, mounted by /init.hollywood.rc. Served from
+    // a host file (not the OTA); when --gfx is off it reads back as zeros (unused).
+    { "gfxsrc", 0x4000000 },                                   // 64M
 };
 
 // A fixed "Linux filesystem data" type GUID for every partition (the by-name
@@ -205,6 +213,48 @@ void UfsDisk::write(uint64_t lba, uint32_t count, const uint8_t* data) {
         if (blk.size() != kBlock) blk.assign(kBlock, 0);
         std::memcpy(blk.data(), data + (size_t)i * kBlock, kBlock);
     }
+    // --gfx: a write touching the framebuffer header block may complete a frame.
+    if (fb_lba_ && lba <= fb_lba_ && fb_lba_ < lba + count) publish_framebuffer();
+}
+
+// Decode /mnt/gfx/framebuffer (header + RGBA pixels) from the overlay-backed disk
+// and publish it to the host GUI. Triggered when the guest writes the header block.
+void UfsDisk::publish_framebuffer() {
+    uint8_t hdr[kBlock];
+    read(fb_lba_, 1, hdr);                                  // overlay-aware
+    if (std::memcmp(hdr, "HFB1", 4) != 0) return;
+    uint32_t gen, w, h;
+    std::memcpy(&gen, hdr + 4, 4); std::memcpy(&w, hdr + 8, 4); std::memcpy(&h, hdr + 12, 4);
+    if (gen == fb_gen_ || w == 0 || h == 0 || w > 4096 || h > 4096) return;
+    size_t pxbytes = (size_t)w * h * 4;
+    if (16 + pxbytes > fb_blocks_ * (uint64_t)kBlock) return;
+    uint32_t nb = (uint32_t)((16 + pxbytes + kBlock - 1) / kBlock);
+    std::vector<uint8_t> buf((size_t)nb * kBlock);
+    read(fb_lba_, nb, buf.data());
+    const uint8_t* src = buf.data() + 16;
+    auto& b = hw::gui::bridge();
+    {
+        std::lock_guard<std::mutex> g(b.fb_mu);
+        b.fb.resize((size_t)w * h);
+        for (size_t i = 0; i < (size_t)w * h; ++i) {
+            uint8_t r = src[i*4+0], gg = src[i*4+1], bl = src[i*4+2], a = src[i*4+3];
+            b.fb[i] = ((uint32_t)a << 24) | ((uint32_t)r << 16) | ((uint32_t)gg << 8) | bl;
+        }
+        b.fb_w = (int)w; b.fb_h = (int)h;
+        b.fb_gen.fetch_add(1, std::memory_order_release);
+    }
+    fb_gen_ = gen;
+    // Verification dump (host-side): write the captured frame as a PPM so a
+    // headless run can confirm the actual pixels.
+    if (std::FILE* f = std::fopen("D:\\gfxbuild\\captured_frame.ppm", "wb")) {
+        std::fprintf(f, "P6\n%u %u\n255\n", w, h);
+        for (size_t i = 0; i < (size_t)w * h; ++i) {
+            std::fputc(src[i*4+0], f); std::fputc(src[i*4+1], f); std::fputc(src[i*4+2], f);
+        }
+        std::fclose(f);
+    }
+    HW_WARN("hollywood_fb", "captured frame gen={} {}x{} ({} px) -> GUI + captured_frame.ppm",
+            gen, w, h, (unsigned long long)((uint64_t)w * h));
 }
 
 } // namespace hw::dev

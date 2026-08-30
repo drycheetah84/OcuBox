@@ -52,9 +52,19 @@ public:
     using Extractor = std::function<Bytes(const std::string& part_name)>;
     void set_partition_source(Extractor ex) { extractor_ = std::move(ex); }
 
+    // --gfx: watch the given absolute LBA range (the /mnt/gfx/framebuffer file's
+    // blocks). When the guest writes the header block with a new generation, the
+    // frame is decoded from the copy-on-write overlay and published to the GUI.
+    void set_framebuffer_region(uint64_t first_lba, uint64_t nblocks) {
+        fb_lba_ = first_lba; fb_blocks_ = nblocks;
+    }
+
 private:
     void build_gpt();
     const Bytes* partition_data(const Part& p);   // lazily extract + cache
+    void publish_framebuffer();                   // decode /mnt/gfx/framebuffer -> GUI
+    uint64_t fb_lba_ = 0, fb_blocks_ = 0;
+    uint32_t fb_gen_ = 0;
 
     Extractor extractor_;
     std::unordered_map<std::string, Bytes> data_cache_;

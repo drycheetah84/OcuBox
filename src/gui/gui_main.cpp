@@ -12,6 +12,7 @@
 #include <windows.h>
 
 #include <atomic>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -91,7 +92,12 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // ---- log sink: emulator thread -> bridge ----
 static void gui_log_sink(hw::LogLevel l, std::string_view mod, std::string_view msg) {
     const char* t = (l >= hw::LogLevel::Warn) ? "! " : "  ";
-    hw::gui::bridge().push_log(std::string(t) + std::string(mod) + " | " + std::string(msg));
+    std::string line = std::string(t) + std::string(mod) + " | " + std::string(msg);
+    hw::gui::bridge().push_log(line);
+    // Also tee to a file so the boot/composer/SurfaceFlinger log is inspectable
+    // (the GUI otherwise keeps it only in memory). Single-writer (emu thread).
+    static std::ofstream f("D:\\gfxbuild\\gui_boot.log", std::ios::out | std::ios::trunc);
+    if (f) { f << line << '\n'; f.flush(); }
 }
 
 // ---- emulator boot thread ----
@@ -104,9 +110,10 @@ static void emu_thread() {
     core::EmuConfig cfg;
     cfg.ota_zip = R"(C:\Users\drych\Downloads\q2_52242990021400150.zip)";
     cfg.ram_mb = 2048;
-    cfg.max_instructions = 40000000000ull;
+    cfg.max_instructions = 150000000000ull;  // SF+SwiftShader RenderEngine is up ~39B; need headroom for compositing/first frame
     cfg.stop_on_mmio = false;    // permissive
     cfg.profile = "minimal";
+    cfg.gfx_inject = true;       // inject SwiftShader + vktri, attach hollywood_fb capture
     // Minimal profile: disable display/camera/GPU nodes (mirrors cmd_boot --profile minimal).
     cfg.dtb_disable = {
         "/soc/qcom,sde_rscc@af20000", "/soc/qcom,mdss_mdp@ae00000",

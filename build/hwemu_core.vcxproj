@@ -333,6 +333,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\projects\eurka_emu\src\devices\qcom_ufs.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\ufs_disk.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\super.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\hollywood_fb.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\core\ext4_writer.cpp" />
+    <ClCompile Include="D:\projects\eurka_emu\src\core\gfx_inject.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\devices\irq.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\platform\qcom_cmddb.cpp" />
     <ClCompile Include="D:\projects\eurka_emu\src\cpu\cpu_state.cpp" />

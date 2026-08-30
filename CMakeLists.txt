@@ -43,6 +43,9 @@ add_library(hwemu_core STATIC
   src/devices/qcom_ufs.cpp
   src/devices/ufs_disk.cpp
   src/devices/super.cpp
+  src/devices/hollywood_fb.cpp
+  src/core/ext4_writer.cpp
+  src/core/gfx_inject.cpp
   src/devices/irq.cpp
   src/platform/qcom_cmddb.cpp
   src/cpu/cpu_state.cpp

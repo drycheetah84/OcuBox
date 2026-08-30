@@ -12,6 +12,8 @@
 #include "devices/ufs_disk.h"
 #include "devices/super.h"
 #include "devices/stub_device.h"
+#include "devices/hollywood_fb.h"
+#include "core/gfx_inject.h"
 #include "platform/qcom_cmddb.h"
 #include "ota/payload.h"
 #include "ota/zip_reader.h"
@@ -202,6 +204,15 @@ int BootPipeline::run() {
             emu_.bus.add(std::make_unique<dev::QcomTcsr>(0x1fc8000ull, 0x1000ull));
         }
 
+        // --gfx: synthetic framebuffer capture device (above guest RAM, so a guest
+        // process can mmap it via /dev/mem under STRICT_DEVMEM). vktri/SF blit here.
+        if (emu_.config.gfx_inject) {
+            emu_.bus.add(std::make_unique<dev::HollywoodFb>());
+            HW_INFO("boot.gfx", "hollywood_fb capture device @ {:#x} ({} MB)",
+                    (unsigned long long)dev::HollywoodFb::kBase,
+                    (unsigned long long)(dev::HollywoodFb::kSize/(1024*1024)));
+        }
+
         return std::format("dram_base={:#x}, {} MMIO devices", emu_.dram_base, emu_.bus.devices().size());
     });
 
@@ -263,18 +274,36 @@ int BootPipeline::run() {
                 namespace fs = std::filesystem;
                 std::error_code ec;
                 fs::path cache = fs::path("build") / "ota_cache" / (base + ".img");
+                Bytes img;
                 if (fs::exists(cache, ec) && fs::file_size(cache, ec) == pp->size) {
-                    Bytes b(pp->size);
+                    img.resize(pp->size);
                     std::ifstream in(cache, std::ios::binary);
-                    if (in.read(reinterpret_cast<char*>(b.data()), (std::streamsize)b.size())) {
-                        HW_WARN("boot.ufs", "[LP] loaded '{}' from cache ({} MB)", base, b.size()/(1024*1024));
-                        return b;
-                    }
+                    if (in.read(reinterpret_cast<char*>(img.data()), (std::streamsize)img.size()))
+                        HW_WARN("boot.ufs", "[LP] loaded '{}' from cache ({} MB)", base, img.size()/(1024*1024));
+                    else img.clear();
                 }
-                Bytes img = ota::extract_partition(*zip, payload, base);
-                fs::create_directories(cache.parent_path(), ec);
-                std::ofstream out(cache, std::ios::binary);
-                out.write(reinterpret_cast<const char*>(img.data()), (std::streamsize)img.size());
+                if (img.empty()) {
+                    img = ota::extract_partition(*zip, payload, base);
+                    fs::create_directories(cache.parent_path(), ec);
+                    std::ofstream out(cache, std::ios::binary);
+                    out.write(reinterpret_cast<const char*>(img.data()), (std::streamsize)img.size());
+                }
+                // --gfx: add /init.hollywood.rc to the system image root (uses free
+                // space, size unchanged; dm-verity is disabled via the vbmeta patch).
+                if (emu_.config.gfx_inject && base == "system" && !img.empty()) {
+                    std::string ierr;
+                    if (inject_init_rc(img, ierr))
+                        HW_INFO("boot.gfx", "system: injected /init.hollywood.rc");
+                    else
+                        HW_WARN("boot.gfx", "system: init.rc injection FAILED: {}", ierr);
+                }
+                if (emu_.config.gfx_inject && base == "vendor" && !img.empty()) {
+                    std::string ierr;
+                    if (inject_composer_vintf(img, ierr))
+                        HW_INFO("boot.gfx", "vendor: injected composer3 VINTF fragment");
+                    else
+                        HW_WARN("boot.gfx", "vendor: composer VINTF injection FAILED: {}", ierr);
+                }
                 return img;
             };
 
@@ -297,12 +326,31 @@ int BootPipeline::run() {
             // Static A/B partitions (vbmeta*/boot/dtbo): active-slot "<part>_a" is
             // served from OTA "<part>"; inactive _b + scratch (metadata/misc/
             // userdata) stay zero.
-            disk->set_partition_source([suffix, ota_extract](const std::string& gpt_name) -> Bytes {
+            const bool gfx = emu_.config.gfx_inject;
+            disk->set_partition_source([suffix, ota_extract, gfx](const std::string& gpt_name) -> Bytes {
+                // --gfx: the graphics payload partition is served from a host image.
+                if (gfx && gpt_name == "gfxsrc") return load_gfxsrc_img();
                 if (gpt_name.size() <= suffix.size() ||
                     gpt_name.compare(gpt_name.size() - suffix.size(), suffix.size(), suffix) != 0)
                     return {};
-                return ota_extract(gpt_name.substr(0, gpt_name.size() - suffix.size()));
+                std::string base = gpt_name.substr(0, gpt_name.size() - suffix.size());
+                Bytes img = ota_extract(base);
+                // --gfx: disable dm-verity so the modified system image mounts.
+                if (gfx && base == "vbmeta" && !img.empty()) vbmeta_disable_verity(img);
+                return img;
             });
+            // --gfx: watch the /mnt/gfx/framebuffer blocks so guest writes there
+            // (from vktri/SF) are decoded + shown in the host GUI.
+            if (emu_.config.gfx_inject) {
+                for (const auto& p : disk->parts())
+                    if (p.name == "gfxsrc") {
+                        disk->set_framebuffer_region(p.first_lba + kFbFsBlock, kFbBlocks);
+                        HW_INFO("boot.gfx", "framebuffer watch @LBA {} (gfxsrc@{} + blk {})",
+                                (unsigned long long)(p.first_lba + kFbFsBlock),
+                                (unsigned long long)p.first_lba, (unsigned long long)kFbFsBlock);
+                        break;
+                    }
+            }
             emu_.bus.add(std::make_unique<dev::QcomUfs>(0x1d84000ull, 0x3000ull, 297,
                                                         emu_.ram.get(), disk));
             emu_.bus.add(std::make_unique<dev::QcomIce>(0x1d90000ull, 0x8000ull));    // inline crypto
@@ -342,6 +390,32 @@ int BootPipeline::run() {
         if (!emu_.ram->contains(emu_.kernel_load, emu_.boot_img.kernel.size()))
             emu_.kernel_load = emu_.dram_base + 0x80000;
         emu_.ram->load(emu_.kernel_load, emu_.boot_img.kernel);
+
+        // COMPAT: patch kernel functions that NULL-deref on the emulator's missing hardware.
+        // On this `user` build panic_on_oops=1, so ANY such oops -> Kernel panic -> reboot.
+        // We replace the function entry with `mov x0,#0; ret` (0xd2800000, 0xd65f03c0) so it
+        // returns 0 harmlessly. Done here (before execution) so there is no stale-TB issue and
+        // no reliance on hook PC-redirect (which is unreliable and corrupted X0/arg0). VA->PA:
+        // the Image begins at _text (VA 0xffffff8008080000), loaded at emu_.kernel_load.
+        // Addresses are from build/ksyms.txt for this Quest kernel (4.19.325 kona).
+        {
+            constexpr uint64_t kTextVA = 0xffffff8008080000ull;
+            struct { uint64_t va; const char* name; } patches[] = {
+                { 0xffffff80084866e0ull, "avc_denied" },           // SELinux permissive: return 0 = allow
+                { 0xffffff8008a1b5c4ull, "bt_power_summary_show" }, // BT sysfs show derefs NULL (no BT hw)
+            };
+            for (auto& p : patches) {
+                uint64_t pa = emu_.kernel_load + (p.va - kTextVA);
+                if (emu_.ram->contains(pa, 8)) {
+                    emu_.ram->write32(pa, 0xd2800000u);       // mov x0, #0
+                    emu_.ram->write32(pa + 4, 0xd65f03c0u);   // ret
+                    HW_INFO("boot.mem", "compat-patched {} @VA {:#x} PA {:#x} -> mov x0,#0; ret",
+                            p.name, p.va, pa);
+                } else {
+                    HW_WARN("boot.mem", "compat-patch {} PA {:#x} outside RAM -- skipped", p.name, pa);
+                }
+            }
+        }
 
         // Place DTB and ramdisk sequentially after the kernel image (all inside the
         // reserved-safe run chosen above, so none overlap a no-map region).

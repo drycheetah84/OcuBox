@@ -49,6 +49,15 @@
     <ClCompile Include="D:\projects\eurka_emu\src\devices\super.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\devices\hollywood_fb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\core\ext4_writer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\projects\eurka_emu\src\core\gfx_inject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\projects\eurka_emu\src\devices\irq.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

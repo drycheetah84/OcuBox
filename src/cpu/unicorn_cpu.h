@@ -180,6 +180,13 @@ private:
     int km_ssd_ret_log_ = 0;        // kmshim: capped log of ssd openat return values
     int km_exec_log_ = 0;           // kmshim: capped log of execve'd binary paths
     uint64_t km_exec_ttbr_ = 0;     // TTBR0 of the last execve caller (process id proxy)
+    // Live kernel-log (printk ring) streaming: prints new dmesg lines as they appear so
+    // crashes/init events are visible in real time (the ring wraps over long boots).
+    uint64_t km_log_seq_ = 0;       // next printk sequence number to print
+    uint32_t km_log_idx_ = 0;       // byte offset in the ring for km_log_seq_
+    int km_log_poll_ = 0;           // block_cb divider for polling the ring
+    bool read_kva(uint64_t va, uint8_t* buf, size_t n);   // read guest kernel VA (per-page)
+    void stream_kmsg();             // print new kernel printk entries to stdout
 
     // Spin detector histogram window: reset counts every this many instructions
     // so a real spin (dominates a window) is caught but long finite loops aren't.
