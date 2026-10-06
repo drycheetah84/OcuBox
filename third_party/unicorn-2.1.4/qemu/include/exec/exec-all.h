@@ -477,6 +477,9 @@ address_space_translate_for_iotlb(CPUState *cpu, int asidx, hwaddr addr,
 hwaddr memory_region_section_get_iotlb(CPUState *cpu,
                                        MemoryRegionSection *section);
 
+/* hollywood_emu: true if any TB is still linked to this physical RAM page. */
+bool hw_tb_page_has_code(struct uc_struct *uc, tb_page_addr_t addr);
+
 static inline bool uc_mem_hook_installed(struct uc_struct *uc, hwaddr paddr)
 {
     if (HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_FETCH_UNMAPPED, paddr))

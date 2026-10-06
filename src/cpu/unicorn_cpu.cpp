@@ -422,16 +422,21 @@ bool UnicornCpu::attach(mem::GuestMemory& ram, dev::DeviceBus& bus, std::string&
     // backend's ARM core reads HOLLYWOOD_EL3 at realize time (cpu.c) to keep EL3 +
     // ARM_FEATURE_EL3 and to report a Qualcomm MIDR; must be set before uc_open.
     if (opts_.el3) {
+#ifdef _WIN32
         _putenv("HOLLYWOOD_EL3=1");
+#else
+        setenv("HOLLYWOOD_EL3", "1", 1);
+#endif
         HW_INFO("cpu.uc", "EL3 enabled (secure monitor / tz)");
         if (const char* t = std::getenv("HOLLYWOOD_TZ_TRAP"))
             tz_trap_pc_ = std::strtoull(t, nullptr, 0);
     }
     if (opts_.kmshim) {
-        void hollywood_install_scm_shim();
-        hollywood_install_scm_shim();
+        ::hollywood_install_scm_shim();
         HW_WARN("cpu.uc", "keymaster/QSEE SCM shim INSTALLED -- boot is NON-FAITHFUL past the secure world");
     }
+
+    diag_hooks_ = opts_.el3 || opts_.trace_user || opts_.kmshim;
 
     uc_err e = uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &uc_);
     if (e != UC_ERR_OK) { err = std::string("uc_open: ") + uc_strerror(e); return false; }
@@ -585,6 +590,9 @@ void UnicornCpu::set_state(const CpuState& st) {
 
 RunResult UnicornCpu::run(uint64_t max_instructions) {
     insns_ = 0; traced_ = 0; fault_.valid = false; spin_ = false; spin_pc_ = 0;
+    insn_cap_ = UINT64_MAX; deadline_hit_ = false; deadline_poll_ = 0;
+    next_hb_insns_ = 0;
+    deadline_ = std::chrono::steady_clock::time_point::max();
     exc_last_pc_ = 0; exc_last_no_ = 0; exc_repeat_ = 0; exc_storm_ = false;
     exc_vectored_ = 0; last_tlb_miss_ = 0; warns_skipped_ = 0;
     g_guest_reboot = false;
@@ -623,11 +631,24 @@ RunResult UnicornCpu::run(uint64_t max_instructions) {
                 std::chrono::steady_clock::now() - t0).count();
             if (opts_.timeout_us && el >= opts_.timeout_us) break;
             if (insns_ >= max_instructions) break;
-            uint64_t rem_to = opts_.timeout_us ? (opts_.timeout_us - el) : 0;
-            uint64_t rem_ins = max_instructions - insns_;
+            // With the block hook installed it enforces both the instruction cap
+            // and the wall-clock deadline itself, so start Unicorn with count=0 and
+            // timeout=0: a nonzero count makes Unicorn add an internal per-instruction
+            // UC_HOOK_CODE (a helper call on every guest instruction), and a nonzero
+            // timeout spawns a watchdog thread on every resume after WFI.
+            uint64_t rem_to = 0, rem_ins = 0;
+            if (opts_.code_hook) {
+                insn_cap_ = max_instructions;
+                deadline_ = opts_.timeout_us
+                    ? t0 + std::chrono::microseconds(opts_.timeout_us)
+                    : std::chrono::steady_clock::time_point::max();
+            } else {
+                rem_to = opts_.timeout_us ? (opts_.timeout_us - el) : 0;
+                rem_ins = max_instructions - insns_;
+            }
             e = uc_emu_start(uc_, pc, 0, rem_to, rem_ins);
             if (e != UC_ERR_OK || spin_ || g_guest_reboot) break;   // stop / error / spin / reboot
-            if (insns_ >= max_instructions) break;           // hit the instruction cap
+            if (insns_ >= max_instructions || deadline_hit_) break; // instruction cap / timeout
             el = (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() - t0).count();
             if (opts_.timeout_us && el >= opts_.timeout_us) break;   // timed out
@@ -881,12 +902,11 @@ void UnicornCpu::stream_kmsg() {
     std::fflush(stdout);
 }
 
-void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
-    auto* self = static_cast<UnicornCpu*>(user);
-    self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
-    g_live_insns.store(self->insns_, std::memory_order_relaxed);   // GUI live counters
-    g_live_pc.store(address, std::memory_order_relaxed);
-
+// Per-block work for the diagnostic modes, split out of block_cb (which runs on
+// every translated block) so the common path has no large frame. Returns true if
+// it stopped emulation.
+bool UnicornCpu::block_diag(uc_engine* uc, uint64_t address) {
+    UnicornCpu* self = this;
     // Live kernel-log streaming: poll the printk ring every ~8192 blocks once the MMU is up.
     if (self->opts_.kmshim && self->mmu_on_ && (++self->km_log_poll_ & 0x1fff) == 0)
         self->stream_kmsg();
@@ -913,7 +933,7 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
             HW_WARN("cpu.tz", "   [{}] {:#x}: {}", 40 - k, (unsigned long long)p, self->disasm_str(p));
         }
         uc_emu_stop(uc);
-        return;
+        return true;
     }
     if (self->opts_.el3 && !self->tz_dropped_) {
         uint64_t ps = 0; uc_reg_read(uc, UC_ARM64_REG_PSTATE, &ps);
@@ -934,7 +954,7 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
                 self->tz_dropped_ = true;
                 self->tz_drop_pc_ = address;
                 uc_emu_stop(uc);
-                return;
+                return true;
             }
             // else: SECURE EL1 (QSEE trusted OS) -- let tz's secure world run.
         }
@@ -970,7 +990,7 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
                 self->tz_dropped_ = true;
                 self->tz_drop_pc_ = address;
                 uc_emu_stop(uc);
-                return;
+                return true;
             }
         }
         self->tz_last_block_ = address;
@@ -992,7 +1012,7 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
             }
         }
         // Syscall trace: an EL0 synchronous exception vectors to VBAR_EL1+0x400.
-        if (self->user_entered_) {
+        if (self->user_entered_ && (address & 0x7ff) == 0x400) {   // VBAR is 2KB-aligned
             uint64_t vbar = 0; uc_reg_read(uc, UC_ARM64_REG_VBAR_EL1, &vbar);
             if (vbar && address == vbar + 0x400) {
                 uint64_t esr = 0; uc_reg_read(uc, UC_ARM64_REG_ESR_EL1, &esr);
@@ -1046,7 +1066,10 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
                 std::fflush(stdout);
             }
         }
-        uint64_t vbar = 0; uc_reg_read(uc, UC_ARM64_REG_VBAR_EL1, &vbar);
+        // VBAR_EL1 is 2KB-aligned, so a block at VBAR+0x400 has (address & 0x7ff) ==
+        // 0x400; test that first to avoid a uc_reg_read on every block.
+        uint64_t vbar = 0;
+        if ((address & 0x7ff) == 0x400) uc_reg_read(uc, UC_ARM64_REG_VBAR_EL1, &vbar);
         if (vbar && address == vbar + 0x400) {
             uint64_t esr = 0; uc_reg_read(uc, UC_ARM64_REG_ESR_EL1, &esr);
             if ((esr >> 26) == 0x15) {                 // SVC (AArch64 syscall)
@@ -1119,6 +1142,32 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
         }
     }
 
+    return false;
+}
+
+void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* user) {
+    auto* self = static_cast<UnicornCpu*>(user);
+    // Instruction cap and wall-clock deadline (replace Unicorn's per-instruction
+    // count hook and per-resume timeout thread; see run()). The cap is checked
+    // against instructions already executed, so the block that crosses it still
+    // runs; the clock is sampled every 64K blocks only.
+    if (self->insns_ >= self->insn_cap_) { uc_emu_stop(uc); return; }
+
+    self->insns_ += size ? (size / 4) : 1;          // block size in bytes -> #insns (AArch64)
+    g_live_insns.store(self->insns_, std::memory_order_relaxed);   // GUI live counters
+    g_live_pc.store(address, std::memory_order_relaxed);
+
+    if ((++self->deadline_poll_ & 0xffff) == 0 &&
+        std::chrono::steady_clock::now() >= self->deadline_) {
+        self->deadline_hit_ = true;
+        uc_emu_stop(uc);
+        return;
+    }
+
+    // Diagnostic modes (tz handoff, --trace-user, kmshim logging) live out of line
+    // so the hot path stays small; returns true when it stopped the run.
+    if (self->diag_hooks_ && self->block_diag(uc, address)) return;
+
     self->pc_ring_[self->pc_ring_pos_] = address;
     self->pc_ring_pos_ = (self->pc_ring_pos_ + 1) % kPcRing;
 
@@ -1144,8 +1193,10 @@ void UnicornCpu::block_cb(uc_engine* uc, uint64_t address, uint32_t size, void* 
         }
     }
 
-    if (self->opts_.heartbeat) {
+    // Compare against the next heartbeat boundary instead of dividing every block.
+    if (self->opts_.heartbeat && self->insns_ >= self->next_hb_insns_) {
         uint64_t hb = self->insns_ / self->opts_.heartbeat;
+        self->next_hb_insns_ = (hb + 1) * self->opts_.heartbeat;
         if (hb != self->last_hb_) {
             self->last_hb_ = hb;
             std::printf("  \x1b[2m[cpu]\x1b[0m executed %lluM insns, PC=%#llx\n",

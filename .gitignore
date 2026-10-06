@@ -87,3 +87,6 @@ crashdumps/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Linux build output
+/build-linux/

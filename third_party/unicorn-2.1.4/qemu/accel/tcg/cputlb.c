@@ -614,6 +614,15 @@ void tlb_flush_page_all_cpus_synced(CPUState *src, target_ulong addr)
    can be detected */
 void tlb_protect_code(struct uc_struct *uc, ram_addr_t ram_addr)
 {
+    /* hollywood_emu: Unicorn stubs out the DIRTY_MEMORY_CODE bitmap, so do the
+     * protection directly: when a page gets its first TB, clear the dirty flag of
+     * every TLB entry that maps this host page -- including other virtual
+     * aliases (e.g. the kernel linear map, dual-mapped JIT memory) -- so the next
+     * store through any of them takes notdirty_write and invalidates the TBs. */
+    if (uc->cpu) {
+        uintptr_t host = (uintptr_t)qemu_map_ram_ptr(uc, NULL, ram_addr & TARGET_PAGE_MASK);
+        tlb_reset_dirty(uc->cpu, host, TARGET_PAGE_SIZE);
+    }
     cpu_physical_memory_test_and_clear_dirty(ram_addr, TARGET_PAGE_SIZE,
                                              DIRTY_MEMORY_CODE);
 }
@@ -1186,6 +1195,26 @@ tb_page_addr_t get_page_addr_code(CPUArchState *env, target_ulong addr)
     return get_page_addr_code_hostp(env, addr, NULL);
 }
 
+/* hollywood_emu: does a store to this mapped RAM page need the slow path for a
+ * hook? Unlike uc_mem_hook_installed(), *_UNMAPPED hooks are ignored (the page is
+ * mapped, so they can never fire for it) and *_PROT hooks only count when the
+ * region's permissions are actually restricted. Without this, a single global
+ * UNMAPPED/PROT hook forces every guest store through the C slow path. */
+static inline bool hw_mem_hook_needs_slow_write(struct uc_struct *uc, hwaddr paddr,
+                                                MemoryRegion *mr)
+{
+    if (HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_READ, paddr) ||
+        HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_READ_AFTER, paddr) ||
+        HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_WRITE, paddr))
+        return true;
+    if (mr->perms != UC_PROT_ALL &&
+        (HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_READ_PROT, paddr) ||
+         HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_WRITE_PROT, paddr) ||
+         HOOK_EXISTS_BOUNDED(uc, UC_HOOK_MEM_FETCH_PROT, paddr)))
+        return true;
+    return false;
+}
+
 static void notdirty_write(CPUState *cpu, vaddr mem_vaddr, unsigned size,
                            CPUIOTLBEntry *iotlbentry, uintptr_t retaddr,
                            CPUTLBEntry *tlbe)
@@ -1203,14 +1232,13 @@ static void notdirty_write(CPUState *cpu, vaddr mem_vaddr, unsigned size,
         page_collection_unlock(pages);
     }
 
-    /* For exec pages, this is cleared in tb_gen_code. */
-    // If we:
-    // - have memory hooks installed
-    // - or doing snapshot
-    // , then never clean the tlb
-    if (!(!mr || (tlbe->addr_write != -1 && mr->priority < cpu->uc->snapshot_level)) &&
-            !(tlbe->addr_code != -1) &&
-            !uc_mem_hook_installed(cpu->uc, tlbe->paddr | (mem_vaddr & ~TARGET_PAGE_MASK))) {
+    /* hollywood_emu: as in upstream QEMU, stop taking the slow path once the
+     * page holds no translated code; tlb_protect_code() re-arms it (for every
+     * alias) when a TB is next linked to the page. Never clean while a hook
+     * needs to see the store, or while snapshotting. */
+    if (mr && !(tlbe->addr_write != -1 && mr->priority < cpu->uc->snapshot_level) &&
+            !hw_tb_page_has_code(cpu->uc, ram_addr & TARGET_PAGE_MASK) &&
+            !hw_mem_hook_needs_slow_write(cpu->uc, tlbe->paddr | (mem_vaddr & ~TARGET_PAGE_MASK), mr)) {
         tlb_set_dirty(cpu, mem_vaddr);
     }
 }
@@ -1878,6 +1906,21 @@ _out:
  * We don't bother with this widened value for SOFTMMU_CODE_ACCESS.
  */
 
+/* hollywood_emu: Unicorn emitted a check_exit_request helper call after every
+ * guest load and store (tcg-op.c) so that a stop requested from a memory
+ * callback takes effect right after the access. Only the slow path below runs
+ * callbacks (MMIO, unmapped/protection hooks, TLB fill), so do the same check
+ * here, with the same restore point (the access's return address), and keep
+ * fast-path RAM accesses free of helper calls. Exits requested from the block
+ * hook are still taken by the TB-start check (gen_tb_start). */
+void uc_check_exit_request_ra(struct uc_struct *uc, uintptr_t retaddr);
+static inline void hw_memop_exit_check(CPUArchState *env, uintptr_t retaddr)
+{
+    if (unlikely(cpu_loop_exit_requested(env_cpu(env)))) {
+        uc_check_exit_request_ra(env->uc, retaddr);
+    }
+}
+
 static uint64_t full_ldub_mmu(CPUArchState *env, target_ulong addr,
                               TCGMemOpIdx oi, uintptr_t retaddr)
 {
@@ -1887,7 +1930,9 @@ static uint64_t full_ldub_mmu(CPUArchState *env, target_ulong addr,
 tcg_target_ulong helper_ret_ldub_mmu(CPUArchState *env, target_ulong addr,
                                      TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return full_ldub_mmu(env, addr, oi, retaddr);
+    uint64_t r = full_ldub_mmu(env, addr, oi, retaddr);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 static uint64_t full_le_lduw_mmu(CPUArchState *env, target_ulong addr,
@@ -1900,7 +1945,9 @@ static uint64_t full_le_lduw_mmu(CPUArchState *env, target_ulong addr,
 tcg_target_ulong helper_le_lduw_mmu(CPUArchState *env, target_ulong addr,
                                     TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return full_le_lduw_mmu(env, addr, oi, retaddr);
+    uint64_t r = full_le_lduw_mmu(env, addr, oi, retaddr);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 static uint64_t full_be_lduw_mmu(CPUArchState *env, target_ulong addr,
@@ -1913,7 +1960,9 @@ static uint64_t full_be_lduw_mmu(CPUArchState *env, target_ulong addr,
 tcg_target_ulong helper_be_lduw_mmu(CPUArchState *env, target_ulong addr,
                                     TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return full_be_lduw_mmu(env, addr, oi, retaddr);
+    uint64_t r = full_be_lduw_mmu(env, addr, oi, retaddr);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 static uint64_t full_le_ldul_mmu(CPUArchState *env, target_ulong addr,
@@ -1926,7 +1975,9 @@ static uint64_t full_le_ldul_mmu(CPUArchState *env, target_ulong addr,
 tcg_target_ulong helper_le_ldul_mmu(CPUArchState *env, target_ulong addr,
                                     TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return full_le_ldul_mmu(env, addr, oi, retaddr);
+    uint64_t r = full_le_ldul_mmu(env, addr, oi, retaddr);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 static uint64_t full_be_ldul_mmu(CPUArchState *env, target_ulong addr,
@@ -1939,21 +1990,27 @@ static uint64_t full_be_ldul_mmu(CPUArchState *env, target_ulong addr,
 tcg_target_ulong helper_be_ldul_mmu(CPUArchState *env, target_ulong addr,
                                     TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return full_be_ldul_mmu(env, addr, oi, retaddr);
+    uint64_t r = full_be_ldul_mmu(env, addr, oi, retaddr);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 uint64_t helper_le_ldq_mmu(CPUArchState *env, target_ulong addr,
                            TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return load_helper(env, addr, oi, retaddr, MO_LEQ, false,
+    uint64_t r = load_helper(env, addr, oi, retaddr, MO_LEQ, false,
                        helper_le_ldq_mmu);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 uint64_t helper_be_ldq_mmu(CPUArchState *env, target_ulong addr,
                            TCGMemOpIdx oi, uintptr_t retaddr)
 {
-    return load_helper(env, addr, oi, retaddr, MO_BEQ, false,
+    uint64_t r = load_helper(env, addr, oi, retaddr, MO_BEQ, false,
                        helper_be_ldq_mmu);
+    hw_memop_exit_check(env, retaddr);
+    return r;
 }
 
 /*
@@ -2455,42 +2512,49 @@ void helper_ret_stb_mmu(CPUArchState *env, target_ulong addr, uint8_t val,
                         TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_UB);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_le_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_LEUW);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_be_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_BEUW);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_le_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_LEUL);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_be_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_BEUL);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_le_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_LEQ);
+    hw_memop_exit_check(env, retaddr);
 }
 
 void helper_be_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val,
                        TCGMemOpIdx oi, uintptr_t retaddr)
 {
     store_helper(env, addr, val, oi, retaddr, MO_BEQ);
+    hw_memop_exit_check(env, retaddr);
 }
 
 /*

@@ -1622,6 +1622,12 @@ static inline void tb_page_add(struct uc_struct *uc, PageDesc *p, TranslationBlo
     }
 }
 
+bool hw_tb_page_has_code(struct uc_struct *uc, tb_page_addr_t addr)
+{
+    PageDesc *p = page_find(uc, addr >> TARGET_PAGE_BITS);
+    return p && p->first_tb;
+}
+
 /* add a new TB and link it to the physical page tables. phys_page2 is
  * (-1) to indicate that only one page contains the TB.
  *

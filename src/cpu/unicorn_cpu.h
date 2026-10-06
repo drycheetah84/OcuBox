@@ -12,6 +12,7 @@
 #pragma once
 #include "cpu/cpu_state.h"
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -88,6 +89,13 @@ private:
     // Per-basic-block hook (fast path): instruction counting, timer poll, spin
     // detection and heartbeat -- avoids the per-instruction UC_HOOK_CODE cost.
     static void block_cb(uc_engine*, uint64_t address, uint32_t size, void* user);
+#if defined(_MSC_VER)
+    __declspec(noinline)
+#else
+    __attribute__((noinline))
+#endif
+    bool block_diag(uc_engine*, uint64_t address);   // diagnostic-mode part of block_cb
+    bool diag_hooks_ = false;                         // any mode block_diag serves is on
     static bool unmapped_cb(uc_engine*, int type, uint64_t address, int size, int64_t value, void* user);
     static void intr_cb(uc_engine*, uint32_t intno, void* user);
     // Phase-9 diagnostic (env HOLLYWOOD_WATCH08C): log writes to the linker
@@ -122,7 +130,13 @@ private:
 
     uint64_t insns_ = 0;
     uint64_t traced_ = 0;
+    // Run limits enforced from block_cb (so uc_emu_start needs no count/timeout).
+    uint64_t insn_cap_ = UINT64_MAX;
+    std::chrono::steady_clock::time_point deadline_ = std::chrono::steady_clock::time_point::max();
+    bool deadline_hit_ = false;
+    uint32_t deadline_poll_ = 0;
     uint64_t last_hb_ = 0;    // last heartbeat bucket (insns_/heartbeat)
+    uint64_t next_hb_insns_ = 0; // insns_ at which the bucket next changes
     uint64_t last_win_ = 0;   // last spin-window bucket (insns_/kSpinWindow)
     LastAccess last_mmio_;
     LastAccess fault_;

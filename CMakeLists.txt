@@ -13,15 +13,31 @@ endif()
 find_package(LibLZMA REQUIRED)              # XZ / LZMA  -> LibLZMA::LibLZMA
 find_package(BZip2   REQUIRED)              # bzip2      -> BZip2::BZip2
 find_package(ZLIB    REQUIRED)              # gzip/zlib  -> ZLIB::ZLIB
-find_package(capstone CONFIG REQUIRED)     # disasm     -> capstone::capstone
+if (WIN32)
+  find_package(capstone CONFIG REQUIRED)   # disasm     -> capstone::capstone
+else()
+  # Linux: system capstone (e.g. apt libcapstone-dev) via pkg-config.
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(CAPSTONE REQUIRED IMPORTED_TARGET capstone)
+  add_library(capstone::capstone ALIAS PkgConfig::CAPSTONE)
+endif()
 
 # We build Unicorn from source ourselves (third_party/) with a patch that
 # exposes SPSR_EL1 -- required to correctly emulate ARM64 exception entry/return,
 # which the prebuilt vcpkg binary cannot do. Static-link the patched archive.
 set(UNICORN_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/unicorn-2.1.4/include")
-set(UNICORN_LIBRARY "${CMAKE_SOURCE_DIR}/third_party/unicorn-build/Release/unicorn.lib")
+if (WIN32)
+  set(UNICORN_LIBRARY "${CMAKE_SOURCE_DIR}/third_party/unicorn-build/Release/unicorn.lib")
+else()
+  # Linux: build the patched source statically, e.g.
+  #   cmake -S third_party/unicorn-2.1.4 -B third_party/unicorn-build-linux \
+  #         -DCMAKE_BUILD_TYPE=Release -DUNICORN_ARCH=aarch64 -DUNICORN_BUILD_SHARED=OFF
+  #   cmake --build third_party/unicorn-build-linux -j
+  set(UNICORN_LIBRARY "${CMAKE_SOURCE_DIR}/third_party/unicorn-build-linux/libunicorn.a"
+      CACHE FILEPATH "patched static Unicorn archive")
+endif()
 if(NOT EXISTS "${UNICORN_LIBRARY}")
-  message(FATAL_ERROR "patched unicorn.lib not found -- build third_party/unicorn-build first")
+  message(FATAL_ERROR "patched Unicorn not found at ${UNICORN_LIBRARY} -- build it from third_party/unicorn-2.1.4 first")
 endif()
 message(STATUS "Unicorn (patched, static): ${UNICORN_LIBRARY}")
 
@@ -58,6 +74,10 @@ target_include_directories(hwemu_core PUBLIC src ${UNICORN_INCLUDE_DIR})
 target_link_libraries(hwemu_core PUBLIC
   LibLZMA::LibLZMA BZip2::BZip2 ZLIB::ZLIB
   ${UNICORN_LIBRARY} capstone::capstone)
+if (NOT WIN32)
+  find_package(Threads REQUIRED)
+  target_link_libraries(hwemu_core PUBLIC Threads::Threads m)
+endif()
 
 # --- Main executable ---
 add_executable(hollywood_emu src/main.cpp)
@@ -72,7 +92,9 @@ add_custom_command(TARGET hollywood_emu POST_BUILD
           ${CMAKE_SOURCE_DIR}/configs $<TARGET_FILE_DIR:hollywood_emu>/configs)
 
 # --- GUI (Dear ImGui + Direct3D 11 + Win32): live boot view + guest display ---
-find_package(imgui CONFIG REQUIRED)
-add_executable(hollywood_gui src/gui/gui_main.cpp)
-target_link_libraries(hollywood_gui PRIVATE
-  hwemu_core imgui::imgui d3d11 dxgi d3dcompiler)
+if (WIN32)
+  find_package(imgui CONFIG REQUIRED)
+  add_executable(hollywood_gui src/gui/gui_main.cpp)
+  target_link_libraries(hollywood_gui PRIVATE
+    hwemu_core imgui::imgui d3d11 dxgi d3dcompiler)
+endif()

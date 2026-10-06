@@ -2917,7 +2917,8 @@ void tcg_gen_qemu_ld_i32(TCGContext *tcg_ctx, TCGv_i32 val, TCGv addr, TCGArg id
         }
     }
 
-    check_exit_request(tcg_ctx);
+    /* hollywood_emu: no per-access exit check here; stops requested by memory
+     * callbacks are taken in the slow path (hw_memop_exit_check, cputlb.c). */
 }
 
 void tcg_gen_qemu_st_i32(TCGContext *tcg_ctx, TCGv_i32 val, TCGv addr, TCGArg idx, MemOp memop)
@@ -2952,7 +2953,8 @@ void tcg_gen_qemu_st_i32(TCGContext *tcg_ctx, TCGv_i32 val, TCGv addr, TCGArg id
         tcg_temp_free_i32(tcg_ctx, swap);
     }
 
-    check_exit_request(tcg_ctx);
+    /* hollywood_emu: no per-access exit check here; stops requested by memory
+     * callbacks are taken in the slow path (hw_memop_exit_check, cputlb.c). */
 }
 
 void tcg_gen_qemu_ld_i64(TCGContext *tcg_ctx, TCGv_i64 val, TCGv addr, TCGArg idx, MemOp memop)
@@ -3009,7 +3011,8 @@ void tcg_gen_qemu_ld_i64(TCGContext *tcg_ctx, TCGv_i64 val, TCGv addr, TCGArg id
             g_assert_not_reached();
         }
     }
-    check_exit_request(tcg_ctx);
+    /* hollywood_emu: no per-access exit check here; stops requested by memory
+     * callbacks are taken in the slow path (hw_memop_exit_check, cputlb.c). */
 }
 
 void tcg_gen_qemu_st_i64(TCGContext *tcg_ctx, TCGv_i64 val, TCGv addr, TCGArg idx, MemOp memop)
@@ -3055,7 +3058,8 @@ void tcg_gen_qemu_st_i64(TCGContext *tcg_ctx, TCGv_i64 val, TCGv addr, TCGArg id
     if (swap) {
         tcg_temp_free_i64(tcg_ctx, swap);
     }
-    check_exit_request(tcg_ctx);
+    /* hollywood_emu: no per-access exit check here; stops requested by memory
+     * callbacks are taken in the slow path (hw_memop_exit_check, cputlb.c). */
 }
 
 static void tcg_gen_ext_i32(TCGContext *tcg_ctx, TCGv_i32 ret, TCGv_i32 val, MemOp opc)

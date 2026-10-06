@@ -6645,10 +6645,13 @@ static int hw_spi_next_deliverable(void)   /* lowest INTID pending&enabled&!acti
     return -1;
 }
 
+static bool hw_irq_pending_last;   /* outcome of the last hw_gic_update_irq */
+
 static void hw_gic_update_irq(CPUState *cs)
 {
     bool pending = (hw_virt_out && !hw_virt_active) || (hw_phys_out && !hw_phys_active)
                    || hw_spi_next_deliverable() >= 0;
+    hw_irq_pending_last = pending;
     if (pending) {
         cpu_interrupt(cs, CPU_INTERRUPT_HARD);
     } else {
@@ -6675,23 +6678,75 @@ void uc_arm64_set_irq_enabled(struct uc_struct *uc, uint32_t intid, int enabled)
     if (uc && uc->cpu) hw_gic_update_irq(uc->cpu);
 }
 
+/* Poll skipping (performance). The block hook ticks virtual time on every
+ * translated block, but a full poll can only change something when (a) the
+ * counter reaches a CVAL whose ISTATUS is still 0, (b) the guest changed a timer
+ * register (CTL/CVAL/CNTVOFF/CNTFRQ), or (c) an IRQ is pending -- the full poll
+ * then re-asserts CPU_INTERRUPT_HARD every block, which we preserve exactly.
+ * SPI and IAR/EOI changes call hw_gic_update_irq() themselves. So the full poll
+ * records the timer registers and the virtual-ns threshold of the next ISTATUS
+ * flip, and uc_arm64_time_tick() polls only when one of those conditions holds;
+ * the result is bit-identical to polling on every block. */
+static uint64_t hw_poll_next_ns;          /* next ISTATUS 0->1 flip (virtual ns) */
+static bool hw_poll_force = true;         /* poll on the next tick regardless */
+static struct {
+    uint64_t vctl, vcval, pctl, pcval, cntvoff, cntfrq;
+} hw_poll_regs;
+
+/* c * period, saturating (an unreachable deadline). */
+static uint64_t hw_cnt_to_ns(uint64_t c, uint64_t period)
+{
+    return (period && c > UINT64_MAX / period) ? UINT64_MAX : c * period;
+}
+
 static void arm_hollywood_timer_poll(CPUState *cs)
 {
     ARMCPU *cpu = ARM_CPU(cs);
     CPUARMState *env = &cpu->env;
-    uint64_t cnt = gt_get_countervalue(env);
+    uint64_t period = gt_cntfrq_period_ns(cpu);
+    uint64_t cnt = hw_virt_ns / period;   /* == gt_get_countervalue(env) */
+    uint64_t off = env->cp15.cntvoff_el2;
+    uint64_t next = UINT64_MAX;
 
     ARMGenericTimer *v = &env->cp15.c14_timer[GTIMER_VIRT];
-    int vist = ((cnt - env->cp15.cntvoff_el2) >= v->cval);
+    int vist = ((cnt - off) >= v->cval);
     v->ctl = deposit32(v->ctl, 2, 1, vist);
     hw_virt_out = (v->ctl & 1) && vist && !(v->ctl & 2);
+    if (cnt < off) {
+        next = 0;                         /* cnt-off wraps: no skipping */
+    } else if (!vist) {
+        uint64_t c = off + v->cval;       /* vist flips when cnt >= off+cval */
+        next = (c < off) ? UINT64_MAX : hw_cnt_to_ns(c, period);
+    }
 
     ARMGenericTimer *p = &env->cp15.c14_timer[GTIMER_PHYS];
     int pist = (cnt >= p->cval);
     p->ctl = deposit32(p->ctl, 2, 1, pist);
     hw_phys_out = (p->ctl & 1) && pist && !(p->ctl & 2);
+    if (!pist) {
+        uint64_t pn = hw_cnt_to_ns(p->cval, period);
+        if (pn < next) next = pn;
+    }
+
+    hw_poll_next_ns = next;
+    hw_poll_force = false;
+    hw_poll_regs.vctl = v->ctl;  hw_poll_regs.vcval = v->cval;
+    hw_poll_regs.pctl = p->ctl;  hw_poll_regs.pcval = p->cval;
+    hw_poll_regs.cntvoff = off;  hw_poll_regs.cntfrq = env->cp15.c14_cntfrq;
 
     hw_gic_update_irq(cs);
+}
+
+static bool hw_timer_poll_needed(CPUState *cs)
+{
+    CPUARMState *env = &ARM_CPU(cs)->env;
+    const ARMGenericTimer *v = &env->cp15.c14_timer[GTIMER_VIRT];
+    const ARMGenericTimer *p = &env->cp15.c14_timer[GTIMER_PHYS];
+    return hw_poll_force || hw_irq_pending_last || hw_virt_ns >= hw_poll_next_ns ||
+           v->ctl != hw_poll_regs.vctl || v->cval != hw_poll_regs.vcval ||
+           p->ctl != hw_poll_regs.pctl || p->cval != hw_poll_regs.pcval ||
+           env->cp15.cntvoff_el2 != hw_poll_regs.cntvoff ||
+           env->cp15.c14_cntfrq != hw_poll_regs.cntfrq;
 }
 
 /* uc_arm64_timer_poll: called from the emulator's instruction hook. */
@@ -6712,7 +6767,7 @@ extern uint64_t hw_virt_ns;   /* defined next to gt_get_countervalue */
 
 void uc_arm64_time_reset(struct uc_struct *uc)
 {
-    (void)uc; hw_virt_ns = 0; hw_time_last_insns = 0;
+    (void)uc; hw_virt_ns = 0; hw_time_last_insns = 0; hw_poll_force = true;
 }
 
 /* Advance virtual time by the instructions retired since the last call, then
@@ -6722,7 +6777,7 @@ void uc_arm64_time_tick(struct uc_struct *uc, uint64_t insns)
     if (insns < hw_time_last_insns) hw_time_last_insns = 0;   /* run restarted */
     hw_virt_ns += (insns - hw_time_last_insns) * HW_NS_PER_INSN;
     hw_time_last_insns = insns;
-    if (uc && uc->cpu) arm_hollywood_timer_poll(uc->cpu);
+    if (uc && uc->cpu && hw_timer_poll_needed(uc->cpu)) arm_hollywood_timer_poll(uc->cpu);
 }
 
 /* On WFI idle: jump virtual time forward to the earliest armed timer deadline so

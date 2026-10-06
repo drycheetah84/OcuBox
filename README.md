@@ -24,6 +24,24 @@ $tc    = "C:\Program Files\Microsoft Visual Studio\18\Community\VC\vcpkg\scripts
 
 Output: `build\Release\hollywood_emu.exe`.
 
+The patched Unicorn in `third_party/unicorn-2.1.4` carries performance fixes
+(fast RAM stores, no per-access exit checks, timer-poll skipping); rebuild
+`third_party/unicorn-build` after pulling changes to it.
+
+### Linux (CLI only; the GUI is Direct3D/Win32)
+
+```sh
+sudo apt install liblzma-dev libbz2-dev zlib1g-dev libcapstone-dev
+cmake -S third_party/unicorn-2.1.4 -B third_party/unicorn-build-linux \
+      -DCMAKE_BUILD_TYPE=Release -DUNICORN_ARCH=aarch64 -DUNICORN_BUILD_SHARED=OFF
+cmake --build third_party/unicorn-build-linux -j
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+cmake --build build-linux -j
+```
+
+Without the OTA zip, `boot` falls back to a kernel-only boot from the cached
+`firmware/boot.img` (no system/vendor partitions).
+
 ## Usage
 
 ```

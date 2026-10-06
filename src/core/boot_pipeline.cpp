@@ -97,13 +97,24 @@ int BootPipeline::run() {
     // 1) Initializing emulator ------------------------------------------------
     stage("Initializing emulator", [&] {
         Log::set_level(emu_.config.verbose ? LogLevel::Debug : LogLevel::Warn);
-        return std::format("host=win-x64  target={}", platform::KonaMap::kName);
+#ifdef _WIN32
+        constexpr const char* kHost = "win-x64";
+#else
+        constexpr const char* kHost = "linux-x64";
+#endif
+        return std::format("host={}  target={}", kHost, platform::KonaMap::kName);
     });
 
     // 2) Loading Quest 2 configuration ---------------------------------------
     stage("Loading Quest 2 configuration", [&] {
-        if (emu_.config.ota_zip.empty() || !fs::exists(emu_.config.ota_zip))
+        if (emu_.config.ota_zip.empty() || !fs::exists(emu_.config.ota_zip)) {
+            // Kernel-only mode: without the OTA, boot from the cached boot.img. The
+            // kernel runs, but UFS partitions are empty (no system/vendor/tz).
+            if (!emu_.config.tz_boot &&
+                fs::exists(fs::path(emu_.config.firmware_dir) / "boot.img"))
+                return std::string("OTA not found -- kernel-only boot from cached boot.img");
             throw std::runtime_error("OTA image not found: " + emu_.config.ota_zip);
+        }
         zip_owner = std::make_unique<ota::ZipReader>(emu_.config.ota_zip);
         zip = zip_owner.get();
         // Pull the real Android build fingerprint from the OTA metadata.
@@ -122,13 +133,14 @@ int BootPipeline::run() {
 
     // 3) Loading kernel -------------------------------------------------------
     stage("Loading kernel", [&] {
-        payload = ota::parse_payload(*zip);
+        if (zip) payload = ota::parse_payload(*zip);
         // Cache boot.img so repeat runs skip the ~1GB payload scan/decompress.
         fs::path cached = fs::path(emu_.config.firmware_dir) / "boot.img";
         Bytes boot;
         if (fs::exists(cached)) {
             boot = read_file(cached);
         } else {
+            if (!zip) throw std::runtime_error("no OTA and no cached boot.img");
             boot = ota::extract_partition(*zip, payload, "boot");
             write_file(cached, boot);
         }
@@ -1212,6 +1224,18 @@ void BootPipeline::dump_kmsg() {
     const size_t nlen = 14;
 
     auto rd16 = [&](size_t o) -> uint16_t { return (uint16_t)(sp[o] | (sp[o + 1] << 8)); };
+    // Next occurrence of `key` at or after `from` in RAM (SIZE_MAX if none). memchr
+    // on the first byte is vectorized, which matters when scanning gigabytes.
+    auto find = [&](size_t from, const char* key, size_t klen) -> size_t {
+        while (from + klen <= scan) {
+            const void* p = std::memchr(sp.data() + from, key[0], scan - from - klen + 1);
+            if (!p) break;
+            size_t i = (size_t)(static_cast<const uint8_t*>(p) - sp.data());
+            if (std::memcmp(sp.data() + i, key, klen) == 0) return i;
+            from = i + 1;
+        }
+        return SIZE_MAX;
+    };
 
     // "Linux version" appears as the .rodata banner AND as the first record of
     // the printk ring buffer -- and the kernel relocates that buffer during boot
@@ -1229,8 +1253,7 @@ void BootPipeline::dump_kmsg() {
         return n;
     };
     size_t rec = SIZE_MAX, best = 0;
-    for (size_t i = 16; i + nlen < scan; ++i) {
-        if (sp[i] != 'L' || std::memcmp(sp.data() + i, needle, nlen) != 0) continue;
+    for (size_t i = find(16, needle, nlen); i != SIZE_MAX; i = find(i + 1, needle, nlen)) {
         size_t h = i - 16;
         uint16_t len = rd16(h + 8), text_len = rd16(h + 10);
         if (text_len >= nlen && text_len <= 800 && len >= (uint16_t)(16 + text_len) && len <= 4096) {
@@ -1266,8 +1289,7 @@ void BootPipeline::dump_kmsg() {
     int hits = 0;
     for (const char* key : keys) {
         size_t klen = std::strlen(key);
-        for (size_t i = 0; i + klen < scan && hits < 40; ++i) {
-            if (sp[i] != (uint8_t)key[0] || std::memcmp(sp.data() + i, key, klen) != 0) continue;
+        for (size_t i = find(0, key, klen); i != SIZE_MAX && hits < 40; i = find(i + 1, key, klen)) {
             // back up to the start of the printable line, then print it
             size_t s = i; while (s > 0 && sp[s - 1] >= 0x20 && sp[s - 1] < 0x7f && i - s < 160) --s;
             size_t e = i; while (e < sp.size() && sp[e] >= 0x20 && sp[e] < 0x7f && e - s < 300) ++e;

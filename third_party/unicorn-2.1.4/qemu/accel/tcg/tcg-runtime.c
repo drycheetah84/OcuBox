@@ -165,6 +165,25 @@ void HELPER(exit_atomic)(CPUArchState *env)
     cpu_loop_exit_atomic(env_cpu(env), GETPC());
 }
 
+/* hollywood_emu: check_exit_request with an explicit return address, for the
+ * load/store slow path (see hw_memop_exit_check in cputlb.c). */
+void uc_check_exit_request_ra(uc_engine *uc, uintptr_t retaddr)
+{
+    if (cpu_loop_exit_requested(uc->cpu)) {
+        if (uc->nested_level == 1) {
+            tb_exec_unlock(uc);
+        }
+        uc->cpu->tcg_exit_req = 0;
+
+        if (uc->skip_sync_pc_on_exit) {
+            uc->skip_sync_pc_on_exit = false;
+            cpu_loop_exit(uc->cpu);
+        } else {
+            cpu_loop_exit_restore(uc->cpu, retaddr);
+        }
+    }
+}
+
 void HELPER(check_exit_request)(void *p, uint32_t in_delay_slot) {
     uc_engine *uc = p;
 
