@@ -1,6 +1,7 @@
 #include "core/gfx_inject.h"
 #include "core/ext4_writer.h"
 #include "common/log.h"
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <vector>
@@ -149,11 +150,14 @@ bool inject_composer_vintf(Bytes& vendor_img, std::string& err) {
 }
 
 Bytes load_gfxsrc_img() {
-    std::ifstream f(kGfxsrcImgPath, std::ios::binary | std::ios::ate);
-    if (!f) { HW_WARN("gfx", "gfxsrc image not found: {}", kGfxsrcImgPath); return {}; }
+    // HOLLYWOOD_GFXSRC overrides the default location (e.g. on a Linux host).
+    const char* env = std::getenv("HOLLYWOOD_GFXSRC");
+    const char* path = (env && *env) ? env : kGfxsrcImgPath;
+    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    if (!f) { HW_WARN("gfx", "gfxsrc image not found: {} (set HOLLYWOOD_GFXSRC)", path); return {}; }
     size_t n = (size_t)f.tellg(); Bytes b(n); f.seekg(0);
     f.read(reinterpret_cast<char*>(b.data()), (std::streamsize)n);
-    HW_INFO("gfx", "loaded gfxsrc image {} ({} MB)", kGfxsrcImgPath, n / (1024 * 1024));
+    HW_INFO("gfx", "loaded gfxsrc image {} ({} MB)", path, n / (1024 * 1024));
     return b;
 }
 

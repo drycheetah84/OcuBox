@@ -1,6 +1,7 @@
 #include "cpu/keymaster_ta.h"
 #include "cpu/km_cbor.h"
 #include "common/sha256.h"
+#include "cpu/km_pubkeys.h"
 
 #include <cstdio>
 #include <cstring>
@@ -34,6 +35,7 @@ constexpr uint32_t T_ENUM = 0x10000000u, T_ENUM_REP = 0x20000000u, T_UINT = 0x30
 constexpr uint32_t TAG_PURPOSE          = T_ENUM_REP | 1;    // 0x20000001
 constexpr uint32_t TAG_ALGORITHM        = T_ENUM     | 2;    // 0x10000002
 constexpr uint32_t TAG_KEY_SIZE         = T_UINT     | 3;    // 0x30000003
+constexpr uint32_t TAG_EC_CURVE         = T_ENUM     | 10;   // 0x1000000a
 constexpr uint32_t TAG_BLOCK_MODE       = T_ENUM_REP | 4;    // 0x20000004
 constexpr uint32_t TAG_DIGEST           = T_ENUM_REP | 5;    // 0x20000005
 constexpr uint32_t TAG_PADDING          = T_ENUM_REP | 6;    // 0x20000006
@@ -273,6 +275,7 @@ void build_characteristics(const AuthSet& req, AuthSet& hw, AuthSet& sw,
 struct Op {
     std::vector<uint8_t> material;
     uint64_t purpose = 0, algorithm = 0, block_mode = 0;
+    uint32_t key_bits = 0;                     // RSA modulus / EC field size (asymmetric sign)
     std::vector<uint8_t> nonce, aad, input;   // input: buffered plaintext for SIGN/VERIFY
     std::vector<uint8_t> ct;                   // accumulated CIPHERTEXT (for the GCM tag)
     size_t stream_off = 0;                     // keystream byte position across chunks
@@ -285,6 +288,79 @@ struct KmState {
     uint64_t next_op = 0x0100000000000001ull;
 };
 KmState g;
+
+// ---- asymmetric keys (COMPATIBILITY / SYNTHETIC) ----
+// Effective size of an RSA/EC key from its characteristics: KEY_SIZE, else the EC
+// curve, else the KeyMint defaults (RSA 2048, EC P-256).
+uint32_t asym_key_bits(const AuthSet& hw, uint64_t alg) {
+    if (const KeyParam* p = find(hw, TAG_KEY_SIZE)) return (uint32_t)p->integer;
+    if (alg == ALG_EC) {
+        if (const KeyParam* p = find(hw, TAG_EC_CURVE)) {
+            switch (p->integer) { case 0: return 224; case 2: return 384; case 3: return 521; default: return 256; }
+        }
+        return 256;
+    }
+    return 2048;
+}
+
+// DER SubjectPublicKeyInfo for exportKey. Every key of a given size shares one
+// fixed public key (see km_pubkeys.h); a size we don't carry maps to the nearest
+// larger one (else the largest).
+std::vector<uint8_t> asym_public_key(uint64_t alg, uint32_t bits) {
+    auto v = [](const uint8_t* d, size_t n) { return std::vector<uint8_t>(d, d + n); };
+    using namespace pubkeys;
+    if (alg == ALG_EC) {
+        if (bits <= 224) return v(kEcP224, sizeof kEcP224);
+        if (bits <= 256) return v(kEcP256, sizeof kEcP256);
+        if (bits <= 384) return v(kEcP384, sizeof kEcP384);
+        return v(kEcP521, sizeof kEcP521);
+    }
+    if (bits <= 1024) return v(kRsa1024, sizeof kRsa1024);
+    if (bits <= 2048) return v(kRsa2048, sizeof kRsa2048);
+    if (bits <= 3072) return v(kRsa3072, sizeof kRsa3072);
+    return v(kRsa4096, sizeof kRsa4096);
+}
+
+// Deterministic bytes from the key material and the signed message.
+void sig_bytes(const Op& op, uint8_t* out, size_t n) {
+    uint8_t seed[32];
+    hmac_sha256(op.material.data(), op.material.size(), op.input.data(), op.input.size(), seed);
+    for (size_t off = 0, ctr = 0; off < n; off += 32, ++ctr) {
+        uint8_t blk[33]; std::memcpy(blk, seed, 32); blk[32] = (uint8_t)ctr;
+        uint8_t h[32]; hmac_sha256(seed, 32, blk, sizeof blk, h);
+        std::memcpy(out + off, h, (n - off < 32) ? n - off : 32);
+    }
+}
+
+// A correctly SHAPED signature (RSA: modulus-sized; EC: DER SEQUENCE{r,s}) so
+// callers that embed it (e.g. a self-signed certificate) get valid structure. It
+// will not verify against the public key -- the private halves don't exist.
+std::vector<uint8_t> asym_signature(const Op& op) {
+    if (op.algorithm == ALG_RSA) {
+        std::vector<uint8_t> out((op.key_bits + 7) / 8);
+        sig_bytes(op, out.data(), out.size());
+        if (!out.empty()) out[0] = 0;                  // keep the integer below the modulus
+        return out;
+    }
+    size_t n = (op.key_bits + 7) / 8;                  // EC: r and s are field-sized
+    std::vector<uint8_t> rs(2 * n);
+    sig_bytes(op, rs.data(), rs.size());
+    auto der_int = [](const uint8_t* p, size_t len) {
+        std::vector<uint8_t> v(p, p + len);
+        v[0] &= 0x7f; if (v[0] == 0) v[0] = 1;         // positive, minimal (no leading 0)
+        v.insert(v.begin(), (uint8_t)v.size()); v.insert(v.begin(), 0x02);
+        return v;
+    };
+    std::vector<uint8_t> r = der_int(rs.data(), n), sv = der_int(rs.data() + n, n);
+    std::vector<uint8_t> out;
+    size_t body = r.size() + sv.size();
+    out.push_back(0x30);
+    if (body >= 0x80) out.push_back(0x81);             // max body for P-521 is ~138 bytes
+    out.push_back((uint8_t)body);
+    out.insert(out.end(), r.begin(), r.end());
+    out.insert(out.end(), sv.begin(), sv.end());
+    return out;
+}
 void ensure_hmac() { if (!g.hmac_ready) { derive_bytes(g.hmac_key, 32, 0xA5A5A5A5ull); g.hmac_ready = true; } }
 
 // ---- command ids (low bits, after stripping the 0x2000 CBOR flag) -------
@@ -393,7 +469,11 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         if (!q.blobs.count(23) || !parse_keyblob(q.blobs[23].data(), q.blobs[23].size(), hw, sw, material)) {
             status = KM_ERR_INVALID_KEY_BLOB; break;
         }
-        body.map(1); body.u(36); body.bytes(material); // { 36 : material }
+        // Asymmetric keys export their public key as DER SubjectPublicKeyInfo (keystore2
+        // parses it to build the key's certificate); symmetric keys return raw material.
+        uint64_t alg = 0; if (auto* p = find(hw, TAG_ALGORITHM)) alg = p->integer;
+        if (alg == ALG_RSA || alg == ALG_EC) material = asym_public_key(alg, asym_key_bits(hw, alg));
+        body.map(1); body.u(36); body.bytes(material); // { 36 : key data }
         break;
     }
 
@@ -418,6 +498,7 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
         Op op; op.material = material;
         if (auto* p = find(q.params, TAG_PURPOSE)) op.purpose = p->integer;
         if (auto* p = find(hw, TAG_ALGORITHM)) op.algorithm = p->integer;
+        if (op.algorithm == ALG_RSA || op.algorithm == ALG_EC) op.key_bits = asym_key_bits(hw, op.algorithm);
         if (auto* p = find(hw, TAG_BLOCK_MODE)) op.block_mode = p->integer;
         if (auto* p = find(q.params, TAG_MAC_LENGTH)) op.mac_bytes = (uint32_t)(p->integer / 8);
         AuthSet out_params;
@@ -534,6 +615,9 @@ bool keymaster_ta_handle(uint32_t cmd, const uint8_t* payload, size_t len,
                     if (std::memcmp(op.ct.data() + ctlen, exp, op.mac_bytes) != 0) status = KM_ERR_VERIFICATION_FAILED;
                 }
             }
+        } else if (op.purpose == PURP_SIGN && (op.algorithm == ALG_RSA || op.algorithm == ALG_EC)) {
+            op.input.insert(op.input.end(), finin.begin(), finin.end());
+            output = asym_signature(op);
         } else if (op.purpose == PURP_SIGN || op.algorithm == ALG_HMAC) {
             op.input.insert(op.input.end(), finin.begin(), finin.end());
             uint8_t mac[32]; hmac_sha256(op.material.data(), op.material.size(),

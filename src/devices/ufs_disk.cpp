@@ -3,6 +3,7 @@
 #include "gui/gui_bridge.h"
 #include "common/log.h"
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <string>
@@ -246,7 +247,9 @@ void UfsDisk::publish_framebuffer() {
     fb_gen_ = gen;
     // Verification dump (host-side): write the captured frame as a PPM so a
     // headless run can confirm the actual pixels.
-    if (std::FILE* f = std::fopen("D:\\gfxbuild\\captured_frame.ppm", "wb")) {
+    // HOLLYWOOD_FRAME_DUMP overrides the dump path (e.g. on a Linux host).
+    const char* dump = std::getenv("HOLLYWOOD_FRAME_DUMP");
+    if (std::FILE* f = std::fopen((dump && *dump) ? dump : "D:\\gfxbuild\\captured_frame.ppm", "wb")) {
         std::fprintf(f, "P6\n%u %u\n255\n", w, h);
         for (size_t i = 0; i < (size_t)w * h; ++i) {
             std::fputc(src[i*4+0], f); std::fputc(src[i*4+1], f); std::fputc(src[i*4+2], f);
